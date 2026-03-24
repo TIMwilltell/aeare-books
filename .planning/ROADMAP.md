@@ -12,7 +12,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 ## Phases
 
 - [x] **Phase 1: Foundation & Core Flow** - PWA shell, barcode scanning, library management ✅
-- [ ] **Phase 2: API Integrations** - Google Books metadata, AR lookup with BFF proxy
+- [x] **Phase 2: API Integrations** - Google Books metadata, AR lookup with BFF proxy (completed 2026-03-24)
 - [ ] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes
 - [ ] **Phase 4: Cloud Sync & Export** - Google Sheets sync, offline handling, export
 
@@ -66,12 +66,12 @@ Parents can quickly catalog their children's books and track AR reading progress
 9. App clearly indicates whether AR data was fetched or manually entered
 10. App caches successful AR lookups to avoid repeated scrapes
 
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 **Plan list:**
-- [ ] 02-01-PLAN.md — Google Books API + AR Cache Setup
-- [ ] 02-02-PLAN.md — Playwright AR Lookup Endpoint
-- [ ] 02-03-PLAN.md — UI Integration (Lookup button, covers, AR fields)
+- [x] 02-01-PLAN.md — Google Books API + AR Cache Setup
+- [x] 02-02-PLAN.md — Playwright AR Lookup Endpoint
+- [x] 02-03-PLAN.md — UI Integration (Lookup button, covers, AR fields)
 
 **UI hint:** yes
 
@@ -125,7 +125,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Flow | 2/2 | Complete | 2026-03-24 |
-| 2. API Integrations | 0/? | Not started | - |
+| 2. API Integrations | 3/3 | Complete   | 2026-03-24 |
 | 3. Progress Tracking | 0/? | Not started | - |
 | 4. Cloud Sync & Export | 0/? | Not started | - |
 
