@@ -151,7 +151,10 @@ Parents can quickly catalog their children's books and track AR reading progress
 9. Design spec documents empty state component for library
 10. Design spec documents FAB (floating action button) for scan action
 
-**Plans**: TBD
+**Plans:** 1/1 plan complete
+
+**Plan list:**
+- [x] 05-01-PLAN.md — Document all 10 UI components with design specifications
 
 ---
 
@@ -183,7 +186,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 | 2. API Integrations | 3/3 | Complete   | 2026-03-24 |
 | 3. Progress Tracking | 2/2 | Complete   | 2026-03-24 |
 | 4. Cloud Sync & Export | 3/3 | Complete   | 2026-03-24 |
-| 5. Component Specifications | 0/1 | Not started | - |
+| 5. Component Specifications | 1/1 | Planned    | - |
 | 6. Screen Designs | 0/1 | Not started | - |
 
 ## Coverage
