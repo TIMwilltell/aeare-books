@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { getAllBooks, searchBooks, type Book } from '$lib/db';
+	import { exportLibrary } from '$lib/api/export';
 	import BookList from '$lib/components/BookList.svelte';
 	import FAB from '$lib/components/FAB.svelte';
 
@@ -25,6 +26,15 @@
 	function handleScan() {
 		goto('/scan');
 	}
+
+	async function handleExport() {
+		try {
+			await exportLibrary();
+		} catch (error) {
+			console.error('Export failed:', error);
+			alert('Failed to export library. Please try again.');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -32,13 +42,18 @@
 </svelte:head>
 
 <div class="library-page">
-	<div class="search-bar">
-		<input
-			type="text"
-			placeholder="Search by title or author..."
-			bind:value={searchQuery}
-			oninput={handleSearch}
-		/>
+	<div class="header">
+		<div class="search-bar">
+			<input
+				type="text"
+				placeholder="Search by title or author..."
+				bind:value={searchQuery}
+				oninput={handleSearch}
+			/>
+		</div>
+		<button class="export-btn" onclick={handleExport}>
+			📥 Export
+		</button>
 	</div>
 
 	{#if loading}
@@ -65,10 +80,17 @@
 		padding-bottom: 80px;
 	}
 
-	.search-bar {
+	.header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 		padding: 16px;
 		background: white;
 		border-bottom: 1px solid #eee;
+	}
+
+	.search-bar {
+		flex: 1;
 	}
 
 	.search-bar input {
@@ -83,6 +105,23 @@
 	.search-bar input:focus {
 		outline: none;
 		border-color: #4A90D9;
+	}
+
+	.export-btn {
+		padding: 10px 16px;
+		background: #f3f4f6;
+		border: none;
+		border-radius: 8px;
+		font-size: 14px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		white-space: nowrap;
+	}
+
+	.export-btn:hover {
+		background: #e5e7eb;
 	}
 
 	.loading {
