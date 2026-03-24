@@ -18,18 +18,38 @@
 		{#each books as book (book.id)}
 			<li>
 				<button class="book-row" onclick={() => book.id && onSelect(book.id)}>
+					<div class="book-cover">
+						{#if book.coverUrl}
+							<img src={book.coverUrl} alt="{book.title} cover" />
+						{:else}
+							<div class="cover-placeholder">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+									<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+								</svg>
+							</div>
+						{/if}
+					</div>
 					<div class="book-info">
 						<span class="book-title">{book.title}</span>
-						<span class="book-author">{book.author}</span>
+						<span class="book-author">by {book.author}</span>
+						{#if book.arLevel}
+							<span class="ar-info">
+								AR {book.arLevel}
+								{#if book.arPoints}
+									<span class="ar-points">• {book.arPoints} pts</span>
+								{/if}
+							</span>
+						{/if}
 					</div>
-					{#if book.arLevel}
-						<span class="ar-badge">
-							AR {book.arLevel}
-							{#if book.arPoints}
-								<span class="ar-points">({book.arPoints})</span>
-							{/if}
-						</span>
-					{/if}
 				</button>
 			</li>
 		{/each}
@@ -57,8 +77,8 @@
 		width: 100%;
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		padding: 14px 16px;
+		gap: 12px;
+		padding: 12px;
 		background: white;
 		border: none;
 		border-bottom: 1px solid #eee;
@@ -68,6 +88,30 @@
 
 	.book-row:hover {
 		background: #f9f9f9;
+	}
+
+	.book-cover {
+		flex-shrink: 0;
+		width: 48px;
+		height: 64px;
+		border-radius: 4px;
+		overflow: hidden;
+		background: #f0f0f0;
+	}
+
+	.book-cover img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.cover-placeholder {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #ccc;
 	}
 
 	.book-info {
@@ -95,18 +139,14 @@
 		text-overflow: ellipsis;
 	}
 
-	.ar-badge {
-		flex-shrink: 0;
-		padding: 4px 8px;
-		background: #e0e7ff;
-		color: #4A90D9;
-		border-radius: 12px;
-		font-size: 12px;
+	.ar-info {
+		font-size: 13px;
+		color: #4a90d9;
 		font-weight: 500;
-		margin-left: 12px;
 	}
 
 	.ar-points {
+		font-weight: normal;
 		opacity: 0.8;
 	}
 </style>

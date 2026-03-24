@@ -10,11 +10,13 @@
 	let loading = $state(true);
 	let editing = $state(false);
 	let saving = $state(false);
-	
+
 	// Edit form state
 	let title = $state('');
 	let author = $state('');
 	let isbn = $state('');
+	let arLevel = $state(0);
+	let arPoints = $state(0);
 
 	// Delete dialog state
 	let showDeleteDialog = $state(false);
@@ -28,6 +30,8 @@
 			title = loadedBook.title;
 			author = loadedBook.author;
 			isbn = loadedBook.isbn;
+			arLevel = loadedBook.arLevel || 0;
+			arPoints = loadedBook.arPoints || 0;
 		} else {
 			goto('/');
 		}
@@ -35,6 +39,10 @@
 	});
 
 	function startEdit() {
+		if (book) {
+			arLevel = book.arLevel || 0;
+			arPoints = book.arPoints || 0;
+		}
 		editing = true;
 	}
 
@@ -43,16 +51,34 @@
 			title = book.title;
 			author = book.author;
 			isbn = book.isbn;
+			arLevel = book.arLevel || 0;
+			arPoints = book.arPoints || 0;
 		}
 		editing = false;
 	}
 
 	async function handleSave() {
 		if (!book) return;
-		
+
 		saving = true;
-		await updateBook(book.id!, { title, author, isbn });
-		book = { ...book, title, author, isbn };
+		const arDataSource = arLevel || arPoints ? 'manual' : undefined;
+		await updateBook(book.id!, {
+			title,
+			author,
+			isbn,
+			arLevel: arLevel || undefined,
+			arPoints: arPoints || undefined,
+			arDataSource
+		});
+		book = {
+			...book,
+			title,
+			author,
+			isbn,
+			arLevel: arLevel || undefined,
+			arPoints: arPoints || undefined,
+			arDataSource
+		};
 		editing = false;
 		saving = false;
 	}
@@ -81,6 +107,12 @@
 	{#if loading}
 		<p class="loading">Loading...</p>
 	{:else if book}
+		{#if book.coverUrl}
+			<div class="cover-image">
+				<img src={book.coverUrl} alt="{book.title} cover" />
+			</div>
+		{/if}
+
 		<h1>{book.title}</h1>
 
 		{#if editing}
@@ -97,6 +129,21 @@
 					<label for="isbn">ISBN</label>
 					<input type="text" id="isbn" bind:value={isbn} />
 				</div>
+				<div class="form-group">
+					<label for="ar-level">AR Level</label>
+					<input
+						type="number"
+						id="ar-level"
+						bind:value={arLevel}
+						step="0.1"
+						min="0"
+						max="20"
+					/>
+				</div>
+				<div class="form-group">
+					<label for="ar-points">AR Points</label>
+					<input type="number" id="ar-points" bind:value={arPoints} step="0.1" min="0" />
+				</div>
 				<div class="form-actions">
 					<button type="button" class="btn-cancel" onclick={cancelEdit} disabled={saving}>
 						Cancel
@@ -111,7 +158,17 @@
 				<p class="author">by {book.author}</p>
 				<p class="isbn">ISBN: {book.isbn || 'N/A'}</p>
 				{#if book.arLevel}
-					<p class="ar-info">AR Level: {book.arLevel}{book.arPoints ? ` • ${book.arPoints} points` : ''}</p>
+					<div class="ar-info">
+						<span>AR Level: {book.arLevel}</span>
+						{#if book.arPoints}
+							<span>• {book.arPoints} points</span>
+						{/if}
+						{#if book.arDataSource === 'fetched'}
+							<span class="ar-badge fetched">Auto</span>
+						{:else if book.arDataSource === 'manual'}
+							<span class="ar-badge manual">Manual</span>
+						{/if}
+					</div>
 				{/if}
 			</div>
 
@@ -135,6 +192,17 @@
 		padding: 20px;
 		max-width: 500px;
 		margin: 0 auto;
+	}
+
+	.cover-image {
+		margin-bottom: 20px;
+		text-align: center;
+	}
+
+	.cover-image img {
+		max-width: 150px;
+		border-radius: 8px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	}
 
 	h1 {
@@ -163,9 +231,31 @@
 	}
 
 	.ar-info {
-		color: #4A90D9;
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 4px;
+		color: #4a90d9;
 		font-weight: 500;
 		margin: 0;
+	}
+
+	.ar-badge {
+		display: inline-block;
+		font-size: 11px;
+		padding: 2px 6px;
+		border-radius: 4px;
+		margin-left: 8px;
+	}
+
+	.ar-badge.fetched {
+		background: #dbeafe;
+		color: #1d4ed8;
+	}
+
+	.ar-badge.manual {
+		background: #fef3c7;
+		color: #92400e;
 	}
 
 	.book-actions {
@@ -215,7 +305,7 @@
 
 	input:focus {
 		outline: none;
-		border-color: #4A90D9;
+		border-color: #4a90d9;
 	}
 
 	.form-actions {
@@ -240,7 +330,7 @@
 	}
 
 	.btn-save {
-		background: #4A90D9;
+		background: #4a90d9;
 		color: white;
 	}
 
