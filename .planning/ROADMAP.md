@@ -11,7 +11,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 
 ## Phases
 
-- [x] **Phase 1: Foundation & Core Flow** - PWA shell, barcode scanning, library management
+- [x] **Phase 1: Foundation & Core Flow** - PWA shell, barcode scanning, library management ✅
 - [ ] **Phase 2: API Integrations** - Google Books metadata, AR lookup with BFF proxy
 - [ ] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes
 - [ ] **Phase 4: Cloud Sync & Export** - Google Sheets sync, offline handling, export
@@ -24,23 +24,23 @@ Parents can quickly catalog their children's books and track AR reading progress
 
 **Depends on:** Nothing (first phase)
 
-**Requirements:** SCAN-01, SCAN-02, SCAN-03, SCAN-04, LIB-01, LIB-02, LIB-03, LIB-04, PWA-03
+**Requirements:** SCAN-01, SCAN-02, SCAN-03, SCAN-04, LIB-01, LIB-02, LIB-03, LIB-04, PWA-03 ✅
 
 **Success Criteria** (what must be TRUE):
-1. User can scan a book barcode using phone camera on iOS Safari
-2. User can scan a book barcode using phone camera on Android Chrome
-3. User can manually enter ISBN when camera is unavailable
-4. User can view list of all scanned books in library
-5. User can search/filter library by title or author
-6. User can view individual book details
-7. User can delete a book from library
-8. User can install app to phone home screen
+1. ✅ User can scan a book barcode using phone camera on iOS Safari
+2. ✅ User can scan a book barcode using phone camera on Android Chrome
+3. ✅ User can manually enter ISBN when camera is unavailable
+4. ✅ User can view list of all scanned books in library
+5. ✅ User can search/filter library by title or author
+6. ✅ User can view individual book details
+7. ✅ User can delete a book from library
+8. ✅ User can install app to phone home screen
 
-**Plans:** 2 plans
+**Plans:** 2 plans ✅
 
 **Plan list:**
-- [ ] 01-01-PLAN.md — SvelteKit + PWA Shell Setup
-- [ ] 01-02-PLAN.md — Scanner + Library Management
+- [x] 01-01-PLAN.md — SvelteKit + PWA Shell Setup (f474f46)
+- [x] 01-02-PLAN.md — Scanner + Library Management (f2e1ef2)
 
 **UI hint:** yes
 

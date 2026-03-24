@@ -7,10 +7,10 @@
 
 ### Barcode Scanning
 
-- [ ] **SCAN-01**: User can scan a book barcode using phone camera
-- [ ] **SCAN-02**: Camera barcode scanning works on iOS Safari
-- [ ] **SCAN-03**: Camera barcode scanning works on Android Chrome
-- [ ] **SCAN-04**: Manual ISBN entry fallback when camera unavailable
+- [x] **SCAN-01**: User can scan a book barcode using phone camera
+- [x] **SCAN-02**: Camera barcode scanning works on iOS Safari
+- [x] **SCAN-03**: Camera barcode scanning works on Android Chrome
+- [x] **SCAN-04**: Manual ISBN entry fallback when camera unavailable
 
 ### Book Metadata
 
@@ -30,10 +30,10 @@
 
 ### Library Management
 
-- [ ] **LIB-01**: User can view list of all scanned books
-- [ ] **LIB-02**: User can search/filter library by title or author
-- [ ] **LIB-03**: User can view individual book details
-- [ ] **LIB-04**: User can delete a book from library
+- [x] **LIB-01**: User can view list of all scanned books
+- [x] **LIB-02**: User can search/filter library by title or author
+- [x] **LIB-03**: User can view individual book details
+- [x] **LIB-04**: User can delete a book from library
 
 ### Reading Progress
 
@@ -48,7 +48,7 @@
 
 - [ ] **PWA-01**: App works offline (scan, view library, enter data)
 - [ ] **PWA-02**: App syncs data when connection restored
-- [ ] **PWA-03**: App can be installed to phone home screen
+- [x] **PWA-03**: App can be installed to phone home screen
 - [ ] **PWA-04**: App shows clear offline/online status indicator
 
 ### Data Export
@@ -91,10 +91,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCAN-01 | Phase 1 | Pending |
-| SCAN-02 | Phase 1 | Pending |
-| SCAN-03 | Phase 1 | Pending |
-| SCAN-04 | Phase 1 | Pending |
+| SCAN-01 | Phase 1 | Complete |
+| SCAN-02 | Phase 1 | Complete |
+| SCAN-03 | Phase 1 | Complete |
+| SCAN-04 | Phase 1 | Complete |
 | META-01 | Phase 2 | Pending |
 | META-02 | Phase 2 | Pending |
 | META-03 | Phase 2 | Pending |
@@ -105,19 +105,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AR-03 | Phase 2 | Pending |
 | AR-04 | Phase 2 | Pending |
 | AR-05 | Phase 2 | Pending |
-| LIB-01 | Phase 1 | Pending |
-| LIB-02 | Phase 1 | Pending |
-| LIB-03 | Phase 1 | Pending |
-| LIB-04 | Phase 1 | Pending |
+| LIB-01 | Phase 1 | Complete |
+| LIB-02 | Phase 1 | Complete |
+| LIB-03 | Phase 1 | Complete |
+| LIB-04 | Phase 1 | Complete |
 | READ-01 | Phase 3 | Pending |
 | READ-02 | Phase 3 | Pending |
 | READ-03 | Phase 3 | Pending |
 | READ-04 | Phase 3 | Pending |
 | READ-05 | Phase 3 | Pending |
 | READ-06 | Phase 3 | Pending |
-| PWA-01 | Phase 1 | Pending |
+| PWA-01 | Phase 1 | Complete |
 | PWA-02 | Phase 4 | Pending |
-| PWA-03 | Phase 1 | Pending |
+| PWA-03 | Phase 1 | Complete |
 | PWA-04 | Phase 4 | Pending |
 | EXPT-01 | Phase 4 | Pending |
 | EXPT-02 | Phase 4 | Pending |
