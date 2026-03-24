@@ -1,6 +1,6 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
-	import { ConvexProvider } from 'convex-svelte';
+	import StatusBanner from '$lib/components/StatusBanner.svelte';
 	import '$lib/convex-client';
 
 	let { children } = $props();
@@ -10,6 +10,5 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<ConvexProvider>
-	{@render children()}
-</ConvexProvider>
+<StatusBanner />
+{@render children()}
