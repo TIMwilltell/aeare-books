@@ -14,19 +14,19 @@
 
 ### Book Metadata
 
-- [ ] **META-01**: App auto-populates title from Google Books API using scanned ISBN
-- [ ] **META-02**: App auto-populates author from Google Books API
-- [ ] **META-03**: App auto-populates cover thumbnail from Google Books API
-- [ ] **META-04**: App handles Google Books API lookup failures gracefully
-- [ ] **META-05**: App tries both ISBN-10 and ISBN-13 formats
+- [x] **META-01**: App auto-populates title from Google Books API using scanned ISBN
+- [x] **META-02**: App auto-populates author from Google Books API
+- [x] **META-03**: App auto-populates cover thumbnail from Google Books API
+- [x] **META-04**: App handles Google Books API lookup failures gracefully
+- [x] **META-05**: App tries both ISBN-10 and ISBN-13 formats
 
 ### AR Data
 
-- [ ] **AR-01**: App attempts to fetch AR level from arbookfind.com scrape via backend proxy
-- [ ] **AR-02**: App attempts to fetch AR points from arbookfind.com
-- [ ] **AR-03**: App includes manual AR level entry field as fallback
-- [ ] **AR-04**: App indicates when AR data was fetched vs. manually entered
-- [ ] **AR-05**: App caches successful AR lookups to reduce scrape frequency
+- [x] **AR-01**: App attempts to fetch AR level from arbookfind.com scrape via backend proxy
+- [x] **AR-02**: App attempts to fetch AR points from arbookfind.com
+- [x] **AR-03**: App includes manual AR level entry field as fallback
+- [x] **AR-04**: App indicates when AR data was fetched vs. manually entered
+- [x] **AR-05**: App caches successful AR lookups to reduce scrape frequency
 
 ### Library Management
 
@@ -95,16 +95,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCAN-02 | Phase 1 | Complete |
 | SCAN-03 | Phase 1 | Complete |
 | SCAN-04 | Phase 1 | Complete |
-| META-01 | Phase 2 | Pending |
-| META-02 | Phase 2 | Pending |
-| META-03 | Phase 2 | Pending |
-| META-04 | Phase 2 | Pending |
-| META-05 | Phase 2 | Pending |
-| AR-01 | Phase 2 | Pending |
-| AR-02 | Phase 2 | Pending |
-| AR-03 | Phase 2 | Pending |
-| AR-04 | Phase 2 | Pending |
-| AR-05 | Phase 2 | Pending |
+| META-01 | Phase 2 | Complete |
+| META-02 | Phase 2 | Complete |
+| META-03 | Phase 2 | Complete |
+| META-04 | Phase 2 | Complete |
+| META-05 | Phase 2 | Complete |
+| AR-01 | Phase 2 | Complete |
+| AR-02 | Phase 2 | Complete |
+| AR-03 | Phase 2 | Complete |
+| AR-04 | Phase 2 | Complete |
+| AR-05 | Phase 2 | Complete |
 | LIB-01 | Phase 1 | Complete |
 | LIB-02 | Phase 1 | Complete |
 | LIB-03 | Phase 1 | Complete |
