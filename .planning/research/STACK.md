@@ -1,208 +1,402 @@
-# Stack Research
+# Technology Stack: Design Spec for Professional UI Implementation
 
-**Domain:** Book scanning PWA with barcode detection, API integration, and offline data storage
-**Researched:** 2026-03-23
+**Project:** AeAre Books — v1.1 Design Spec Creation
+**Researched:** 2026-03-24
+**Milestone:** Creating design spec to hand off to a designer
 **Confidence:** HIGH
 
-## Recommended Stack
+## Executive Summary
 
-### Core Technologies
+Creating a professional design spec for this SvelteKit book scanning PWA requires three layers:
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| **SvelteKit** | 2.x (Svelte 5) | Frontend framework | Smallest bundle (~15-30KB vs React's ~100-200KB), best DX, compiles to vanilla JS, excellent PWA support via vite-plugin-pwa, perfect for mobile-first PWAs |
-| **Hono** | 4.x | Backend API server | Multi-runtime (Node/Bun/Deno/Edge), ~14KB, TypeScript-first, fastest Node.js framework, perfect for AR scraping endpoint |
-| **vite-plugin-pwa** | 0.22.x | PWA service worker | ~2M weekly downloads, zero-config setup with Workbox, works with SvelteKit via Vite, handles manifest and update prompts |
-| **Quagga2** | 2.x | Barcode scanning | Maintained fork of QuaggaJS, excellent 1D barcode support (ISBN, UPC-A), uses getUserMedia, ~875 GitHub stars, actively maintained |
-| **Dexie.js** | 4.x | IndexedDB wrapper | ~3M weekly downloads, ORM-like API with rich queries, React hooks support via useLiveQuery, handles migrations gracefully |
-| **@google-cloud/local-auth** | 2.1.x | Google auth | Handles OAuth flow for Google Sheets API, works with googleapis |
-| **googleapis** | 139.x | Google Sheets API | Official Google client library, handles API calls to Google Sheets |
+1. **Design Tool** — Figma with Dev Mode for design-to-developer handoff
+2. **Component Library** — Skeleton (primary) or Konsta UI (mobile-focus alternative) for SvelteKit-compatible UI components
+3. **Specification Format** — Zero-ambiguity design documentation ensuring clear communication between designer and developer
 
-### Supporting Libraries
+For this mobile-first PWA where parents scan books with their phone cameras, mobile optimization is critical. Konsta UI is particularly well-suited for camera-based UX patterns, while Skeleton provides better design-handoff integration via its Figma UI Kit.
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| **zod** | 3.x | Schema validation | Validate API responses, form data, environment variables |
-| **cheerio** | 1.0.x | HTML parsing | Parse arbookfind.com scrape results in backend |
-| **puppeteer** or **playwright** | latest | Headless browser | Only if cheerio insufficient for complex AR scrape (likely not needed) |
-| **pwa-helpers** | - | PWA utilities | Optional: Use native browser APIs instead |
+---
 
-### Development Tools
+## 1. Design Tool Recommendation
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| **Node.js** | Runtime | v18+ required for all packages |
-| **Vite** | Bundler | Included with SvelteKit, handles HMR |
-| **TypeScript** | Language | First-class in SvelteKit, strict mode recommended |
-| **Vitest** | Testing | Works great with Vite-based projects |
-| **@sveltejs/adapter-auto** | Deployment | Auto-detects deployment target (Vercel, Netlify, etc.) |
+### Primary: Figma (with Dev Mode)
 
-## Installation
+| Aspect | Recommendation |
+|--------|----------------|
+| **Why Figma** | Industry-standard for design handoff; Dev Mode provides exact measurements, CSS export, and component property inspection |
+| **Version** | Figma Professional (paid) — enables full Dev Mode features |
+| **Alternative** | Figma Free tier (limited Dev Mode capabilities) |
 
+**Dev Mode capabilities needed for this project:**
+
+- Inspect panel for exact spacing, colors, typography values
+- Code snippet generation (CSS, iOS Swift, Android XML)
+- Component property inspection (variants, props)
+- Version history comparison for design changes
+- Design token sync (if using connected libraries)
+
+**Why Figma over alternatives:**
+
+- **Sketch**: Mac-only, less common in 2026, weaker developer handoff
+- **Adobe XD**: Deprecated by Adobe, no longer actively developed
+- **Penpot**: Open-source alternative but less mature handoff tooling
+
+**Confidence:** HIGH — Figma with Dev Mode is the clear industry standard for design-dev handoff in 2026
+
+---
+
+## 2. Component Library for SvelteKit
+
+### Recommendation: Skeleton (Primary) or Konsta UI (Mobile-Focus Alternative)
+
+#### Option A: Skeleton (Recommended for Design Handoff)
+
+| Aspect | Details |
+|--------|---------|
+| **Why Skeleton** | Full design system with official Figma UI Kit included; built specifically for Svelte and SvelteKit; Tailwind-based theming; comprehensive component coverage |
+| **Components** | Buttons, cards, forms, inputs, modals, tables, accordions, breadcrumbs, steppers, toasts, tooltips, avatars, etc. |
+| **Styling** | Tailwind CSS (v4 compatible) |
+| **Svelte Version** | Svelte 4/5 compatible |
+| **Figma Support** | Yes — official Figma UI Kit included |
+| **License** | MIT (open source) |
+| **Best for** | Projects needing strong design-dev handoff bridge |
+
+**Why Skeleton fits this project:**
+- Figma UI Kit directly maps to code components — designers can design in Figma using components that match the code
+- Theme system handles color/spacing consistency across all screens
+- Component coverage matches book tracking app needs:
+  - **Cards** — Book entries in library view
+  - **Forms** — Data entry for book metadata, AR scores
+  - **Modals** — Confirmation dialogs, editing forms
+  - **Badges** — AR level/points display
+  - **Avatars** — Book cover thumbnails
+  - **Toasts** — Success/error notifications
+- Accessibility-first (WAI-ARIA compliant components)
+- Dark mode support built-in
+
+**Installation:**
 ```bash
-# Core dependencies
-npm create svelte@latest aeare -- --template skeleton --types typescript
-cd aeare
-npm install
-
-# PWA support
-npm install -D vite-plugin-pwa
-
-# Barcode scanning
-npm install @ericblade/quagga2
-
-# Data storage
-npm install dexie
-
-# Backend (if separate server)
-npm install hono @hono/node-server
-
-# Google APIs
-npm install googleapis @google-cloud/local-auth
-
-# Validation
-npm install zod
-
-# HTML parsing (for AR scrape)
-npm install cheerio
-
-# Dev dependencies
-npm install -D typescript vitest @sveltejs/adapter-auto
+npm install @skeletonlabs/skeleton @skeletonlabs/skeleton-themes
 ```
 
-## Architecture Overview
+#### Option B: Konsta UI (Mobile-Focus Alternative)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    PWA (SvelteKit)                       │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐  │
-│  │ Scanner  │  │ Library  │  │ Book Detail / Quiz   │  │
-│  │  View    │  │   View   │  │      Entry           │  │
-│  └────┬─────┘  └────┬─────┘  └──────────┬───────────┘  │
-│       │             │                    │               │
-│       └─────────────┼────────────────────┘               │
-│                     │                                    │
-│  ┌──────────────────▼───────────────────────────────┐    │
-│  │              Dexie.js (IndexedDB)                │    │
-│  │    books, quizzes, syncQueue tables              │    │
-│  └──────────────────┬───────────────────────────────┘    │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐    │
-│  │           Service Worker (vite-plugin-pwa)       │    │
-│  │   • Offline caching     • Background sync        │    │
-│  └─────────────────┬───────────────────────────────┘    │
-└────────────────────┼────────────────────────────────────┘
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-    ┌─────▼──────┐      ┌──────▼──────┐
-    │ Google API │      │  Backend    │
-    │ Google     │      │  (Hono)     │
-    │ Books/     │      │  arbookfind │
-    │ Sheets     │      │  scrape     │
-    └────────────┘      └─────────────┘
+| Aspect | Details |
+|--------|---------|
+| **Why Konsta UI** | Built specifically for mobile PWAs; pixel-perfect iOS and Material Design components; optimized for touch interactions |
+| **Components** | Navbar, toolbar, cards, lists, modals, toast, sheet, actions, etc. — all mobile-optimized |
+| **Styling** | Tailwind CSS |
+| **Svelte Support** | Svelte 5 compatible |
+| **Figma Support** | No official kit |
+| **License** | MIT (open source) |
+| **Best for** | Pure mobile-first PWA where native mobile feel is priority |
+
+**Why Konsta UI fits this project:**
+- Perfect for barcode scanning UX — camera viewport components, native mobile patterns
+- iOS/Material Design themes match parent expectations on phone UIs
+- Smaller bundle size than full design systems
+- Optimized for touch targets (44px+ minimums)
+- Sheet modals, action sheets, swipe gestures built-in
+
+**When to choose Konsta over Skeleton:**
+- If design will be purely mobile (no desktop variant needed)
+- If native iOS/Material look is preferred over custom design system
+- If barcode scanning UI needs custom camera viewport patterns
+
+**Installation:**
+```bash
+npm install konsta
 ```
 
-## Alternatives Considered
+#### Other Svelte Libraries Considered and Rejected
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|------------------------|
-| SvelteKit | Next.js | Team is React-fluent, needs React ecosystem libraries |
-| SvelteKit | Nuxt | Team knows Vue, wants Vue ecosystem |
-| Hono | Express | Legacy codebase, no TypeScript needed |
-| Hono | Fastify | Node-only deployment, existing Fastify expertise |
-| Quagga2 | html5-qrcode | Need 2D barcode support AND willing to use unmaintained library |
-| Quagga2 | Native BarcodeDetector | Only targeting Chrome Android, progressive enhancement |
-| Dexie.js | localForage | Only need simple key-value storage |
-| Dexie.js | idb | Need minimal wrapper, will build own ORM |
+| Library | Verdict | Reason |
+|---------|---------|--------|
+| **Flowbite-Svelte** | Strong alternative | 60+ components, Tailwind-based, but less design-system focused than Skeleton |
+| **shadcn-svelte** | Good but code-first | Generates component code directly into project; less designer-oriented |
+| **Bits UI** | Headless only | No pre-styles, requires building custom design system from scratch |
+| **Lapikit** | Too limited | Only ~19 components, not enough for full app |
+| **SvelteUI** | Older, less maintained | Not optimized for Svelte 5, documentation outdated |
 
-## What NOT to Use
+**Confidence:** HIGH — Skeleton provides the best balance of component coverage + design-handoff tooling
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| **React** | Large bundle (~100-200KB), virtual DOM overhead, complex hooks | Svelte (compiles to vanilla JS) |
-| **Next.js** | Over-engineered for this use case, Vercel-centric | SvelteKit (smaller, simpler) |
-| **Express** | No TypeScript-first support, slower, legacy patterns | Hono (4x faster, TypeScript-native) |
-| **html5-qrcode** | Unmaintained since 2023, issues with UPC barcode detection | Quagga2 (actively maintained) |
-| **localStorage** | Synchronous (blocks main thread), 5MB limit, no transactions | IndexedDB via Dexie.js |
-| **MongoDB/PostgreSQL** | Backend complexity for single-user local-first app | IndexedDB + Google Sheets |
-| **PWA Wrappers (Capacitor)** | App store native app — explicitly out of scope | PWA only |
-| **Firebase/Supabase** | Overkill for single-device family use case | Local IndexedDB + Google Sheets |
+---
 
-## Stack Patterns by Variant
+## 3. Design Specification Format
 
-**If deploying to Cloudflare Workers:**
-- Use Hono (native CF Workers support)
-- Use D1 for edge-compatible relational data if needed
-- Adapter: `@hono/cloudflare-workers`
+### Professional Design Spec Structure
 
-**If deploying to Vercel:**
-- SvelteKit with `@sveltejs/adapter-vercel`
-- Hono works on Vercel Edge Runtime
-- Consider using Hono's RPC mode for type-safe client calls
+A zero-ambiguity design spec for this project should include these sections:
 
-**If deploying to Netlify:**
-- SvelteKit with `@sveltejs/adapter-netlify`
-- Hono works via Node.js serverless functions
+#### Section 1: Project Metadata
+| Field | Value |
+|-------|-------|
+| Project Name | AeAre Books |
+| Version | v1.1 Design Spec |
+| Designer | [To be filled] |
+| Developer | [To be filled] |
+| Figma Link | [Link with Dev Mode enabled] |
+| Target Implementation | Sprint/date |
 
-**If need maximum offline capability:**
-- Full Dexie.js schema with sync queue
-- Service worker caches app shell
-- Background Sync API for retry queue
+#### Section 2: Design System Specifications
 
-## Version Compatibility
+**Color Palette:**
+- Primary color (app brand)
+- Secondary/accent colors
+- Semantic colors (success, error, warning, info)
+- Light/dark mode variants
+- Background colors (page, surface, elevated)
+- Text colors (primary, secondary, disabled)
 
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| SvelteKit 2.x | Svelte 5 | Use Svelte 5 runes syntax |
-| vite-plugin-pwa 0.22.x | Vite 5.x | Check vite-plugin-pwa compatibility matrix |
-| Dexie.js 4.x | All modern browsers | IE11 not supported (acceptable for PWA) |
-| Quagga2 2.x | All browsers with getUserMedia | Safari iOS requires HTTPS |
-| Hono 4.x | Node 18+, Bun, Deno, Cloudflare | Multi-runtime by design |
-| googleapis 139.x | Node 18+ | Auth via @google-cloud/local-auth for dev |
+**Typography:**
+- Font family (recommend: system fonts or Google Fonts)
+- Type scale: h1, h2, h3, h4, h5, h6, body, small, caption
+- Line heights
+- Font weights
 
-## Key Technical Decisions
+**Spacing System:**
+- Base unit (recommend: 4px or 8px)
+- Scale: 0, xs, sm, md, lg, xl, 2xl, 3xl
+- Component padding standards
 
-### 1. SvelteKit over Next.js
-**Rationale:** This is a mobile-first PWA where bundle size directly impacts user experience. SvelteKit's compiler-based approach produces 30-50% smaller bundles than React-based frameworks. For a parent scanning books at home, fast load times on mobile data matter.
+**Border Radius:**
+- Scale: none, sm, md, lg, xl, full
+- Usage: buttons, cards, inputs, modals
 
-### 2. Hono over Express
-**Rationale:** The backend only needs a few routes (AR scrape endpoint, potential Google Sheets proxy). Hono's ~14KB footprint vs Express's ~200KB is meaningful. TypeScript-first design prevents runtime type errors. Multi-runtime support means easy migration if deployment needs change.
+**Shadows:**
+- Elevation levels: subtle, medium, high
+- Usage: cards, modals, dropdowns
 
-### 3. Quagga2 over html5-qrcode
-**Rationale:** Book barcodes are 1D (EAN-13/UPC-A). Quagga2 specializes in 1D barcodes and is actively maintained. html5-qrcode development stalled in 2023 and has known UPC detection issues. The native BarcodeDetector API can be used as progressive enhancement on Chrome Android.
+**Iconography:**
+- Icon set (recommend: Phosphor Icons, Heroicons, or Lucide)
+- Icon sizes: sm, md, lg
+- Usage conventions
 
-### 4. Dexie.js over raw IndexedDB
-**Rationale:** IndexedDB's callback-based API is unwieldy. Dexie provides:
-- Promise-based async operations
-- ORM-like schema management
-- Automatic migration handling
-- Live queries (useful for reactive UI)
-- Rich query support (filtering, sorting)
+#### Section 3: Component Specifications
 
-### 5. Local IndexedDB + Google Sheets (not pure backend)
-**Rationale:** Project requirements specify Google Sheets for easy viewing/editing. Using IndexedDB locally means:
-- Fast offline reads/writes
-- App works without network
-- Syncs to Google Sheets when connected
-- Users can still view/edit data in Sheets directly
+For each reusable component, document:
+
+| Property | Description |
+|----------|-------------|
+| **Component Name** | e.g., BookCard, ScanButton |
+| **Variants** | primary, secondary, ghost; small, medium, large |
+| **States** | default, hover, active, disabled, loading, error |
+| **Props/Parameters** | What data the component accepts |
+| **Responsive Behavior** | How it adapts at breakpoints |
+| **Accessibility** | ARIA attributes, keyboard interactions |
+
+**Components needed for this app:**
+
+| Component | Purpose |
+|-----------|---------|
+| **BookCard** | Display book in library grid/list |
+| **BookCover** | Thumbnail with fallback for missing covers |
+| **ARBadge** | Display AR level/points with fetch status indicator |
+| **ScanButton** | Primary CTA for barcode scanner |
+| **ManualEntryForm** | Fallback ISBN entry |
+| **ProgressForm** | Mark as read, enter quiz score |
+| **SearchBar** | Filter library |
+| **EmptyState** | No books yet illustration |
+| **LoadingState** | Skeleton loaders |
+| **Toast** | Success/error notifications |
+| **ConfirmDialog** | Delete confirmation |
+| **OfflineIndicator** | Network status |
+
+#### Section 4: Screen Specifications
+
+For each screen in the app:
+
+| Screen | Key Elements |
+|--------|--------------|
+| **Scan Screen** | Camera viewport, barcode overlay, manual entry toggle, loading states, permission denied state |
+| **Book Detail Screen** | Cover image (sized), title/author/ISBN, AR data badges (fetched vs manual indicator), edit form, progress timeline |
+| **Library Screen** | Grid/list toggle, search bar, filter chips (by child, by status), sort options, empty state |
+| **Progress Entry Screen** | Read date picker, quiz score input (0-100), date picker, notes field |
+| **Export Screen** | Format selection, preview, share button |
+
+**Document for each screen:**
+- All states (default, loading, empty, error)
+- Responsive layout at mobile/tablet/desktop
+- User flow interactions
+- Edge cases
+
+#### Section 5: Responsive Behavior
+
+| Breakpoint | Width | Layout Changes |
+|------------|-------|-----------------|
+| Mobile (default) | < 640px | Single column, bottom navigation |
+| Tablet | 640px - 1024px | Two columns for library |
+| Desktop | > 1024px | Full grid, side navigation |
+
+Document what components change at each breakpoint.
+
+#### Section 6: Accessibility Requirements
+
+| Requirement | Standard |
+|-------------|----------|
+| Color contrast | WCAG 2.1 AA (4.5:1 for text) |
+| Focus indicators | Visible focus rings on all interactive elements |
+| Touch targets | Minimum 44x44px on mobile |
+| Screen reader | Proper ARIA labels, semantic HTML |
+| Keyboard navigation | Full keyboard access |
+| Reduced motion | Respect prefers-reduced-motion |
+
+#### Section 7: Interaction Specifications
+
+- Page transitions (recommend: fade or slide)
+- Button press feedback
+- Toggle animations
+- Loading states (skeleton vs spinner)
+- Error animations
+- Empty state illustrations
+
+---
+
+## 4. Recommended Deliverables
+
+### From Designer → Developer
+
+1. **Figma file** with all screens and components
+   - Dev Mode enabled
+   - All variants and states included
+   - Design tokens in shared library
+
+2. **Design tokens** exported as:
+   - JSON (for code integration)
+   - Or linked via Figma variables
+
+3. **Component inventory** — list of all components created with variants
+
+4. **Interactive prototype** — for user flow validation
+
+### Documentation Deliverable
+
+Structured spec document (Notion, Confluence, or Google Docs) containing:
+
+- Design system specifications (colors, typography, spacing)
+- Component API (props, variants, states)
+- Screen-by-screen requirements
+- Accessibility checklist (completed)
+- Responsive behavior documentation
+
+### Meeting Deliverable
+
+- **30-minute walkthrough** of most complex screens (likely scan screen + library)
+- Q&A to clarify edge cases
+- Confirmed acceptance criteria
+
+---
+
+## 5. Integration with Existing SvelteKit App
+
+The existing AeAre Books app is built with:
+- SvelteKit (Svelte 5)
+- Tailwind CSS
+- Dexie.js (IndexedDB)
+- Quagga2 (barcode scanning)
+
+**How component library integrates:**
+
+| Existing Tech | Integration Point |
+|--------------|-------------------|
+| SvelteKit | Skeleton/Konsta both support SvelteKit SSR |
+| Tailwind CSS | Both libraries built on Tailwind — extend existing config |
+| Existing styles | Can coexist — use component library for new screens, keep existing for scan functionality |
+| PWA | Both work with vite-plugin-pwa |
+
+**Migration path:**
+1. Install component library
+2. Configure theme (colors, fonts) to match design spec
+3. Build new screens with components
+4. Keep Quagga2 scanner — wrap in component if needed
+5. Test responsive behavior
+
+---
+
+## 6. Dependencies Summary
+
+### Required for Design Spec Creation
+| Tool | Purpose |
+|------|---------|
+| Figma Professional | Design + Dev Mode handoff |
+| (Optional) Notion/Confluence | Design spec documentation |
+
+### Required for Implementation
+| Library | Version | Purpose |
+|---------|---------|---------|
+| **Skeleton** | Latest | Design system + components |
+| **Tailwind CSS** | v4 | Styling foundation (already in project) |
+| **@skeletonlabs/skeleton-themes** | Latest | Theme support |
+
+### Alternative Stack (Mobile-First)
+| Library | Version | Purpose |
+|---------|---------|---------|
+| **Konsta UI** | v5+ | Mobile-optimized components |
+| **Tailwind CSS** | v4 | Styling foundation |
+
+---
+
+## 7. Implementation Path
+
+### Phase 1: Design System Setup (Designer)
+1. Define color palette with semantic mapping
+2. Set typography (font family selection, type scale)
+3. Create spacing/sizing scales
+4. Design base components (buttons, inputs, cards)
+5. Export Figma UI Kit to developer
+
+### Phase 2: Screen Designs (Designer)
+1. Scan screen — camera viewport, barcode overlay, manual entry
+2. Book detail screen — metadata display, AR badges, edit form
+3. Library screen — grid/list, search, filters, empty state
+4. Progress screen — read date, quiz score, timeline
+5. Export/settings screens
+
+### Phase 3: Spec Documentation (Designer/Developer collaboration)
+1. Document component props and variants
+2. Specify responsive behavior
+3. Write accessibility requirements
+4. Create component inventory
+5. Define acceptance criteria
+
+### Phase 4: Implementation (Developer)
+1. Install Skeleton or chosen component library
+2. Map design tokens to component theme configuration
+3. Build screens using components
+4. Test responsive behavior across breakpoints
+5. Verify accessibility compliance
+
+---
 
 ## Sources
 
-- [SvelteKit Documentation](https://svelte.dev/docs/kit) — Framework docs, routing, adapters
-- [Next.js vs SvelteKit vs Nuxt 2026](https://pkgpulse.com/blog/nextjs-vs-astro-vs-sveltekit-2026) — Framework comparison, MEDIUM confidence
-- [SvelteKit vs Next.js 2026](https://pkgpulse.com/blog/sveltekit-vs-nextjs-2026-full-stack-comparison) — Bundle size analysis, HIGH confidence
-- [Quagga2 GitHub](https://github.com/ericblade/quagga2) — Active maintenance, 1D barcode focus
-- [html5-qrcode vs Quagga2](https://scanbot.io/blog/quagga2-vs-html5-qrcode-scanner/) — Comparison, maintenance status
-- [vite-plugin-pwa](https://vite-pwa.dev/) — PWA configuration
-- [Workbox vs vite-pwa vs next-pwa](https://pkgpulse.com/blog/workbox-vs-vite-pwa-vs-next-pwa-service-workers-pwa-2026) — PWA tooling comparison
-- [Hono vs Express 2026](https://pkgpulse.com/blog/express-vs-hono-2026) — Backend framework comparison
-- [Hono Documentation](https://hono.dev/) — Official docs, TypeScript-first design
-- [Dexie.js Documentation](https://dexie.org/) — IndexedDB wrapper, ORM features
-- [IndexedDB Best Practices](https://web.dev/articles/indexeddb-best-practices-app-state) — Official guidance
-- [Google Sheets API](https://developers.google.com/sheets/api) — Official API documentation
-- [Barcode Detection API](https://developer.mozilla.org/en-US/docs/Web/API/BarcodeDetector) — Native browser API (progressive enhancement)
+- Figma Dev Mode documentation (2026)
+- Skeleton UI official docs (skeleton.dev)
+- Konsta UI Svelte documentation (konstaui.com)
+- Design handoff best practices (IdeaPlan design handoff template)
+- "Zero-ambiguity specs" methodology (Simanta Parida blog)
+- Svelte UI library comparison (UXPin, DEV Community)
 
 ---
-*Stack research for: AeAre Books - Book scanning PWA*
-*Researched: 2026-03-23*
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Design Tool | HIGH | Figma + Dev Mode is industry standard |
+| Component Library | HIGH | Skeleton best for design-handoff bridge |
+| Mobile optimization | MEDIUM | May need Konsta UI supplement for camera UX |
+| Spec format | HIGH | Zero-ambiguity methodology well-established |
+
+## Gaps to Address in Design Spec
+
+- **Barcode scanning UI**: Camera overlay patterns need specific design (not generic component library)
+- **Offline indicator**: Visual design for connectivity status
+- **AR data badges**: Visual distinction between fetched vs. manually entered data
+- **Book cover placeholder**: Fallback design for missing covers
+
+---
+
+*Research for: AeAre Books - Design Spec Creation*
+*Researched: 2026-03-24*
+*Mode: Stack research for design handoff tools*

@@ -1,205 +1,171 @@
 # Project Research Summary
 
-**Project:** AeAre Books - Book Scanning PWA
-**Domain:** Book scanning/library tracking PWA with AR reading progress
-**Researched:** 2026-03-23
-**Confidence:** HIGH (Stack), MEDIUM-HIGH (Architecture), MEDIUM (Features, Pitfalls)
+**Project:** AeAre Books — Mobile PWA Book Tracking App
+**Domain:** Book scanning/library tracking PWA for AR reading progress
+**Researched:** 2026-03-24
+**Confidence:** HIGH
 
 ## Executive Summary
 
-AeAre is a family-focused PWA for tracking children's Accelerated Reader (AR) reading progress. The core workflow is: scan a book barcode → auto-populate book details (Google Books API) → fetch AR levels/points (scraped from arbookfind.com via backend proxy) → track quiz scores and reading progress → export to Google Sheets for school sharing.
-
-Experts build this type of app using a local-first architecture with IndexedDB as the source of truth, syncing to cloud services in the background. For this specific use case, the recommended stack is **SvelteKit** for the frontend (smallest bundle, best PWA support), **Hono** for the backend proxy (multi-runtime, TypeScript-first), **Quagga2** for barcode scanning (actively maintained, excellent 1D support), and **Dexie.js** for IndexedDB (handles Safari quirks). Google APIs handle book metadata and Sheets export.
-
-The key risks are: (1) iOS Safari barcode scanning unreliability, (2) AR BookFinder scrape breakage when Renaissance changes their site, (3) offline writes disappearing due to missing sync queue, and (4) Google Sheets rate limiting. Mitigate all of these through graceful degradation (manual fallbacks always available), proper sync queue implementation, and batch writes with rate limiting.
+AeAre Books is a mobile-first PWA that enables parents to scan books using their phone cameras, automatically fetch metadata from Google Books, lookup AR (Accelerated Reader) levels, and track reading progress. Research strongly recommends using Figma with Dev Mode as the design tool paired with Skeleton UI component library for SvelteKit to achieve professional design handoff. The core architecture follows an offline-first pattern with IndexedDB as the source of truth, Service Worker for PWA capabilities, and a BFF proxy for AR scraping. The primary risks are iOS barcode scanner reliability, Google Books API missing some books, AR scrape breakage when Renaissance changes their site, and IndexedDB corruption on Safari. All core functionality exists — this research focuses on creating a professional design spec to hand off to a designer for v1.1 UI implementation.
 
 ## Key Findings
 
 ### Recommended Stack
 
-**Core technologies:**
-- **SvelteKit 2.x (Svelte 5):** Frontend framework — smallest bundle (~15-30KB vs React's ~100-200KB), compiles to vanilla JS, excellent PWA support via vite-plugin-pwa, perfect for mobile-first PWAs
-- **Hono 4.x:** Backend API server — ~14KB, TypeScript-first, multi-runtime (Node/Bun/Deno/Edge), fastest Node.js framework, ideal for AR scraping endpoint
-- **vite-plugin-pwa 0.22.x:** PWA service worker — ~2M weekly downloads, zero-config Workbox integration, handles manifest and update prompts
-- **Quagga2 2.x:** Barcode scanning — maintained fork of QuaggaJS, excellent 1D barcode support (ISBN, UPC-A), uses getUserMedia, actively maintained over html5-qrcode
-- **Dexie.js 4.x:** IndexedDB wrapper — ~3M weekly downloads, ORM-like API, handles Safari IndexedDB quirks gracefully
-- **googleapis + @google-cloud/local-auth:** Google Sheets API integration
-- **cheerio 1.0.x:** HTML parsing for AR scrape results
+**Design Tool:** Figma with Dev Mode — Industry standard for design-to-developer handoff, provides exact measurements, CSS export, and component property inspection.
 
-**Note:** Architecture research mentioned ZXing but stack research recommends Quagga2 for 1D barcodes. Use Quagga2 as primary (better maintained for ISBN), with native BarcodeDetector as progressive enhancement on Chrome Android.
+**Component Library:** Skeleton (primary) — Full design system with official Figma UI Kit included, built specifically for Svelte/SvelteKit, Tailwind-based theming, comprehensive component coverage. Konsta UI is a mobile-focus alternative better suited for camera-based UX patterns.
+
+**Target Platform:** SvelteKit mobile-first PWA with offline capability
+
+**Core technologies:**
+- **Figma Dev Mode:** Design handoff tool with inspect panel, code snippets, component properties
+- **Skeleton UI:** Svelte component library with Figma UI Kit bridge
+- **Tailwind CSS v4:** Styling foundation (already in project)
+- **Dexie.js:** IndexedDB wrapper handling Safari quirks
+- **@zxing/library:** Barcode scanning (primary on iOS, not native BarcodeDetector)
 
 ### Expected Features
 
 **Must have (table stakes):**
-- Barcode/ISBN scanning — core use case, must work quickly and reliably
-- Auto-populated book metadata — Google Books API, users won't manually type titles
-- View library/collection — basic inventory management
-- Export/share library data — parents need to share with schools
-- Book details display — verify correct book was scanned
+- Barcode scanning with camera — Core user flow
+- Google Books metadata fetch — Auto-populate book details
+- AR level/points lookup — Via arbookfind.com scraping
+- Library view (grid/list) — Display scanned books
+- Mark as read with quiz score — Progress tracking
+- Offline-first operation — Works without network
 
-**Should have (competitive differentiators):**
-- AR level/points auto-fetch — parents' core pain point, avoids manual arbookfind.com lookup
-- Mark book as read with date — basic progress tracking
-- Quiz score entry with date — record AR quiz results
-- Google Sheets export — share data with schools (no competitor offers this)
+**Should have (competitive):**
+- PWA installability — Home screen installation
+- Custom offline indicator — Visual feedback when offline
+- Sync status indicator — "Saved locally" → "Synced" progression
+- Search/filter library — Find books quickly
 
-**Defer to v2+:**
-- AR book recommendations — complex ML/recommendation system, hard to do well
-- Reading streaks/gamification badges — engagement features after PMF established
-- Batch scanning mode — scan multiple books quickly
-- School direct integration — Renaissance doesn't offer public API
+**Defer (v2+):**
+- Multiple child profiles — Single user for v1
+- Cloud backup beyond Google Sheets — Manual export sufficient
+- Advanced analytics — Basic stats only
 
 ### Architecture Approach
 
-The recommended architecture is **local-first with cloud sync**. IndexedDB (via Dexie.js) is the source of truth — all reads come from local DB, syncing happens in background. This enables offline operation which is critical for parents scanning books at home.
+The architecture follows an offline-first PWA pattern with IndexedDB as the source of truth. All reads come from local IndexedDB; sync to Google Sheets happens in background via a sync queue. Service Worker with Workbox handles caching with Network First for HTML and Cache First for static assets.
 
 **Major components:**
-1. **PWA Shell (SvelteKit + vite-plugin-pwa):** App shell with service worker for offline caching and background sync
-2. **Scanner UI + BarcodeService (Quagga2):** Camera access, barcode detection, ISBN extraction
-3. **IndexedDB (Dexie.js):** Local data persistence, sync queue for pending writes
-4. **BFF Proxy (Hono):** Server-side scraping of arbookfind.com (CORS), Google Sheets API proxy
-5. **API Services:** Google Books (book metadata), AR lookup (BFF proxy), Google Sheets (sync)
-
-Key patterns: App Shell Architecture (precached minimal assets), Optimistic UI (immediate local update, background sync), BFF Proxy (AR scrape + Sheets proxy).
+1. **Scanner UI** — Camera access, barcode detection via @zxing/library, manual ISBN entry fallback
+2. **Library UI** — Book grid/list with search/filter, powered by IndexedDB
+3. **State Management** — Zustand for connectivity/UI state, IndexedDB for persistence
+4. **BFF Proxy** — Edge function for AR scraping (hides secrets, avoids CORS)
+5. **SyncService** — Background sync queue with retry logic
 
 ### Critical Pitfalls
 
-1. **iOS Barcode Scanner Unreliability** — iOS Safari has inconsistent BarcodeDetector support and camera issues. Use Quagga2 as primary scanner, configure iOS-friendly camera constraints, always provide manual ISBN entry fallback.
-
-2. **AR BookFinder Scrape Breakage** — Renaissance changes site structure frequently. Design for failure: AR data is always optional, never block book adding. Cache successful lookups, implement manual entry fallback.
-
-3. **Offline Writes Disappearing** — User adds books offline but data never syncs. Implement outbound sync queue pattern: on any write, add to queue. On reconnect, process queue with retry.
-
-4. **IndexedDB Safari Corruption** — Safari has critical IndexedDB bugs (WAL file grows unbounded, silent write failures). Use Dexie.js wrapper, wrap writes in transactions, implement storage quota monitoring.
-
-5. **PWA Service Worker Caching Stale HTML** — Users see old content after deploy. Never use Cache First for HTML — use Network First with cache fallback. Implement update available prompt.
-
-6. **Google Sheets Rate Limit Hits** — Individual row writes hit 100 req/100s limit. Always use batch writes (up to 500 operations), implement queue with rate limiting, exponential backoff on 429.
+1. **iOS Barcode Scanner Unreliability** — Use @zxing/library (not native BarcodeDetector), configure iOS-friendly camera constraints, always provide manual ISBN entry fallback
+2. **Google Books API Missing Books** — Try both ISBN-10 and ISBN-13 formats, include realistic User-Agent, fallback to Open Library API
+3. **AR Scrape Breakage** — Design for failure (AR is optional), implement graceful degradation, cache successful lookups, show "AR unavailable" with manual entry option
+4. **IndexedDB Safari Corruption** — Use Dexie.js wrapper (handles Safari quirks), wrap writes in transactions, implement storage quota monitoring
+5. **PWA Stale HTML Caching** — Never use Cache First for HTML, use Network First with cache fallback, show "Update available" prompt
+6. **Offline Writes Disappear** — Implement outbound queue pattern, use Background Sync API, show sync status indicator
+7. **Design Spec Missing PWA Install Requirements** — Specify icons (192x192, 512x512, maskable), theme color, display mode, start URL
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+Based on research, this is not a new build — the core functionality exists. The roadmap is for creating a professional design spec (v1.1) to hand off to a designer, then implementing the refined UI.
 
-### Phase 1: Foundation & Core Flow
-**Rationale:** The most important feature is scan → add book. Validate this first before adding complexity. Foundation enables everything else.
+### Phase 1: Design System Foundation
+**Rationale:** Establishes the foundation before any screen design — colors, typography, spacing, icons all need to be defined first to ensure consistency across the app.
 
-**Delivers:**
-- PWA shell with service worker (vite-plugin-pwa)
-- Barcode scanning with Quagga2 (iOS-friendly constraints)
-- Manual book entry form (fallback)
-- IndexedDB persistence via Dexie.js (books, syncQueue stores)
-- Library view (list/grid)
+**Delivers:** Design tokens (color palette, typography, spacing scale, shadows), icon set selection, Figma variables setup
 
-**Avoids pitfalls:**
-- iOS scanner unreliability (proper camera constraints)
-- IndexedDB Safari corruption (Dexie.js wrapper)
-- PWA stale HTML caching (Network First for pages)
-- Offline writes disappearing (sync queue implementation)
+**Addresses:** STACK.md design tool setup, FEATURES.md design system foundation
 
----
+**Avoids:** Designer-developer language mismatch — use CSS property names in specs
 
-### Phase 2: API Integrations
-**Rationale:** Depends on scanner working. Adds value without changing data flow. AR lookup requires BFF proxy which adds infrastructure.
+### Phase 2: Component Specifications
+**Rationale:** Components are reusable across all screens — build these first so screen designs can reference them.
 
-**Delivers:**
-- Google Books API integration (book metadata, covers)
-- BFF proxy (Hono) for AR scrape endpoint
-- AR level/points auto-fetch with graceful degradation
-- Manual AR entry fallback
-- Open Library API as backup for missing books
+**Delivers:** All reusable components with states documented (buttons, inputs, cards, modals, toasts, badges, loading states, empty states)
 
-**Avoids pitfalls:**
-- Google Books missing books (ISBN-10/13 fallback, realistic User-Agent)
-- AR scrape breakage (design for failure, cache successful lookups)
+**Addresses:** FEATURES.md component specifications, PITFALLS.md missing component states pitfall
 
----
+**Avoids:** Implementing only default states — document hover, focus, disabled, loading, error states
 
-### Phase 3: Progress Tracking
-**Rationale:** Depends on book storage working. Adds tracking value to existing books.
+### Phase 3: Screen Designs
+**Rationale:** With design system and components ready, create full mockups for each screen.
 
-**Delivers:**
-- Mark book as read with date
-- Quiz score entry with date
-- Reading history view
-- Basic progress display/stats
+**Delivers:** Library view, scan flow, book detail, progress entry, settings screens with all states (default, loading, empty, error)
 
----
+**Addresses:** FEATURES.md screen-level design requirements
 
-### Phase 4: Cloud Sync & Export
-**Rationale:** Final piece. Requires all data structures stable. Simplest to add last.
+**Avoids:** Undefined responsive behavior — specify mobile-first breakpoints, safe areas, 44x44px touch targets
 
-**Delivers:**
-- Google Sheets API integration via BFF
-- Background sync with rate limiting
-- Batch writes (up to 500 operations)
-- Sync status indicator (pending/synced/error)
-- Export functionality
+### Phase 4: PWA & Accessibility Refinement
+**Rationale:** PWA installability and accessibility must be designed explicitly — these are often afterthoughts.
 
-**Avoids pitfalls:**
-- Google Sheets rate limits (batch writes, exponential backoff)
+**Delivers:** PWA manifest specifications (icons, theme color, display mode), accessibility checklist (WCAG AA), offline state designs
 
----
+**Addresses:** STACK.md PWA integration, PITFALLS.md PWA stale HTML and offline state pitfalls
+
+**Avoids:** Missing PWA install requirements — include icon specs, install prompt design
+
+### Phase 5: Design Handoff & Implementation
+**Rationale:** The final phase — professional handoff to developers with all specifications documented.
+
+**Delivers:** Design walkthrough meeting, component inventory, responsive specs, animation specifications, review checkpoints
+
+**Addresses:** ARCHITECTURE.md design spec structure
+
+**Avoids:** Handoff without shared understanding — schedule walkthrough, establish Q&A channel
 
 ### Phase Ordering Rationale
 
-1. **Foundation first:** Core flow (scan → add book) must work. All other features depend on books being stored.
-2. **APIs second:** Google Books and AR lookup add value but don't change data flow. AR needs BFF proxy.
-3. **Progress third:** Tracking features enhance existing books, don't require new infrastructure.
-4. **Sync last:** All data structures stable, can design Sheets schema properly.
-
-**Grouping rationale:** Features within phases share dependencies and can be tested together. Each phase produces a testable increment.
+- Design system first because all downstream work depends on consistent tokens
+- Components before screens because screens reuse components
+- PWA/Accessibility in middle because they're easily overlooked
+- Handoff last because it requires all preceding work complete
 
 ### Research Flags
 
-**Needs deeper research during planning:**
-- **Phase 2 (AR Lookup):** arbookfind.com scraping approach — need to verify current HTML structure and anti-bot measures. May need to research headless browser vs. simple fetch.
-- **Phase 4 (Google Sheets):** Auth flow for family use — how to share access without complex OAuth for non-technical parents.
+Phases likely needing deeper research during planning:
+- **Phase 3 (Screen Designs):** Camera UI overlay patterns need specific design not available in component library — may need custom design exploration
 
-**Standard patterns (skip detailed research):**
-- **Phase 1 (PWA Shell):** Well-documented via vite-plugin-pwa docs, MDN PWA guides
-- **Phase 3 (Progress Tracking):** Simple CRUD with date fields, standard patterns
-- **Phase 4 (Batch Writes):** Google Sheets API batch documentation is clear and stable
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (Design System):** Well-established design token methodology
+- **Phase 2 (Components):** Standard component state patterns from Skeleton
+- **Phase 4 (PWA/A11y):** WCAG and PWA installability well-documented
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Verified with official docs, npm stats, recent 2026 comparisons |
-| Features | MEDIUM | Competitor analysis, AR domain knowledge; needs validation with actual users |
-| Architecture | HIGH | Based on MDN PWA best practices, well-documented patterns (App Shell, Local-First) |
-| Pitfalls | MEDIUM-HIGH | Based on community reports, Stack Overflow, GitHub issues; some are iOS/Safari-specific requiring real device testing |
+| Stack | HIGH | Figma Dev Mode + Skeleton is established industry pattern |
+| Features | HIGH | All functionality exists — design spec is about UI documentation |
+| Architecture | HIGH | Offline-first PWA pattern well-established with extensive sources |
+| Pitfalls | MEDIUM-HIGH | Some AR scrape risks are inherent to scraping, hard to fully predict |
 
-**Overall confidence:** MEDIUM-HIGH
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **AR scrape implementation:** Research assumed BFF proxy with cheerio parsing, but current anti-bot measures may require headless browser (Puppeteer/Playwright). Verify during Phase 2 planning.
-- **Multi-child profiles:** Not in MVP but mentioned in features. Define child data model early to avoid schema changes later.
-- **User testing on iOS:** Several pitfalls are iOS-specific. Need real device testing before Phase 1 is considered complete.
+- **AR scrape resilience:** Renaissance changes site structure — need monitoring system in place to detect when scraping breaks
+- **Camera UI custom design:** Barcode scanning overlay patterns aren't available in component libraries — may need design exploration
+- **Real device testing:** All research is documentation-based — actual iOS testing needed for scanner reliability
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [SvelteKit Documentation](https://svelte.dev/docs/kit) — Framework docs, routing, adapters
-- [Hono Documentation](https://hono.dev/) — Official docs, TypeScript-first design
-- [Dexie.js Documentation](https://dexie.org/) — IndexedDB wrapper, ORM features
-- [MDN PWA Best Practices](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Best_practices) — HIGH
-- [vite-plugin-pwa](https://vite-pwa.dev/) — PWA configuration
-- [Quagga2 GitHub](https://github.com/ericblade/quagga2) — Active maintenance, 1D barcode focus
-- [Google Sheets API Documentation](https://developers.google.com/workspace/sheets/api/guides/libraries) — HIGH
+- Figma Dev Mode documentation (2026)
+- Skeleton UI official docs (skeleton.dev)
+- Dexie.js IndexedDB wrapper documentation
+- WCAG 2.1 Accessibility Guidelines
 
 ### Secondary (MEDIUM confidence)
-- [Next.js vs SvelteKit vs Nuxt 2026](https://pkgpulse.com/blog/nextjs-vs-astro-vs-sveltekit-2026) — Framework comparison
-- [SvelteKit vs Next.js 2026](https://pkgpulse.com/blog/sveltekit-vs-nextjs-2026-full-stack-comparison) — Bundle size analysis
-- [Hono vs Express 2026](https://pkgpulse.com/blog/express-vs-hono-2026) — Backend framework comparison
-- [PWA Offline-First Architecture Guide](https://needlecode.com/blog/pwa/complete-guide-to-offline-web-apps.html) — Architecture patterns
-- [Dexie.js PWA Patterns](https://www.wellally.tech/blog/build-offline-pwa-react-dexie-workbox) — PWA patterns
-- [Competitor analysis: AR Book Assistant, BookJar, Beanstack](https://apps.apple.com, https://play.google.com) — Feature landscape
+- PITFALLS.md iOS scanner issues — Stack Overflow and barcode detection guides
+- ARCHITECTURE.md PWA patterns — MDN, Workbox documentation
 
 ### Tertiary (LOW confidence)
-- [iOS Barcode Scanner Issues](https://stackoverflow.com/questions/79685913/inaccurate-unreliable-barcode-scanning-on-ios-web-app) — Anecdotal reports, needs real device testing
-- [Google Books API Missing ISBNs](https://stackoverflow.com/questions/79574770/issues-retrieving-books-by-isbn-using-google-books-api) — Workarounds need validation
+- AR scrape anti-detection — Modern bot detection is evolving rapidly; needs monitoring
 
 ---
-*Research completed: 2026-03-23*
+*Research completed: 2026-03-24*
 *Ready for roadmap: yes*

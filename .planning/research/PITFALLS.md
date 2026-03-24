@@ -353,7 +353,266 @@ App stops working when writing to Google Sheets. User gets errors, data not save
 - [Google Sheets API Rate Limits](https://thecodersblog.com/fix-google-sheets-api-rate-limiting-permission-errors-2025/) — Quota management strategies
 - [Dexie.js - IndexedDB wrapper](https://dexie.org/) — Recommended IndexedDB abstraction
 - [Offline-First PWA Architecture](https://wild.codes/candidate-toolkit-question/how-would-you-architect-a-pwa-for-offline-first-and-real-time-sync) — Sync patterns
+---
+
+# Design Spec Creation Pitfalls (Designer Handoff)
+
+**Domain:** Mobile PWA Design Spec Creation & Designer Handoff
+**Researched:** 2026-03-24
+**Confidence:** HIGH
+
+## Critical Pitfalls for Design Specs
+
+### Pitfall 1: Specifying Without PWA Install Requirements
+
+**What goes wrong:**
+The designed PWA fails to meet installability criteria, users cannot add the app to their home screen, or the installed app lacks proper branding (missing icons, wrong display mode, generic splash screen).
+
+**Why it happens:**
+Designers focus on screen layouts without understanding PWA installability requirements. Web App Manifest fields (icons, theme_color, display mode, start_url) require specific visual assets and configuration that designers rarely include in specs.
+
+**How to avoid:**
+Include a PWA Install Requirements section in the design spec:
+- Icon specifications: 192x192 and 512x512 PNG, plus maskable variants
+- Theme color and background color for splash screen
+- Display mode (standalone, fullscreen, minimal-ui)
+- Start URL and scope
+- Custom install prompt UI (deferring browser defaults)
+
+**Warning signs:**
+- No icon specifications in the design spec
+- No discussion of "add to home screen" experience
+- Designer doesn't mention manifest or service worker
+
+**Phase to address:**
+v1.1 Design Spec Creation
 
 ---
+
+### Pitfall 2: Missing Component States
+
+**What goes wrong:**
+Developers implement only default states, missing hover, focus, disabled, loading, and error states. The implemented UI feels incomplete and appears broken in edge cases.
+
+**Why it happens:**
+Designers create beautiful default states in Figma but assume other states are "obvious" or can be derived intuitively. Developers receive no guidance on these states and prioritize shipping the happy path.
+
+**How to avoid:**
+Document every interactive component's complete state matrix:
+- Default, hover, focus, active, disabled states for buttons
+- Empty, loading, error, and populated states for data components
+- Network states: online, offline, slow connection, timeout
+
+**Warning signs:**
+- Spec shows only one version of each component
+- No discussion of error states or validation feedback
+- No loading/skeleton states specified for async content
+
+**Phase to address:**
+v1.1 Design Spec Creation
+
+---
+
+### Pitfall 3: Undefined Responsive Behavior for Mobile
+
+**What goes wrong:**
+Designs work on design tool viewports but break on actual mobile screens. Elements overlap, text becomes unreadable, touch targets are too small, or horizontal scrolling appears.
+
+**Why it happens:**
+Designers create desktop-first or single-viewport designs without explicitly specifying breakpoint behavior. Mobile PWA layouts require specific handling of safe areas, notch/Dynamic Island areas, and touch target sizing.
+
+**How to avoid:**
+Specify explicit responsive behavior:
+- Mobile-first viewport strategy with defined breakpoints
+- Safe area insets for notched devices (env() CSS)
+- Minimum touch target size: 44x44 CSS pixels
+- Content padding for various screen widths
+- Bottom navigation behavior (fixed vs. scroll-aware)
+
+**Warning signs:**
+- Only one viewport size shown in designs
+- No mention of mobile-specific gestures or behaviors
+- No specification for landscape orientation (if supported)
+
+**Phase to address:**
+v1.1 Design Spec Creation
+
+---
+
+### Pitfall 4: No Offline State Design
+
+**What goes wrong:**
+The PWA lacks offline fallback designs. Users see generic browser error pages when offline, or the app crashes instead of gracefully degrading.
+
+**Why it happens:**
+Designers assume always-online connectivity and don't design for offline-first PWA behavior. Offline is treated as an edge case rather than a core design condition.
+
+**How to avoid:**
+Design explicit offline states for every screen:
+- Offline indicator (banner or toast)
+- Offline fallback page for navigation attempts
+- Cached content indication (subtle "available offline" badges)
+- Pending sync indicator for offline actions
+
+**Warning signs:**
+- No discussion of offline behavior in requirements
+- No offline page or state designs included
+- App flow assumes network availability
+
+**Phase to address:**
+v1.1 Design Spec Creation
+
+---
+
+### Pitfall 5: Designer-Developer Language Mismatch
+
+**What goes wrong:**
+Developers implement designs incorrectly because specs use design-tool terminology without translation. Measurements get misinterpreted, spacing is applied inconsistently, and design intent is lost.
+
+**Why it happens:**
+Designers use Figma/Sketch terminology (padding vs. margin vs. gap) without clear CSS translation. Developers guess at implementation, leading to subtle but noticeable differences from intended design.
+
+**How to avoid:**
+Provide developer-ready specifications:
+- Use CSS property names (margin, padding, gap, border-radius)
+- Specify exact pixel values for all measurements
+- Include code snippets for complex behaviors
+- Provide a glossary of design terms with CSS equivalents
+
+**Warning signs:**
+- Spec uses terms like "whitespace" without specifying where
+- Measurements are described qualitatively ("a bit more space")
+- No CSS-idiomatic specification provided
+
+**Phase to address:**
+v1.1 Design Spec Creation
+
+---
+
+### Pitfall 6: Ignoring Animation Implementation Complexity
+
+**What goes wrong:**
+Animations specified as "slide in" or "fade" get implemented with different easing, duration, or trigger conditions. Micro-interactions feel off, and transitions create visual glitches.
+
+**Why it happens:**
+Designers describe animations qualitatively without specifying timing functions, durations, curve types, or trigger conditions. Developers implement "best guess" animations that differ from intent.
+
+**How to avoid:**
+Document animations with technical specifications:
+- Animation type (ease-in, ease-out, ease-in-out, cubic-bezier)
+- Duration in milliseconds
+- Trigger conditions (on mount, on hover, on click, on appear)
+- Property being animated (transform, opacity, height)
+- Entrance vs. exit variations
+
+**Warning signs:**
+- Animations described with onomatopoeia ("whoosh", "pop")
+- No duration or easing specified
+- Complex multi-step animations without breakdown
+
+**Phase to address:**
+v1.1 Design Spec Creation
+
+---
+
+### Pitfall 7: Missing Edge Case Content Design
+
+**What goes wrong:**
+Designs use ideal content (short titles, populated fields, success states) but real data breaks layouts. Long book titles overflow cards, empty libraries show no guidance, error messages are missing.
+
+**Why it happens:**
+Designers use Lorem ipsum or carefully crafted placeholder content that doesn't represent real-world extremes. Content variation isn't tested against design boundaries.
+
+**How to avoid:**
+Include content variation examples:
+- Minimum, typical, and maximum content lengths
+- Empty state designs for all data-dependent screens
+- Error state designs for all user actions
+- Loading skeleton designs for async content
+
+**Warning signs:**
+- All placeholder content is same length
+- No empty state designs included
+- No long-content overflow handling specified
+
+**Phase to address:**
+v1.1 Design Spec Creation
+
+---
+
+### Pitfall 8: Handoff Without Shared Understanding
+
+**What goes wrong:**
+Designer hands off files and walks away. Developers have questions but don't know where to ask. Issues accumulate, decisions get made without design input, and final product diverges from intent.
+
+**Why it happens:**
+Handoff is treated as a one-time transfer rather than a process. No established channel for questions exists, and designers don't proactively schedule review checkpoints.
+
+**How to avoid:**
+Establish handoff process:
+- Schedule design walkthrough meeting before implementation starts
+- Create dedicated Slack/channel for design questions
+- Plan design review checkpoints at implementation milestones
+- Provide async Loom/video explanations for complex interactions
+
+**Warning signs:**
+- No handoff meeting scheduled
+- Designer unavailable for questions during implementation
+- No agreed-upon process for design clarifications
+
+**Phase to address:**
+v1.1 Design Spec Creation
+
+---
+
+## Design Spec Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Barcode Scanner UI | Spec doesn't address camera permission flow | Design permission request, denied state, and fallback |
+| Google Books API | No loading or error states for API failures | Design spinner, timeout, error, and retry states |
+| AR BookFind Scraping | No indication that scrape is in progress | Design loading state with progress indication |
+| Google Sheets Sync | No offline queue or sync status | Design pending sync indicator and conflict UI |
+| PWA Installation | Rely on browser default prompt only | Design custom install prompt with context |
+
+---
+
+## Design Spec "Looks Done But Isn't" Checklist
+
+- [ ] **PWA Install:** Icons specified at required sizes (192, 512, maskable)? Display mode specified? Theme colors defined?
+- [ ] **Component States:** All interactive elements have hover, focus, disabled states? Loading states for all async content?
+- [ ] **Mobile Responsive:** Touch targets minimum 44px? Safe areas handled? Bottom nav doesn't overlap content?
+- [ ] **Offline Design:** Offline indicator? Cached content marked? Fallback for failed requests?
+- [ ] **Error States:** API failure UI? Validation errors? Empty states for all lists?
+- [ ] **Content Extremes:** Long title handling? Maximum text lengths specified? Overflow behavior designed?
+- [ ] **Animation Specs:** Durations? Easing curves? Trigger conditions?
+- [ ] **Handoff Process:** Walkthrough scheduled? Q&A channel established? Review checkpoints planned?
+
+---
+
+## Design Spec Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Missing component states | MEDIUM | Implement during development, requires designer review |
+| Undefined responsive behavior | HIGH | Test on real devices, iterate on layouts, may require design changes |
+| No offline design | HIGH | Add offline states after core is built, requires new designs |
+| Wrong icon sizes | LOW | Generate correct sizes, update manifest |
+| Handoff misunderstandings | MEDIUM | Schedule clarification meetings, document decisions |
+
+---
+
+## Design Spec Sources
+
+- LogRocket Blog: "Why most design specs fail developers" (2026-01)
+- Web Designer Depot: "Design Handoff Pitfalls" (2025-02)
+- Website Design Thinking: "Common Communication Problems Between Designers and Developers" (2026-01)
+- Nielsen Norman Group: "5 Common Mistakes When Creating Design Specs" (2025-05)
+- Digital Applied: "Progressive Web Apps 2026: Complete Development Guide" (2026-01)
+- MDN: "Best Practices for PWAs" (2025-06)
+- MoldStud: "Common Mistakes to Avoid in PWA User Experience Design" (2025-05)
+
+---
+
 *Pitfalls research for: Book scanning/library tracking PWA*
-*Researched: 2026-03-23*
+*Researched: 2026-03-23 (core project) / 2026-03-24 (design spec creation)*

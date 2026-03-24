@@ -1,165 +1,145 @@
-# Feature Research
+# Design Specification Research
 
-**Domain:** Book scanning/library tracking PWA with AR reading progress
-**Researched:** 2026-03-23
-**Confidence:** MEDIUM
+**Domain:** Mobile PWA Book Tracking App Design Specification
+**Researched:** 2026-03-24
+**Confidence:** HIGH
 
-## Feature Landscape
+## Purpose
 
-### Table Stakes (Users Expect These)
+This document identifies design specification categories needed for professional UI implementation of AeAre Books PWA. All core functionality is already built; this research focuses on what the designer needs to document for implementation.
 
-Features users assume exist. Missing these = product feels broken or incomplete.
+---
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Barcode/ISBN scanning | Core use case — must work quickly and reliably | MEDIUM | Requires camera permission, offline fallback needed |
-| Auto-populated book metadata | Users won't manually type titles/authors | LOW | Google Books API is reliable and free |
-| View library/collection | Basic inventory management | LOW | List and grid views |
-| Export/share library data | Parents need to share with schools/teachers | LOW | Google Sheets integration already planned |
-| Book details display | Verify correct book was scanned | LOW | Title, author, cover, ISBN |
+## Design Spec Categories
 
-### Differentiators (Competitive Advantage)
+### 1. Design System Foundation
 
-Features that set the product apart. Not required, but valuable for this specific niche.
+Core visual identity ensuring consistency across the app.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| AR level/points auto-fetch | Parents' core pain point — avoiding manual lookup on arbookfind.com | MEDIUM | Fragile scrape, requires graceful degradation |
-| AR BookFinder search | Find books by AR level/points before reading | MEDIUM | Enhances before-you-read workflow |
-| Multi-child profile support | Families with 2+ kids in AR programs | LOW | Separate goals, scores, libraries |
-| Quiz score tracking | Track AR comprehension quiz results | LOW | Manual entry with date |
-| Reading date tracking | Show reading history timeline | LOW | Mark book as read with date |
-| AR goal progress visualization | Gamification — see progress toward goals | MEDIUM | Points earned vs. target |
-| Offline scan queue | Catalog books without connectivity | MEDIUM | PWA offline capability |
-| AR book recommendations | Suggest books at child's reading level | HIGH | Complex to implement well |
+| Design Element | Specification Need | Complexity | Notes |
+|----------------|-------------------|------------|-------|
+| **Color Palette** | Primary, secondary, accent colors with semantic meaning (success, error, warning, info) | LOW | Must work in both light and dark modes; test contrast ratios for accessibility (WCAG AA minimum 4.5:1 for body text) |
+| **Typography** | Font families, sizes, weights, line heights for all text levels (h1-h6, body, caption, button) | LOW | Use relative units (rem) for accessibility; support Dynamic Type scaling on iOS |
+| **Spacing System** | Consistent spacing scale (4pt, 8pt, 12pt, 16pt, 24pt, 32pt, 48pt) | LOW | Follow 8pt grid system for alignment |
+| **Border Radius** | Consistent corner radius for cards, buttons, inputs | LOW | 8-12px typical for mobile; 16px for large cards |
+| **Shadows** | Elevation levels for cards, modals, floating elements | LOW | Subtle shadows improve depth perception on mobile |
+| **Iconography** | Icon set with consistent stroke/fill style | MEDIUM | Icons needed: scan, search, add, delete, edit, export, settings, offline/online status, filter, sort, checkmark, close |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+### 2. UI Component Specifications
 
-Features that seem good but create problems.
+Reusable component definitions with all states and behaviors.
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Real-time sync across devices | "My data should be on all my devices" | Complexity explosion — auth, conflict resolution, storage | Single-device local-first with manual export |
-| Social features/sharing | Goodreads-style reviews, friends | Scope creep, moderation burden, not core value | Keep focus on catalog + AR tracking |
-| School integration (direct) | Teachers want automatic AR sync | Renaissance doesn't offer public API, privacy concerns, school-by-school config | Parents manually record what schools report |
-| Book recommendations engine | "Tell me what to read next" | Hard to do well, needs ML/recommendation system | Basic filtering by AR level instead |
-| In-app AR quizzing | Take quizzes in the app | Requires Renaissance partnership, large quiz database | Keep as out-of-scope; kids quiz at school |
-| Automatic reading time detection | Track reading without manual entry | Privacy concerns, unreliable, requires constant monitoring | Manual "mark as read" with timer suggestion |
+| Component | States Needed | Complexity | Design Notes |
+|-----------|---------------|------------|---------------|
+| **Primary Button** | default, hover, active, disabled, loading | LOW | Min touch target 44x44pt per iOS HIG; include loading spinner state |
+| **Secondary Button** | default, hover, active, disabled | LOW | Outline or ghost style; clear visual hierarchy below primary |
+| **Text Input** | default, focused, error, disabled, with/without helper text | MEDIUM | Clear labels, error messages below field; 48pt minimum height |
+| **Book Card** | default, pressed, selected (for batch ops) | MEDIUM | Cover image, title, author, AR level badge; tap for details |
+| **Modal/Dialog** | standard, confirmation, bottom sheet | HIGH | Centered modals for critical actions; bottom sheets for options on mobile |
+| **Toast/Notification** | success, error, warning, info | LOW | Auto-dismiss after 3-5 seconds; position top or bottom |
+| **Empty State** | no books, no search results, offline | LOW | Friendly illustration + action button |
+| **Loading State** | skeleton screens, spinners | MEDIUM | Skeleton preferred for content loading; spinners for actions |
+| **Search Bar** | default, focused, with/without results | MEDIUM | Real-time filtering; clear button when populated |
+| **Bottom Navigation** | active, inactive, badge indicator | LOW | 5 tabs max; persistent across screens |
+| **AR Level Badge** | fetched (green), manual (gray), not available | LOW | Color-coded for quick visual identification |
+| **Offline Indicator** | online, offline, syncing states | LOW | Already in requirements (PWA-04); needs design refinement |
 
-## Feature Dependencies
+### 3. Screen-Level Design Requirements
 
-```
-[Barcode Scanning]
-       └──requires──> [Book Metadata Lookup]
-                              └──optional──> [AR Data Fetch]
-                                               └──requires──> [AR Scrape Backend]
+Detailed layout and content specifications for each screen.
 
-[Book Details Display] ──enhances──> [Barcode Scanning]
+| Screen | Key Elements | Complexity | Design Dependencies |
+|--------|---------------|------------|---------------------|
+| **Home/Library** | Book grid/list view, search bar, filter/sort, FAB for adding | MEDIUM | Toggle between grid (cover-focused) and list (details-focused); sort by title, author, date added, AR level |
+| **Scan Flow** | Camera view, scan result feedback, manual entry link | HIGH | Full-screen camera with overlay guide; haptic + audio feedback on scan success; graceful fallback to manual ISBN entry |
+| **Book Detail** | Cover image, metadata (title, author, ISBN), AR data, progress timeline, actions (edit, delete) | MEDIUM | Scrollable content; AR quiz score entry prominent; progress events in chronological order |
+| **Add/Edit Book** | Form fields for all metadata, AR data source indicator | MEDIUM | Pre-populated from scan; clear indication of auto-fetched vs. manual fields |
+| **Export** | Export format selection, progress indicator, share sheet integration | LOW | JSON export already built; design share sheet integration |
+| **Settings** | App info, about, offline status indicator | LOW | Simple list view; PWA install prompt if not installed |
 
-[Multi-Child Profiles]
-       └──contains──> [Child Goals]
-       └──contains──> [Quiz Score History]
-       └──contains──> [Read History]
+### 4. Responsive Design Specifications
 
-[Library Export] ──enhances──> [Library View]
+How the app adapts across devices and orientations.
 
-[Offline Queue] ──conflicts──> [Real-time Sync] (choose one)
-```
+| Aspect | Mobile Portrait | Mobile Landscape | Tablet | Notes |
+|--------|-----------------|------------------|--------|-------|
+| **Layout** | Single column, bottom nav | Adaptive card width | Multi-column for library | Consider max-width on tablet (600px optimal reading) |
+| **Touch Targets** | Min 44pt | Min 44pt | Min 44pt | iOS Human Interface Guidelines compliance |
+| **Navigation** | Bottom tabs | Bottom tabs | Side rail or bottom tabs | Consistent across form factors |
+| **Book Grid** | 2 columns | 3-4 columns | 4-6 columns | Adjust based on screen width |
+| **Safe Areas** | Respect notch/home indicator | Full screen with system UI | Standard margins | Use env(safe-area-inset-*) |
 
-### Dependency Notes
+**PWA-Specific Considerations:**
+- `display: standalone` mode removes browser chrome
+- Handle `display-mode: standalone` media query for installed app context
+- App icon and splash screen specifications (multiple sizes for various devices)
 
-- **Barcode scanning requires book metadata lookup:** Can't show a book without first looking it up
-- **AR data fetch requires backend:** Browser CORS prevents direct scraping; backend proxy needed
-- **Multi-child profiles contains multiple sub-features:** Each child needs separate goals, scores, and history
-- **Offline queue conflicts with real-time sync:** Different architecture approaches; AeAre chooses offline-first
+### 5. Accessibility Requirements
 
-## MVP Definition
+Ensuring the app works for all users.
 
-### Launch With (v1)
+| Requirement | Specification | Priority |
+|-------------|--------------|----------|
+| **Color Contrast** | 4.5:1 for body text, 3:1 for large text and UI components (WCAG AA) | Required |
+| **Touch Targets** | Minimum 44x44pt, 8pt minimum spacing between targets | Required |
+| **Keyboard Navigation** | Logical tab order, visible focus indicators | Required |
+| **Screen Reader Support** | Proper ARIA labels, semantic HTML, alt text for images | Required |
+| **Dynamic Type** | Support iOS Dynamic Type scaling (50%-200%) | Recommended |
+| **Reduced Motion** | Respect prefers-reduced-motion for animations | Recommended |
+| **Focus Management** | Focus moves to new content in modals, trap focus appropriately | Required |
 
-Minimum viable product — what's needed to validate the concept.
+### 6. PWA-Specific Design Elements
 
-- [ ] Barcode scanning — core use case must work
-- [ ] Google Books auto-populate — avoid manual typing
-- [ ] AR level/points fetch with graceful fallback — the key differentiator
-- [ ] Basic library view — see what you've cataloged
-- [ ] Mark book as read with date — basic progress tracking
-- [ ] Quiz score entry with date — record AR quiz results
-- [ ] Library export to Google Sheets — share with schools
+Unique considerations for PWA implementation.
 
-### Add After Validation (v1.x)
+| Element | Specification Need | Notes |
+|---------|-------------------|-------|
+| **Install Prompt** | Custom "Add to Home Screen" button or banner | Browser beforeinstallprompt event handling |
+| **Splash Screen** | Theme color background, app icon centered | Specified in web app manifest |
+| **App Icons** | Multiple sizes (72, 96, 128, 144, 152, 192, 384, 512px) | Maskable icons for Android adaptive icons |
+| **Theme Color** | `<meta name="theme-color">` matching brand | Shows in status bar when installed |
 
-Features to add once core is working.
+---
 
-- [ ] Multi-child profiles — families with 2+ kids
-- [ ] AR goal tracking with visual progress — gamification
-- [ ] Offline scan queue — scan books without connection
-- [ ] AR-level filtering when searching — find books at right level
+## Existing Features → Design Mapping
 
-### Future Consideration (v2+)
+All features are already built. Design spec must implement the UI for each:
 
-Features to defer until product-market fit is established.
+| Built Feature | Design Component Need | Complexity |
+|---------------|----------------------|------------|
+| Barcode scanning | Camera UI with scan overlay, result feedback | HIGH |
+| Google Books metadata | Book card with cover, title, author from API | MEDIUM |
+| AR lookup | AR badge component with source indicator (fetched vs. manual) | LOW |
+| Reading progress | Progress timeline component, quiz score entry | MEDIUM |
+| Convex sync | Sync status indicator, offline state | MEDIUM |
+| JSON export | Export flow with share sheet integration | LOW |
+| Offline capability | Offline indicator banner, offline-friendly UI | MEDIUM |
 
-- [ ] AR book recommendations based on level — complex ML/recommendations
-- [ ] Reading streaks/gamification badges — engagement features
-- [ ] Batch scanning mode — scan multiple books quickly
-- [ ] Barcode-to-AR lookup without Google Books — faster for AR-only users
+---
 
-## Feature Prioritization Matrix
+## Design Spec Deliverables Recommended
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Barcode scanning | HIGH | MEDIUM | P1 |
-| Google Books auto-populate | HIGH | LOW | P1 |
-| AR level/points fetch | HIGH | MEDIUM | P1 |
-| Graceful AR fallback (manual) | HIGH | LOW | P1 |
-| Mark book as read (date) | HIGH | LOW | P1 |
-| Quiz score entry (date) | HIGH | LOW | P1 |
-| Library view | HIGH | LOW | P1 |
-| Export to Google Sheets | HIGH | MEDIUM | P1 |
-| Multi-child profiles | MEDIUM | LOW | P2 |
-| Offline scan queue | MEDIUM | MEDIUM | P2 |
-| AR goal progress visualization | MEDIUM | MEDIUM | P2 |
-| AR-level filtering/search | LOW | MEDIUM | P3 |
-| Book recommendations | LOW | HIGH | P3 |
+For a professional handoff to developers:
 
-**Priority key:**
-- P1: Must have for launch
-- P2: Should have, add when possible
-- P3: Nice to have, future consideration
+1. **Style Guide / Design Tokens** — Colors, typography, spacing as reusable values
+2. **Component Library** — All reusable components with states documented
+3. **Screen Designs** — Full mockups for each screen (Figma/Sketch)
+4. **Responsive Breakpoints** — Mobile, tablet specifications
+5. **Accessibility Checklist** — Specific implementations for WCAG compliance
+6. **PWA Assets** — Icons, splash screen, manifest specifications
 
-## Competitor Feature Analysis
-
-| Feature | AR Book Assistant | BookJar | Beanstack | Our Approach |
-|---------|------------------|---------|-----------|---------------|
-| Barcode scanning | Yes | No | Yes | Yes — core flow |
-| Google Books lookup | Implicit | No | No | Yes — for metadata |
-| AR level/points | Yes (scraped) | Yes | Via integration | Yes (scraped) + fallback |
-| Quiz score tracking | Yes | No | Yes | Yes — manual entry |
-| Multi-child profiles | Yes (up to 4) | Yes | Yes | Yes |
-| Goal tracking | Yes | Yes | Yes | Yes |
-| Offline capability | No info | No info | Yes | Yes — PWA |
-| Export/share | No info | No | Yes | Yes — Google Sheets |
-| Reading date tracking | Yes | Yes | Yes | Yes |
-| School integration | No | No | Yes (Epic) | No — out of scope |
-
-### Key Insights from Competitors
-
-1. **AR Book Assistant (iOS, launched 2024)** is the closest competitor — barcode + AR lookup + quiz tracking + multi-child. Our advantage: PWA (works in any browser, no install), Google Sheets export.
-
-2. **BookJar** simplified to AR goal lists only — no quiz tracking, no scanning. Our advantage: faster cataloging with barcode scan.
-
-3. **Beanstack** is school-focused with heavy admin features — overkill for parent use. Our advantage: simpler, focused on individual/family use.
-
-4. **No competitor offers Google Sheets export** — this is a differentiator for parents who need to share data with schools.
+---
 
 ## Sources
 
-- Competitor analysis: AR Book Assistant (App Store), BookJar (Medium blog 2019), Beanstack (website), LibraryThing (App Store/Play Store), Libib (Play Store)
-- Book catalog app comparison: makeheadway.com (2026), isbndb.com blog (2025), tidymalism.com (2026), booktrack.app (2025)
-- AR program information: Renaissance Learning (official), Twinkl parent guide (2025), AR BookFinder (arbookfind.com)
-- PWA best practices: MDN Web Docs (2025), Scanbot SDK tutorials
+- Apple Human Interface Guidelines (HIG)
+- Google Material Design 3
+- Web.dev PWA Best Practices
+- WCAG 2.1 Accessibility Guidelines
+- PWA display-mode specifications (MDN Web Docs)
+- Competitor UI analysis: Bookology, BookShelf, BookWorm apps
 
 ---
-*Feature research for: AeAre Books PWA*
-*Researched: 2026-03-23*
+
+*Design specification research for AeAre Books v1.1*
+*Researched: 2026-03-24*

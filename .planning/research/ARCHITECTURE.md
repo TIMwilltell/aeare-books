@@ -573,5 +573,142 @@ Based on dependencies, recommended build sequence:
 - [PWA Barcode Scanner Tutorial (Scanbot, 2025)](https://scanbot.io/techblog/progressive-web-app-barcode-scanner-tutorial) - MEDIUM
 
 ---
+
+## Design Spec Architecture
+
+*Section added 2026-03-24 for v1.1 Design Spec milestone*
+
+### Design Spec Structure for Mobile-First PWA
+
+This section provides the framework for creating a comprehensive design spec to hand off to a designer for professional UI implementation.
+
+#### Required Sections for Designer Handoff
+
+| Section | Purpose | Deliverable |
+|---------|---------|-------------|
+| Design Tokens | Foundation values (colors, typography, spacing, shadows) | Figma variables / Style guide |
+| Component Library | Reusable UI elements with states and behaviors | Component specifications |
+| Screen Specifications | Layouts for each view with annotations | Annotated mockups |
+| Responsive Behavior | How layouts adapt at each breakpoint | Responsive specs / demos |
+| Accessibility Requirements | WCAG compliance criteria | A11y checklist |
+| Interaction Patterns | Gestures, animations, transitions | Motion specs |
+
+#### Mobile-First Breakpoint System
+
+| Breakpoint | CSS | Purpose | Target Devices |
+|------------|-----|---------|-----------------|
+| 0-479px | Base styles (no query) | Mobile portrait | iPhone SE, Galaxy S series |
+| 480px+ | `@media (min-width: 480px)` | Mobile landscape | Phones in landscape |
+| 768px+ | `@media (min-width: 768px)` | Tablet | iPads, large phones |
+| 1024px+ | `@media (min-width: 1024px)` | Small desktop | Landscape tablets, laptops |
+| 1280px+ | `@media (min-width: 1280px)` | Desktop | Standard monitors |
+
+**Key Principle:** Mobile-first (min-width media queries) is the industry standard for 2025-2026, prioritizing the ~60% of global web traffic from mobile devices.
+
+#### Accessibility Requirements (WCAG 2.1 AA)
+
+| Principle | Requirement | Target |
+|-----------|-------------|--------|
+| **Perceivable** | Color contrast (text) | 4.5:1 minimum |
+| **Perceivable** | Color contrast (large text) | 3:1 minimum |
+| **Perceivable** | Color contrast (UI components) | 3:1 minimum |
+| **Perceivable** | Text resizable to 200% | No horizontal scroll |
+| **Operable** | Keyboard accessible | All functions via keyboard |
+| **Operable** | Focus visible | Clear focus indicator |
+| **Operable** | Touch targets | Minimum 44x44px |
+| **Operable** | Touch target spacing | 8px minimum between |
+| **Understandable** | Error identification | Clear, specific messages |
+| **Understandable** | Labels for forms | Visible, descriptive |
+| **Robust** | Semantic HTML | Proper heading hierarchy |
+
+#### Design Token Definitions
+
+**Color Tokens (WCAG Compliant):**
+```
+--color-primary: #3B82F6 (4.5:1 on white)
+--color-success: #10B981
+--color-warning: #F59E0B
+--color-error: #EF4444
+--color-text-primary: #111827
+--color-text-secondary: #6B7280
+--color-border: #E5E7EB
+```
+
+**Typography:**
+- Font family: system-ui, -apple-system, sans-serif
+- Body: 16px (1rem), line-height 1.5
+- Minimum readable: 14px
+- Headings: 700 weight, line-height 1.25
+
+**Spacing:**
+- Base unit: 4px (0.25rem)
+- Standard: 16px (1rem)
+- Touch spacing: 8px minimum between targets
+
+**Touch Targets:**
+- Minimum: 44x44px
+- Recommended: 48x48px for primary actions
+
+#### Component Specification Template
+
+Each component spec should document:
+1. **Purpose** — What the component does
+2. **Anatomy** — Visual structure with labeled parts
+3. **States** — Default, hover, focus, active, disabled, loading, error
+4. **Accessibility** — ARIA roles, keyboard navigation, focus management
+5. **Responsive** — How it adapts across breakpoints
+
+#### Navigation Structure
+
+```
+Mobile (< 768px):
+┌─────────────────────┐
+│      App Bar        │
+├─────────────────────┤
+│                     │
+│     Content         │
+│                     │
+├─────────────────────┤
+│ [Library] [Scan] [+]│  ← Bottom navigation
+└─────────────────────┘
+
+Tablet/Desktop (≥ 768px):
+┌────────┬──────────────┐
+│  Nav   │   App Bar   │
+│  Rail  ├──────────────┤
+│        │              │
+│ [Lib]  │   Content   │
+│ [Scan] │              │
+│ [+Add] │              │
+└────────┴──────────────┘
+```
+
+#### Screen Inventory for AeAre
+
+| Screen | Purpose | Key Components |
+|--------|---------|----------------|
+| Library View | Display all scanned books | Book grid, search/filter, FAB for scan |
+| Book Detail | Show book info + progress | Book card, AR data, quiz scores |
+| Scan Flow | Capture barcode | Camera view, scan overlay, manual entry |
+| Progress Entry | Log reading progress | Date picker, score input |
+| Settings | App configuration | Theme toggle, export, about |
+
+#### PWA-Specific Design Considerations
+
+- **Install prompt:** App icon 192x192px, 512x512px; theme color; display standalone
+- **Offline indicator:** Top banner when offline, warning color
+- **Loading states:** Skeleton screens for content, spinners for actions
+- **Reduced motion:** Respect `prefers-reduced-motion`
+- **Dark mode:** Support `prefers-color-scheme: dark`
+
+#### Design Spec Sources
+
+- [MDN: Best practices for PWAs](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Best_practices) — HIGH
+- [Accessibility in UI/UX Design: 2025 Best Practices](https://orbix.studio/blogs/accessibility-uiux-design-best-practices-2025) — HIGH
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/) — Authoritative
+- [CSS Media Queries and Breakpoints 2025](https://viadreams.cc/no/blog/css-media-queries-breakpoints-2025) — HIGH
+
+---
+
 *Architecture research for: Book Scanning / Library Tracking PWA*
-*Researched: 2026-03-23*
+*Researched: 2026-03-23 (system), 2026-03-24 (design spec)*
