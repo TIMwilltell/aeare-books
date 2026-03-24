@@ -13,7 +13,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 
 - [x] **Phase 1: Foundation & Core Flow** - PWA shell, barcode scanning, library management ✅
 - [x] **Phase 2: API Integrations** - Google Books metadata, AR lookup with BFF proxy (completed 2026-03-24)
-- [ ] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes
+- [x] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes (completed 2026-03-24)
 - [ ] **Phase 4: Cloud Sync & Export** - Google Sheets sync, offline handling, export
 
 ## Phase Details
@@ -93,11 +93,11 @@ Parents can quickly catalog their children's books and track AR reading progress
 5. User can add notes to a book entry
 6. User can view chronological sequence of all progress events (scan, read, quiz dates)
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 **Plan list:**
-- [ ] 03-01-PLAN.md — Database Schema Updates
-- [ ] 03-02-PLAN.md — Detail Page Progress UI
+- [x] 03-01-PLAN.md — Database Schema Updates
+- [x] 03-02-PLAN.md — Detail Page Progress UI
 
 **UI hint:** yes
 
@@ -130,7 +130,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Flow | 2/2 | Complete | 2026-03-24 |
 | 2. API Integrations | 3/3 | Complete   | 2026-03-24 |
-| 3. Progress Tracking | 2/? | Ready to execute | - |
+| 3. Progress Tracking | 2/2 | Complete   | 2026-03-24 |
 | 4. Cloud Sync & Export | 0/? | Not started | - |
 
 ## Coverage

@@ -37,12 +37,12 @@
 
 ### Reading Progress
 
-- [ ] **READ-01**: User can mark a book as read
-- [ ] **READ-02**: User can record date book was completed
-- [ ] **READ-03**: User can enter AR quiz score (0-100)
-- [ ] **READ-04**: User can record date of AR quiz attempt
-- [ ] **READ-05**: App tracks sequence of all progress events (read date, quiz dates)
-- [ ] **READ-06**: User can add notes to a book entry
+- [x] **READ-01**: User can mark a book as read
+- [x] **READ-02**: User can record date book was completed
+- [x] **READ-03**: User can enter AR quiz score (0-100)
+- [x] **READ-04**: User can record date of AR quiz attempt
+- [x] **READ-05**: App tracks sequence of all progress events (read date, quiz dates)
+- [x] **READ-06**: User can add notes to a book entry
 
 ### PWA & Offline
 
@@ -109,12 +109,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIB-02 | Phase 1 | Complete |
 | LIB-03 | Phase 1 | Complete |
 | LIB-04 | Phase 1 | Complete |
-| READ-01 | Phase 3 | Pending |
-| READ-02 | Phase 3 | Pending |
-| READ-03 | Phase 3 | Pending |
-| READ-04 | Phase 3 | Pending |
-| READ-05 | Phase 3 | Pending |
-| READ-06 | Phase 3 | Pending |
+| READ-01 | Phase 3 | Complete |
+| READ-02 | Phase 3 | Complete |
+| READ-03 | Phase 3 | Complete |
+| READ-04 | Phase 3 | Complete |
+| READ-05 | Phase 3 | Complete |
+| READ-06 | Phase 3 | Complete |
 | PWA-01 | Phase 1 | Complete |
 | PWA-02 | Phase 4 | Pending |
 | PWA-03 | Phase 1 | Complete |
