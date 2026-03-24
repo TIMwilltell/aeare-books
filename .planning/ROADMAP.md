@@ -66,7 +66,12 @@ Parents can quickly catalog their children's books and track AR reading progress
 9. App clearly indicates whether AR data was fetched or manually entered
 10. App caches successful AR lookups to avoid repeated scrapes
 
-**Plans:** TBD
+**Plans:** 3 plans
+
+**Plan list:**
+- [ ] 02-01-PLAN.md — Google Books API + AR Cache Setup
+- [ ] 02-02-PLAN.md — Playwright AR Lookup Endpoint
+- [ ] 02-03-PLAN.md — UI Integration (Lookup button, covers, AR fields)
 
 **UI hint:** yes
 
