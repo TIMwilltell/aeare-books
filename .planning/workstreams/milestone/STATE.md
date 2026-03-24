@@ -1,71 +1,69 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Milestone complete
-stopped_at: Completed Phase 3 (Progress Tracking)
-last_updated: "2026-03-24T18:29:15.928Z"
+milestone: v1.1
+milestone_name: Design Spec
+status: Planning phase
+stopped_at: Starting phase 5
+last_updated: "2026-03-24T19:00:00.000Z"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-23)
+See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Parents can quickly catalog their children's books and track AR reading progress without manual data entry.
-**Current focus:** Phase 4 — Cloud Sync & Export
+**Current focus:** Milestone v1.1 — Design Spec (Phase 5)
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
+Phase: 5 - Component Specifications
+Plan: —
+Status: Planning phase
+Last activity: 2026-03-24 — v1.1 roadmap created
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2
-- Average duration: 7.5 min/plan
-- Total execution time: 0.25 hours
+- Total plans completed: 0
+- Average duration: N/A
+- Total execution time: N/A
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-Foundation | 2 | 2 | 7.5 min |
-
-**Recent Trend:**
-
-- Last 5 plans: No completed plans yet
-- Trend: N/A
+| 5. Component Specs | 0 | 0 | N/A |
+| 6. Screen Designs | 0 | 0 | N/A |
 
 *Updated after each plan completion*
-| Phase 03-progress-tracking P03-01 | 5 | 3 tasks | 1 files |
-| Phase 03-progress-tracking P03-02 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
 ### Decisions
 
-- Implementation: SvelteKit + vite-plugin-pwa for PWA setup
-- Implementation: Dexie.js for IndexedDB with offline support
-- Implementation: Quagga2 for barcode scanning with manual fallback
-- Implementation: Compact list view with FAB for library management
-- [Phase 02]: Google Books API for ISBN lookup (free, no auth required)
-- [Phase 02]: Use Playwright for AR lookup (complex ASPX form requires browser automation)
-- [Phase 02]: Button click for metadata lookup (not auto-fetch on ISBN entry)
-- [Phase 03]: Separate ProgressEvent table for chronological tracking
-- [Phase 03]: Button on detail page to mark as read
-- [Phase 03]: Plain text notes, no character limit
-- [Phase 04]: Use Convex for cross-device cloud sync
-- [Phase 04]: JSON export format (preserves all fields)
-- [Phase 04]: Auto-sync with warning banner + manual "sync now" button
+- [Current] Design spec approach: Figma with Dev Mode + Skeleton UI component library
+- [Current] Mobile-first responsive design with tablet/desktop breakpoints
+- [Previous] Implementation: SvelteKit + vite-plugin-pwa for PWA setup
+- [Previous] Implementation: Dexie.js for IndexedDB with offline support
+- [Previous] Implementation: Quagga2 for barcode scanning with manual fallback
+- [Previous] Implementation: Compact list view with FAB for library management
+- [Previous] Google Books API for ISBN lookup (free, no auth required)
+- [Previous] Use Playwright for AR lookup (complex ASPX form requires browser automation)
+- [Previous] Button click for metadata lookup (not auto-fetch on ISBN entry)
+- [Previous] Separate ProgressEvent table for chronological tracking
+- [Previous] Button on detail page to mark as read
+- [Previous] Plain text notes, no character limit
+- [Previous] Use Convex for cross-device cloud sync
+- [Previous] JSON export format (preserves all fields)
+- [Previous] Auto-sync with warning banner + manual "sync now" button
 
 ### Pending Todos
 
@@ -88,8 +86,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-24T19:00:00.000Z
-Stopped at: Fixed Scanner component - restored to use container div for Quagga LiveStream
+Stopped at: Starting phase 5
 
 ---
 
 *State initialized: 2026-03-23*
+*Reset for milestone v1.1: 2026-03-24*
+*v1.1 roadmap created: 2026-03-24*

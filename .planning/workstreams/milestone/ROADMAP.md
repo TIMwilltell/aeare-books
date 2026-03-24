@@ -15,6 +15,8 @@ Parents can quickly catalog their children's books and track AR reading progress
 - [x] **Phase 2: API Integrations** - Google Books metadata, AR lookup with BFF proxy (completed 2026-03-24)
 - [x] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes (completed 2026-03-24)
 - [x] **Phase 4: Cloud Sync & Export** - Convex sync, offline handling, JSON export (completed 2026-03-24)
+- [ ] **Phase 5: Component Specifications** - Design spec defines all reusable UI components with states
+- [ ] **Phase 6: Screen Designs** - Design spec provides mockups for all app screens with responsive behavior
 
 ## Phase Details
 
@@ -129,6 +131,50 @@ Parents can quickly catalog their children's books and track AR reading progress
 
 ---
 
+### Phase 5: Component Specifications
+
+**Goal:** Design spec defines all reusable UI components with their states (default, hover, active, disabled, loading, error)
+
+**Depends on:** Nothing (first phase of milestone)
+
+**Requirements:** COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, COMP-06, COMP-07, COMP-08, COMP-09, COMP-10
+
+**Success Criteria** (what must be TRUE):
+1. Design spec documents primary button component with all interaction states
+2. Design spec documents secondary/ghost button component with all interaction states
+3. Design spec documents text input component with labels, placeholders, and error states
+4. Design spec documents book card component showing thumbnail, title, author, AR badges
+5. Design spec documents modal/dialog component for confirmations
+6. Design spec documents toast/notification component
+7. Design spec documents badge component for AR fetched vs. manual indicators
+8. Design spec documents loading spinner and skeleton states
+9. Design spec documents empty state component for library
+10. Design spec documents FAB (floating action button) for scan action
+
+**Plans**: TBD
+
+---
+
+### Phase 6: Screen Designs
+
+**Goal:** Design spec provides mockups for all app screens with responsive behavior
+
+**Depends on:** Phase 5
+
+**Requirements:** SCRN-01, SCRN-02, SCRN-03, SCRN-04, SCRN-05, SCRN-06
+
+**Success Criteria** (what must be TRUE):
+1. Design spec includes library screen mockup with list/grid view toggle and search bar
+2. Design spec includes scan flow screen mockup showing camera view, scan button, and manual entry option
+3. Design spec includes book detail screen mockup displaying cover, metadata, AR info, and reading progress
+4. Design spec includes add/edit progress screen mockup for read date, quiz score, and notes
+5. Design spec includes settings/export screen mockup
+6. Design spec shows responsive behavior for tablet and desktop views
+
+**Plans**: TBD
+
+---
+
 ## Progress Table
 
 | Phase | Plans Complete | Status | Completed |
@@ -137,6 +183,8 @@ Parents can quickly catalog their children's books and track AR reading progress
 | 2. API Integrations | 3/3 | Complete   | 2026-03-24 |
 | 3. Progress Tracking | 2/2 | Complete   | 2026-03-24 |
 | 4. Cloud Sync & Export | 3/3 | Complete   | 2026-03-24 |
+| 5. Component Specifications | 0/1 | Not started | - |
+| 6. Screen Designs | 0/1 | Not started | - |
 
 ## Coverage
 
@@ -182,3 +230,4 @@ Parents can quickly catalog their children's books and track AR reading progress
 ---
 
 *Roadmap created: 2026-03-23*
+*v1.1 phases added: 2026-03-24*

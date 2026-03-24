@@ -76,5 +76,16 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
+## Current Milestone: v1.1 Design Spec
+
+**Goal:** Create a comprehensive design spec document to give to a designer so we can implement real designs.
+
+**Target features:**
+- Design system specification (colors, typography, spacing)
+- UI component specifications (buttons, cards, forms, modals)
+- Screen-level design requirements
+- Responsive design specifications
+- Accessibility requirements
+
 ---
-*Last updated: 2026-03-23 after initialization*
+*Last updated: 2026-03-24 after milestone v1.1 started*
