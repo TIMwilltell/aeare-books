@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed Phase 3 (Progress Tracking)
-last_updated: "2026-03-24T17:49:09.744Z"
+last_updated: "2026-03-24T18:07:00.000Z"
 last_activity: 2026-03-24
 progress:
   total_phases: 4
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** Parents can quickly catalog their children's books and track AR reading progress without manual data entry.
-**Current focus:** Phase 3 - Progress Tracking
+**Current focus:** Phase 4 - Cloud Sync & Export
 
 ## Current Position
 
-Phase: 3 of 4 (Progress Tracking) — **Ready to execute**
-Plan: 1 of 2 in current phase
-Status: Phase 3 plans created, ready to execute
+Phase: 4 of 4 (Cloud Sync & Export) — **Ready to execute**
+Plan: 1 of 3 in current phase
+Status: Phase 4 plans created, ready to execute
 Last activity: 2026-03-24
 
-Progress: [████░░░░░░░░] 25%
+Progress: [██████░░░░░░] 60%
 
 ## Performance Metrics
 
@@ -69,9 +69,9 @@ Progress: [████░░░░░░░░] 25%
 - [Phase 03]: Separate ProgressEvent table for chronological tracking
 - [Phase 03]: Button on detail page to mark as read
 - [Phase 03]: Plain text notes, no character limit
-- [Phase 03]: Progress: Separate ProgressEvent table for chronological tracking
-- [Phase 03]: Progress: Button on detail page to mark as read
-- [Phase 03]: Progress: Plain text notes, no character limit
+- [Phase 04]: Use Convex for cross-device cloud sync
+- [Phase 04]: JSON export format (preserves all fields)
+- [Phase 04]: Auto-sync with warning banner + manual "sync now" button
 
 ### Pending Todos
 

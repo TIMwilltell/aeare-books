@@ -14,7 +14,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 - [x] **Phase 1: Foundation & Core Flow** - PWA shell, barcode scanning, library management ✅
 - [x] **Phase 2: API Integrations** - Google Books metadata, AR lookup with BFF proxy (completed 2026-03-24)
 - [x] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes (completed 2026-03-24)
-- [ ] **Phase 4: Cloud Sync & Export** - Google Sheets sync, offline handling, export
+- [ ] **Phase 4: Cloud Sync & Export** - Convex sync, offline handling, JSON export
 
 ## Phase Details
 
@@ -105,7 +105,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 
 ### Phase 4: Cloud Sync & Export
 
-**Goal:** Data syncs to Google Sheets and users can export their library
+**Goal:** Data syncs to Convex cloud and users can export their library to JSON
 
 **Depends on:** Phase 2, Phase 3
 
@@ -113,12 +113,17 @@ Parents can quickly catalog their children's books and track AR reading progress
 
 **Success Criteria** (what must be TRUE):
 1. App works offline (can scan, view library, enter data without network)
-2. App syncs data to Google Sheets when connection is restored
+2. App syncs data to Convex cloud when connection is restored
 3. App shows clear indicator when offline vs online
-4. User can export library data to file
+4. User can export library data to JSON file
 5. Export includes all book fields (title, author, AR data) and progress data (read dates, quiz scores)
 
-**Plans:** TBD
+**Plans:** 3/3 plans
+
+**Plan list:**
+- [ ] 04-01-PLAN.md — Convex Setup + Backend Functions
+- [ ] 04-02-PLAN.md — Frontend Integration + Sync UI
+- [ ] 04-03-PLAN.md — JSON Export + Offline Testing
 
 **UI hint:** yes
 
@@ -131,7 +136,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 | 1. Foundation & Core Flow | 2/2 | Complete | 2026-03-24 |
 | 2. API Integrations | 3/3 | Complete   | 2026-03-24 |
 | 3. Progress Tracking | 2/2 | Complete   | 2026-03-24 |
-| 4. Cloud Sync & Export | 0/? | Not started | - |
+| 4. Cloud Sync & Export | 0/3 | Not started | - |
 
 ## Coverage
 
@@ -147,26 +152,26 @@ Parents can quickly catalog their children's books and track AR reading progress
 | SCAN-02 | Phase 1 | Complete |
 | SCAN-03 | Phase 1 | Complete |
 | SCAN-04 | Phase 1 | Complete |
-| META-01 | Phase 2 | Pending |
-| META-02 | Phase 2 | Pending |
-| META-03 | Phase 2 | Pending |
-| META-04 | Phase 2 | Pending |
-| META-05 | Phase 2 | Pending |
-| AR-01 | Phase 2 | Pending |
-| AR-02 | Phase 2 | Pending |
-| AR-03 | Phase 2 | Pending |
-| AR-04 | Phase 2 | Pending |
-| AR-05 | Phase 2 | Pending |
+| META-01 | Phase 2 | Complete |
+| META-02 | Phase 2 | Complete |
+| META-03 | Phase 2 | Complete |
+| META-04 | Phase 2 | Complete |
+| META-05 | Phase 2 | Complete |
+| AR-01 | Phase 2 | Complete |
+| AR-02 | Phase 2 | Complete |
+| AR-03 | Phase 2 | Complete |
+| AR-04 | Phase 2 | Complete |
+| AR-05 | Phase 2 | Complete |
 | LIB-01 | Phase 1 | Complete |
 | LIB-02 | Phase 1 | Complete |
 | LIB-03 | Phase 1 | Complete |
 | LIB-04 | Phase 1 | Complete |
-| READ-01 | Phase 3 | Assigned |
-| READ-02 | Phase 3 | Assigned |
-| READ-03 | Phase 3 | Assigned |
-| READ-04 | Phase 3 | Assigned |
-| READ-05 | Phase 3 | Assigned |
-| READ-06 | Phase 3 | Assigned |
+| READ-01 | Phase 3 | Complete |
+| READ-02 | Phase 3 | Complete |
+| READ-03 | Phase 3 | Complete |
+| READ-04 | Phase 3 | Complete |
+| READ-05 | Phase 3 | Complete |
+| READ-06 | Phase 3 | Complete |
 | PWA-01 | Phase 4 | Pending |
 | PWA-02 | Phase 4 | Pending |
 | PWA-03 | Phase 1 | Complete |
