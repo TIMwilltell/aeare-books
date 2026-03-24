@@ -23,7 +23,9 @@
 		"workbox-window": "^7.4.0"
 	},
 	"dependencies": {
+		"@playwright/test": "^1.58.2",
 		"dexie": "^4.3.0",
+		"playwright": "^1.58.2",
 		"quagga": "^0.12.1"
 	}
 }
