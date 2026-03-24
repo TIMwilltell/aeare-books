@@ -96,6 +96,9 @@ export async function addBook(
 		arLevel,
 		arPoints,
 		arDataSource,
+		isRead: false,
+		readDate: null,
+		notes: '',
 		createdAt: now,
 		updatedAt: now
 	});
