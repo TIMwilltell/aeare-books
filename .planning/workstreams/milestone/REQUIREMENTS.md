@@ -1,89 +1,47 @@
 # Requirements: AeAre Books
 
-**Defined:** 2026-03-23
+**Defined:** 2026-03-24
+**Milestone:** v1.1 Design Spec
 **Core Value:** Parents can quickly catalog their children's books and track AR reading progress without manual data entry.
 
-## v1 Requirements
+## v1.1 Requirements (Design Spec)
 
-### Barcode Scanning
+### Components
 
-- [x] **SCAN-01**: User can scan a book barcode using phone camera
-- [x] **SCAN-02**: Camera barcode scanning works on iOS Safari
-- [x] **SCAN-03**: Camera barcode scanning works on Android Chrome
-- [x] **SCAN-04**: Manual ISBN entry fallback when camera unavailable
+- [ ] **COMP-01**: Design spec defines primary button component (default, hover, active, disabled, loading states)
+- [ ] **COMP-02**: Design spec defines secondary/ghost button component with all states
+- [ ] **COMP-03**: Design spec defines text input component with labels, placeholders, error states
+- [ ] **COMP-04**: Design spec defines book card component (thumbnail, title, author, AR badges)
+- [ ] **COMP-05**: Design spec defines modal/dialog component for confirmations
+- [ ] **COMP-06**: Design spec defines toast/notification component
+- [ ] **COMP-07**: Design spec defines badge component (for AR fetched vs. manual indicators)
+- [ ] **COMP-08**: Design spec defines loading spinner/skeleton states
+- [ ] **COMP-09**: Design spec defines empty state component for library
+- [ ] **COMP-10**: Design spec defines FAB (floating action button) for scan action
 
-### Book Metadata
+### Screens
 
-- [x] **META-01**: App auto-populates title from Google Books API using scanned ISBN
-- [x] **META-02**: App auto-populates author from Google Books API
-- [x] **META-03**: App auto-populates cover thumbnail from Google Books API
-- [x] **META-04**: App handles Google Books API lookup failures gracefully
-- [x] **META-05**: App tries both ISBN-10 and ISBN-13 formats
+- [ ] **SCRN-01**: Design spec provides library screen mockup (list/grid view, search bar)
+- [ ] **SCRN-02**: Design spec provides scan flow screen mockup (camera view, scan button, manual entry)
+- [ ] **SCRN-03**: Design spec provides book detail screen mockup (cover, metadata, AR info, progress)
+- [ ] **SCRN-04**: Design spec provides add/edit progress screen mockup (read date, quiz score, notes)
+- [ ] **SCRN-05**: Design spec provides settings/export screen mockup
+- [ ] **SCRN-06**: Design spec shows responsive behavior for tablet/desktop views
 
-### AR Data
+## Future Requirements (Deferred)
 
-- [x] **AR-01**: App attempts to fetch AR level from arbookfind.com scrape via backend proxy
-- [x] **AR-02**: App attempts to fetch AR points from arbookfind.com
-- [x] **AR-03**: App includes manual AR level entry field as fallback
-- [x] **AR-04**: App indicates when AR data was fetched vs. manually entered
-- [x] **AR-05**: App caches successful AR lookups to reduce scrape frequency
-
-### Library Management
-
-- [x] **LIB-01**: User can view list of all scanned books
-- [x] **LIB-02**: User can search/filter library by title or author
-- [x] **LIB-03**: User can view individual book details
-- [x] **LIB-04**: User can delete a book from library
-
-### Reading Progress
-
-- [x] **READ-01**: User can mark a book as read
-- [x] **READ-02**: User can record date book was completed
-- [x] **READ-03**: User can enter AR quiz score (0-100)
-- [x] **READ-04**: User can record date of AR quiz attempt
-- [x] **READ-05**: App tracks sequence of all progress events (read date, quiz dates)
-- [x] **READ-06**: User can add notes to a book entry
-
-### PWA & Offline
-
-- [x] **PWA-01**: App works offline (scan, view library, enter data)
-- [x] **PWA-02**: App syncs data when connection restored
-- [x] **PWA-03**: App can be installed to phone home screen
-- [x] **PWA-04**: App shows clear offline/online status indicator
-
-### Data Export
-
-- [x] **EXPT-01**: User can export library data
-- [x] **EXPT-02**: Export includes all book fields and progress data
-
-## v2 Requirements
-
-### Multi-Child Profiles
-
-- **PROF-01**: User can create profiles for multiple children
-- **PROF-02**: User can assign books to specific child profiles
-- **PROF-03**: User can view reading progress per child
-
-### Goal Tracking
-
-- **GOAL-01**: User can set AR point goals per child
-- **GOAL-02**: App shows progress toward goal
-
-### Batch Operations
-
-- **BATCH-01**: User can scan multiple books in succession without leaving scan mode
-- **BATCH-02**: User can review and confirm all scanned books before saving
+- Design System tokens (color palette, typography, spacing) — defer to implementation
+- PWA manifest specifications (icons, theme color) — defer to implementation
+- Accessibility audit (WCAG compliance) — defer to implementation
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| App store native app | PWA works on all platforms, no app store required |
-| User authentication | Single device/family use, no multi-user accounts needed |
-| School integration | Would require API access Renaissance doesn't provide |
-| Real-time sync across devices | Adds complexity without value for single-user use case |
-| Reading recommendations | Outside core value prop |
-| Barcode lookup history | Not needed for v1 |
+| Dark mode design | Defer to future milestone |
+| Multi-child profiles | v2 feature |
+| Custom illustrations | Out of budget/scope |
+| Animation specifications | Defer to implementation |
 
 ## Traceability
 
@@ -91,42 +49,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCAN-01 | Phase 1 | Complete |
-| SCAN-02 | Phase 1 | Complete |
-| SCAN-03 | Phase 1 | Complete |
-| SCAN-04 | Phase 1 | Complete |
-| META-01 | Phase 2 | Complete |
-| META-02 | Phase 2 | Complete |
-| META-03 | Phase 2 | Complete |
-| META-04 | Phase 2 | Complete |
-| META-05 | Phase 2 | Complete |
-| AR-01 | Phase 2 | Complete |
-| AR-02 | Phase 2 | Complete |
-| AR-03 | Phase 2 | Complete |
-| AR-04 | Phase 2 | Complete |
-| AR-05 | Phase 2 | Complete |
-| LIB-01 | Phase 1 | Complete |
-| LIB-02 | Phase 1 | Complete |
-| LIB-03 | Phase 1 | Complete |
-| LIB-04 | Phase 1 | Complete |
-| READ-01 | Phase 3 | Complete |
-| READ-02 | Phase 3 | Complete |
-| READ-03 | Phase 3 | Complete |
-| READ-04 | Phase 3 | Complete |
-| READ-05 | Phase 3 | Complete |
-| READ-06 | Phase 3 | Complete |
-| PWA-01 | Phase 1 | Complete |
-| PWA-02 | Phase 4 | Complete |
-| PWA-03 | Phase 1 | Complete |
-| PWA-04 | Phase 4 | Complete |
-| EXPT-01 | Phase 4 | Complete |
-| EXPT-02 | Phase 4 | Complete |
+| COMP-01 | — | Pending |
+| COMP-02 | — | Pending |
+| COMP-03 | — | Pending |
+| COMP-04 | — | Pending |
+| COMP-05 | — | Pending |
+| COMP-06 | — | Pending |
+| COMP-07 | — | Pending |
+| COMP-08 | — | Pending |
+| COMP-09 | — | Pending |
+| COMP-10 | — | Pending |
+| SCRN-01 | — | Pending |
+| SCRN-02 | — | Pending |
+| SCRN-03 | — | Pending |
+| SCRN-04 | — | Pending |
+| SCRN-05 | — | Pending |
+| SCRN-06 | — | Pending |
 
 **Coverage:**
-- v1 requirements: 30 total
-- Mapped to phases: 30
-- Unmapped: 0 ✓
+- v1.1 requirements: 16 total
+- Mapped to phases: 0
+- Unmapped: 16
 
 ---
-*Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after roadmap creation*
+*Requirements defined: 2026-03-24*
+*Last updated: 2026-03-24 after research synthesis*
