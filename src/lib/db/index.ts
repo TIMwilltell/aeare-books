@@ -9,6 +9,11 @@ export interface Book {
 	arLevel?: number;
 	arPoints?: number;
 	arDataSource?: 'fetched' | 'manual';
+	isRead: boolean;
+	readDate: Date | null;
+	notes: string;
+	quizScore?: number;
+	quizDate?: Date;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -32,10 +37,22 @@ export interface SyncQueueItem {
 	status: 'pending' | 'synced' | 'failed';
 }
 
+export type ProgressEventType = 'marked_read' | 'quiz_completed' | 'notes_added' | 'book_added';
+
+export interface ProgressEvent {
+	id?: number;
+	bookId: number;
+	eventType: ProgressEventType;
+	value?: string;
+	eventDate: Date;
+	createdAt: Date;
+}
+
 class AeAreDatabase extends Dexie {
 	books!: Table<Book, number>;
 	syncQueue!: Table<SyncQueueItem, number>;
 	arCache!: Table<ArCacheEntry, string>;
+	progressEvents!: Table<ProgressEvent, number>;
 
 	constructor() {
 		super('AeAreDB');
@@ -47,6 +64,12 @@ class AeAreDatabase extends Dexie {
 			books: '++id, isbn, title, author, createdAt',
 			syncQueue: '++id, operation, tableName, recordId, status, createdAt',
 			arCache: 'isbn, cachedAt'
+		});
+		this.version(3).stores({
+			books: '++id, isbn, title, author, isRead, createdAt',
+			syncQueue: '++id, operation, tableName, recordId, status, createdAt',
+			arCache: 'isbn, cachedAt',
+			progressEvents: '++id, bookId, eventType, eventDate, createdAt'
 		});
 	}
 }
@@ -135,4 +158,33 @@ export async function setArCache(isbn: string, arLevel: number, arPoints: number
 		arPoints,
 		cachedAt: new Date()
 	});
+}
+
+// Progress Event Operations
+
+export async function addProgressEvent(
+	bookId: number,
+	eventType: ProgressEventType,
+	value?: string,
+	eventDate?: Date
+): Promise<number> {
+	const now = new Date();
+	return await db.progressEvents.add({
+		bookId,
+		eventType,
+		value,
+		eventDate: eventDate || now,
+		createdAt: now
+	});
+}
+
+export async function getProgressEventsByBook(bookId: number): Promise<ProgressEvent[]> {
+	return await db.progressEvents
+		.where('bookId')
+		.equals(bookId)
+		.sortBy('eventDate');
+}
+
+export async function deleteProgressEventsByBook(bookId: number): Promise<void> {
+	await db.progressEvents.where('bookId').equals(bookId).delete();
 }
