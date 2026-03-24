@@ -93,7 +93,11 @@ Parents can quickly catalog their children's books and track AR reading progress
 5. User can add notes to a book entry
 6. User can view chronological sequence of all progress events (scan, read, quiz dates)
 
-**Plans:** TBD
+**Plans:** 2 plans
+
+**Plan list:**
+- [ ] 03-01-PLAN.md — Database Schema Updates
+- [ ] 03-02-PLAN.md — Detail Page Progress UI
 
 **UI hint:** yes
 
@@ -126,7 +130,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Flow | 2/2 | Complete | 2026-03-24 |
 | 2. API Integrations | 3/3 | Complete   | 2026-03-24 |
-| 3. Progress Tracking | 0/? | Not started | - |
+| 3. Progress Tracking | 2/? | Ready to execute | - |
 | 4. Cloud Sync & Export | 0/? | Not started | - |
 
 ## Coverage
@@ -157,12 +161,12 @@ Parents can quickly catalog their children's books and track AR reading progress
 | LIB-02 | Phase 1 | Complete |
 | LIB-03 | Phase 1 | Complete |
 | LIB-04 | Phase 1 | Complete |
-| READ-01 | Phase 3 | Pending |
-| READ-02 | Phase 3 | Pending |
-| READ-03 | Phase 3 | Pending |
-| READ-04 | Phase 3 | Pending |
-| READ-05 | Phase 3 | Pending |
-| READ-06 | Phase 3 | Pending |
+| READ-01 | Phase 3 | Assigned |
+| READ-02 | Phase 3 | Assigned |
+| READ-03 | Phase 3 | Assigned |
+| READ-04 | Phase 3 | Assigned |
+| READ-05 | Phase 3 | Assigned |
+| READ-06 | Phase 3 | Assigned |
 | PWA-01 | Phase 4 | Pending |
 | PWA-02 | Phase 4 | Pending |
 | PWA-03 | Phase 1 | Complete |
