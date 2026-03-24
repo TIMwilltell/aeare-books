@@ -2,9 +2,10 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { getBook, updateBook, deleteBook } from '$lib/db';
+	import { getBook, updateBook, deleteBook, addProgressEvent, getProgressEventsByBook, deleteProgressEventsByBook, type ProgressEvent } from '$lib/db';
 	import type { Book } from '$lib/db';
 	import DeleteDialog from '$lib/components/DeleteDialog.svelte';
+	import ProgressTimeline from '$lib/components/ProgressTimeline.svelte';
 
 	let book = $state<Book | null>(null);
 	let loading = $state(true);
@@ -21,6 +22,15 @@
 	// Delete dialog state
 	let showDeleteDialog = $state(false);
 
+	// Progress tracking state
+	let isRead = $state(false);
+	let readDate = $state<string>('');
+	let quizScore = $state<number | undefined>(undefined);
+	let quizDate = $state<string>('');
+	let notes = $state('');
+	let progressEvents = $state<ProgressEvent[]>([]);
+	let savingProgress = $state(false);
+
 	const bookId = parseInt(page.params.id);
 
 	onMount(async () => {
@@ -32,6 +42,12 @@
 			isbn = loadedBook.isbn;
 			arLevel = loadedBook.arLevel || 0;
 			arPoints = loadedBook.arPoints || 0;
+			isRead = loadedBook.isRead || false;
+			readDate = loadedBook.readDate ? new Date(loadedBook.readDate).toISOString().split('T')[0] : '';
+			quizScore = loadedBook.quizScore;
+			quizDate = loadedBook.quizDate ? new Date(loadedBook.quizDate).toISOString().split('T')[0] : '';
+			notes = loadedBook.notes || '';
+			progressEvents = await getProgressEventsByBook(bookId);
 		} else {
 			goto('/');
 		}
@@ -96,6 +112,57 @@
 
 	function closeDeleteDialog() {
 		showDeleteDialog = false;
+	}
+
+	// Progress tracking functions
+	async function toggleReadStatus() {
+		if (!book?.id) return;
+		savingProgress = true;
+		const newIsRead = !isRead;
+		const eventDate = newIsRead ? (readDate || new Date().toISOString().split('T')[0]) : undefined;
+		
+		await updateBook(book.id, { 
+			isRead: newIsRead,
+			readDate: eventDate ? new Date(eventDate) : null
+		});
+		
+		if (newIsRead) {
+			await addProgressEvent(book.id, 'marked_read', undefined, eventDate ? new Date(eventDate) : undefined);
+		}
+		
+		isRead = newIsRead;
+		readDate = eventDate || '';
+		progressEvents = await getProgressEventsByBook(book.id);
+		savingProgress = false;
+	}
+
+	async function saveQuizScore() {
+		if (!book?.id || quizScore === undefined) return;
+		savingProgress = true;
+		const qDate = quizDate || new Date().toISOString().split('T')[0];
+		
+		await updateBook(book.id, { 
+			quizScore: quizScore,
+			quizDate: new Date(qDate)
+		});
+		
+		await addProgressEvent(book.id, 'quiz_completed', `${quizScore}%`, new Date(qDate));
+		
+		quizDate = qDate;
+		progressEvents = await getProgressEventsByBook(book.id);
+		savingProgress = false;
+	}
+
+	async function saveNotes() {
+		if (!book?.id) return;
+		savingProgress = true;
+		
+		await updateBook(book.id, { notes });
+		
+		await addProgressEvent(book.id, 'notes_added', notes);
+		
+		progressEvents = await getProgressEventsByBook(book.id);
+		savingProgress = false;
 	}
 </script>
 
@@ -170,6 +237,63 @@
 						{/if}
 					</div>
 				{/if}
+			</div>
+
+			<!-- Progress Tracking Section -->
+			<div class="progress-section">
+				<div class="read-status">
+					{#if isRead}
+						<span class="read-badge">✓ Read</span>
+						{#if readDate}
+							<span class="read-date">on {new Date(readDate).toLocaleDateString()}</span>
+						{/if}
+					{/if}
+				</div>
+				
+				<button 
+					class="btn-read-toggle" 
+					class:read={isRead}
+					onclick={toggleReadStatus}
+					disabled={savingProgress}
+				>
+					{isRead ? 'Mark as Unread' : 'Mark as Read'}
+				</button>
+				
+				<div class="quiz-section">
+					<label for="quiz-score">AR Quiz Score</label>
+					<div class="quiz-inputs">
+						<input 
+							type="number" 
+							id="quiz-score" 
+							bind:value={quizScore}
+							min="0"
+							max="100"
+							placeholder="0-100"
+						/>
+						<input 
+							type="date" 
+							bind:value={quizDate}
+						/>
+						<button class="btn-save-quiz" onclick={saveQuizScore} disabled={savingProgress || quizScore === undefined}>
+							Save
+						</button>
+					</div>
+				</div>
+				
+				<div class="notes-section">
+					<label for="notes">Notes</label>
+					<textarea 
+						id="notes" 
+						bind:value={notes}
+						placeholder="Add reading notes..."
+						rows="4"
+					></textarea>
+					<button class="btn-save-notes" onclick={saveNotes} disabled={savingProgress}>
+						Save Notes
+					</button>
+				</div>
+				
+				<ProgressTimeline events={progressEvents} />
 			</div>
 
 			<div class="book-actions">
@@ -338,5 +462,113 @@
 	.btn-save:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
+	}
+
+	/* Progress Tracking Styles */
+	.progress-section {
+		margin-top: 24px;
+		padding-top: 24px;
+		border-top: 1px solid #eee;
+	}
+
+	.read-status {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 12px;
+	}
+
+	.read-badge {
+		background: #d1fae5;
+		color: #065f46;
+		padding: 4px 10px;
+		border-radius: 12px;
+		font-size: 14px;
+		font-weight: 500;
+	}
+
+	.read-date {
+		color: #888;
+		font-size: 14px;
+	}
+
+	.btn-read-toggle {
+		width: 100%;
+		padding: 14px;
+		font-size: 16px;
+		border: none;
+		border-radius: 8px;
+		cursor: pointer;
+		background: #e5e5e5;
+		color: #333;
+		margin-bottom: 20px;
+	}
+
+	.btn-read-toggle.read {
+		background: #fef3c7;
+		color: #92400e;
+	}
+
+	.quiz-section,
+	.notes-section {
+		margin-bottom: 20px;
+	}
+
+	.quiz-section label,
+	.notes-section label {
+		display: block;
+		font-weight: 500;
+		margin-bottom: 8px;
+		color: #333;
+	}
+
+	.quiz-inputs {
+		display: flex;
+		gap: 8px;
+	}
+
+	.quiz-inputs input[type="number"] {
+		width: 80px;
+	}
+
+	.quiz-inputs input[type="date"] {
+		flex: 1;
+	}
+
+	.btn-save-quiz,
+	.btn-save-notes {
+		padding: 10px 16px;
+		font-size: 14px;
+		border: none;
+		border-radius: 6px;
+		cursor: pointer;
+		background: #4a90d9;
+		color: white;
+	}
+
+	.btn-save-quiz:disabled,
+	.btn-save-notes:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	textarea {
+		width: 100%;
+		padding: 12px;
+		font-size: 16px;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		font-family: inherit;
+		resize: vertical;
+		box-sizing: border-box;
+	}
+
+	textarea:focus {
+		outline: none;
+		border-color: #4a90d9;
+	}
+
+	.btn-save-notes {
+		margin-top: 8px;
 	}
 </style>
