@@ -36,7 +36,11 @@ Parents can quickly catalog their children's books and track AR reading progress
 7. User can delete a book from library
 8. User can install app to phone home screen
 
-**Plans:** TBD
+**Plans:** 2 plans
+
+**Plan list:**
+- [ ] 01-01-PLAN.md — SvelteKit + PWA Shell Setup
+- [ ] 01-02-PLAN.md — Scanner + Library Management
 
 **UI hint:** yes
 
