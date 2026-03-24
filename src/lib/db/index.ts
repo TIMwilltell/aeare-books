@@ -13,6 +13,13 @@ export interface Book {
 	updatedAt: Date;
 }
 
+export interface ArCacheEntry {
+	isbn: string;
+	arLevel: number;
+	arPoints: number;
+	cachedAt: Date;
+}
+
 export type SyncOperation = 'create' | 'update' | 'delete';
 
 export interface SyncQueueItem {
@@ -28,12 +35,18 @@ export interface SyncQueueItem {
 class AeAreDatabase extends Dexie {
 	books!: Table<Book, number>;
 	syncQueue!: Table<SyncQueueItem, number>;
+	arCache!: Table<ArCacheEntry, string>;
 
 	constructor() {
 		super('AeAreDB');
 		this.version(1).stores({
 			books: '++id, isbn, title, author, createdAt',
 			syncQueue: '++id, operation, tableName, recordId, status, createdAt'
+		});
+		this.version(2).stores({
+			books: '++id, isbn, title, author, createdAt',
+			syncQueue: '++id, operation, tableName, recordId, status, createdAt',
+			arCache: 'isbn, cachedAt'
 		});
 	}
 }
@@ -46,7 +59,10 @@ export async function addBook(
 	title: string,
 	author: string,
 	isbn: string,
-	coverUrl?: string
+	coverUrl?: string,
+	arLevel?: number,
+	arPoints?: number,
+	arDataSource?: 'fetched' | 'manual'
 ): Promise<number> {
 	const now = new Date();
 	const id = await db.books.add({
@@ -54,6 +70,9 @@ export async function addBook(
 		author,
 		isbn,
 		coverUrl,
+		arLevel,
+		arPoints,
+		arDataSource,
 		createdAt: now,
 		updatedAt: now
 	});
@@ -94,4 +113,26 @@ export async function searchBooks(query: string): Promise<Book[]> {
 
 export async function getBooksCount(): Promise<number> {
 	return await db.books.count();
+}
+
+// AR Cache Operations
+
+export async function getArCache(isbn: string): Promise<{ arLevel: number; arPoints: number } | null> {
+	const entry = await db.arCache.get(isbn);
+	if (!entry) {
+		return null;
+	}
+	return {
+		arLevel: entry.arLevel,
+		arPoints: entry.arPoints
+	};
+}
+
+export async function setArCache(isbn: string, arLevel: number, arPoints: number): Promise<void> {
+	await db.arCache.put({
+		isbn,
+		arLevel,
+		arPoints,
+		cachedAt: new Date()
+	});
 }
