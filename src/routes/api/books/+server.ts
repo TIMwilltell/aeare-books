@@ -1,35 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
+const OPEN_LIBRARY_SEARCH_API = 'https://openlibrary.org/search.json';
 
 /**
- * Convert ISBN-13 to ISBN-10
+ * Lookup book metadata from Open Library Search API
+ * This gives us author names directly in the response
  */
-function isbn13to10(isbn13: string): string {
-	const isbn10 = isbn13.slice(3, 12);
-	const checkDigit = calculateIsbn10CheckDigit(isbn10);
-	return isbn10 + checkDigit;
-}
-
-/**
- * Calculate ISBN-10 check digit
- */
-function calculateIsbn10CheckDigit(base: string): string {
-	let sum = 0;
-	for (let i = 0; i < 9; i++) {
-		sum += parseInt(base[i]) * (10 - i);
-	}
-	const remainder = sum % 11;
-	const checkDigit = remainder === 0 ? 0 : 11 - remainder;
-	return checkDigit === 10 ? 'X' : String(checkDigit);
-}
-
-/**
- * Lookup book metadata from Google Books API
- */
-async function lookupGoogleBooks(isbn: string): Promise<Response> {
-	const url = `${GOOGLE_BOOKS_API}?q=isbn:${isbn}`;
+async function lookupOpenLibrary(isbn: string): Promise<Response> {
+	const url = `${OPEN_LIBRARY_SEARCH_API}?isbn=${isbn}`;
 	return fetch(url);
 }
 
@@ -43,92 +22,63 @@ export const GET: RequestHandler = async ({ url }) => {
 	// Clean the ISBN (remove hyphens and spaces)
 	const cleanIsbn = isbn.replace(/[-\s]/g, '');
 
-	let lastError = 'Book not found';
-
-	// Try ISBN-13 first (if it looks like ISBN-13)
-	if (cleanIsbn.length === 13) {
-		try {
-			const response = await lookupGoogleBooks(cleanIsbn);
-			if (response.ok) {
-				const data = await response.json();
-				const book = parseGoogleBooksResponse(data);
-				if (book) {
-					return json(book);
-				}
+	try {
+		const response = await lookupOpenLibrary(cleanIsbn);
+		
+		if (!response.ok) {
+			if (response.status === 404) {
+				return json({ error: 'Book not found' }, { status: 404 });
 			}
-			lastError = `ISBN-13 lookup failed: ${response.status}`;
-		} catch (e) {
-			lastError = 'Network error during ISBN-13 lookup';
+			return json({ error: `Open Library lookup failed: ${response.status}` }, { status: response.status });
 		}
-	}
 
-	// Try ISBN-10 (convert if we had ISBN-13, or use as-is)
-	let isbn10 = cleanIsbn;
-	if (cleanIsbn.length === 13 && cleanIsbn.startsWith('978')) {
-		isbn10 = isbn13to10(cleanIsbn);
-	}
-
-	if (isbn10.length === 10) {
-		try {
-			const response = await lookupGoogleBooks(isbn10);
-			if (response.ok) {
-				const data = await response.json();
-				const book = parseGoogleBooksResponse(data);
-				if (book) {
-					return json(book);
-				}
-			}
-			lastError = `ISBN-10 lookup failed: ${response.status}`;
-		} catch (e) {
-			lastError = 'Network error during ISBN-10 lookup';
+		const data = await response.json();
+		const book = parseOpenLibrarySearchResponse(data);
+		
+		if (book) {
+			return json(book);
 		}
+		
+		return json({ error: 'Book not found' }, { status: 404 });
+	} catch (e) {
+		return json({ error: 'Network error during lookup' }, { status: 500 });
 	}
-
-	// Return 404 if both lookups failed
-	return json({ error: lastError }, { status: 404 });
 };
 
-interface GoogleBooksResponse {
-	totalItems: number;
-	items?: Array<{
-		volumeInfo: {
-			title?: string;
-			authors?: string[];
-			imageLinks?: {
-				thumbnail?: string;
-				smallThumbnail?: string;
-			};
-		};
+interface OpenLibrarySearchResponse {
+	numFound: number;
+	docs?: Array<{
+		title: string;
+		author_name?: string[];
+		cover_i?: number;
+		first_publish_year?: number;
 	}>;
 }
 
-function parseGoogleBooksResponse(data: GoogleBooksResponse) {
-	if (!data.items || data.items.length === 0) {
+function parseOpenLibrarySearchResponse(data: OpenLibrarySearchResponse) {
+	if (!data.numFound || !data.docs || data.docs.length === 0) {
 		return null;
 	}
 
-	const volumeInfo = data.items[0].volumeInfo;
-
-	if (!volumeInfo.title) {
+	const doc = data.docs[0];
+	
+	if (!doc.title) {
 		return null;
 	}
 
-	const title = volumeInfo.title;
-	const author = volumeInfo.authors?.[0] || 'Unknown Author';
-
-	// Prefer larger thumbnail, fallback to smallThumbnail
+	const title = doc.title;
+	const author = doc.author_name?.[0] || 'Unknown Author';
+	
+	// Get cover URL from Open Library covers API
 	let coverUrl: string | undefined;
-	if (volumeInfo.imageLinks?.thumbnail) {
-		// Convert HTTP to HTTPS if needed
-		coverUrl = volumeInfo.imageLinks.thumbnail.replace(/^http:/, 'https:');
-	} else if (volumeInfo.imageLinks?.smallThumbnail) {
-		coverUrl = volumeInfo.imageLinks.smallThumbnail.replace(/^http:/, 'https:');
+	if (doc.cover_i) {
+		coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
 	}
 
 	return {
 		title,
 		author,
 		coverUrl,
-		source: 'google-books' as const
+		source: 'open-library' as const
 	};
 }

@@ -3,7 +3,7 @@
 
 	interface Props {
 		books: Book[];
-		onSelect: (id: number) => void;
+		onSelect: (id: string) => void;
 	}
 
 	let { books, onSelect }: Props = $props();

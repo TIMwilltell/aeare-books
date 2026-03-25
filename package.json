@@ -24,6 +24,8 @@
 	},
 	"dependencies": {
 		"@playwright/test": "^1.58.2",
+		"convex": "^1.34.0",
+		"convex-svelte": "^0.0.12",
 		"dexie": "^4.3.0",
 		"playwright": "^1.58.2",
 		"quagga": "^0.12.1"

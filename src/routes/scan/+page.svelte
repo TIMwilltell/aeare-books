@@ -3,6 +3,8 @@
 	import Scanner from '$lib/components/Scanner.svelte';
 
 	let permissionDenied = $state(false);
+	let scanError = $state('');
+	let errorTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	function handleDetected(isbn: string) {
 		goto(`/book/new?isbn=${isbn}`);
@@ -11,6 +13,15 @@
 	function handleError(error: string) {
 		if (error.includes('denied') || error.includes('NotAllowedError')) {
 			permissionDenied = true;
+			scanError = '';
+		} else if (error === 'not-isbn') {
+			// Non-ISBN barcode scanned - show helpful message
+			// Clear any existing timeout and set new one
+			if (errorTimeout) clearTimeout(errorTimeout);
+			scanError = 'Scanned code is not a valid book ISBN. Please scan the ISBN barcode on the book.';
+			errorTimeout = setTimeout(() => {
+				scanError = '';
+			}, 3000);
 		}
 	}
 
@@ -36,6 +47,11 @@
 		<div class="scanner-wrapper">
 			<Scanner onDetected={handleDetected} onError={handleError} />
 		</div>
+		{#if scanError}
+			<div class="scan-error">
+				<p>{scanError}</p>
+			</div>
+		{/if}
 		<div class="manual-entry">
 			<button class="btn-link" onclick={handleManualEntry}>Enter ISBN manually</button>
 		</div>
@@ -93,5 +109,18 @@
 		font-size: 16px;
 		cursor: pointer;
 		text-decoration: underline;
+	}
+
+	.scan-error {
+		text-align: center;
+		padding: 12px;
+		margin-top: 16px;
+		background: #fef3c7;
+		border-radius: 8px;
+		color: #92400e;
+	}
+
+	.scan-error p {
+		margin: 0;
 	}
 </style>

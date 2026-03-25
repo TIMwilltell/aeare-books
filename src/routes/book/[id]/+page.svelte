@@ -31,9 +31,13 @@
 	let progressEvents = $state<ProgressEvent[]>([]);
 	let savingProgress = $state(false);
 
-	const bookId = parseInt(page.params.id);
+	const bookId = page.params.id;
 
 	onMount(async () => {
+		if (!bookId) {
+			goto('/');
+			return;
+		}
 		const loadedBook = await getBook(bookId);
 		if (loadedBook) {
 			book = loadedBook;
@@ -123,7 +127,7 @@
 		
 		await updateBook(book.id, { 
 			isRead: newIsRead,
-			readDate: eventDate ? new Date(eventDate) : null
+			readDate: eventDate ? new Date(eventDate).getTime() : null
 		});
 		
 		if (newIsRead) {
@@ -143,7 +147,7 @@
 		
 		await updateBook(book.id, { 
 			quizScore: quizScore,
-			quizDate: new Date(qDate)
+			quizDate: new Date(qDate).getTime()
 		});
 		
 		await addProgressEvent(book.id, 'quiz_completed', `${quizScore}%`, new Date(qDate));

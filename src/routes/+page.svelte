@@ -19,7 +19,7 @@
 		books = await searchBooks(searchQuery);
 	}
 
-	function handleBookSelect(id: number) {
+	function handleBookSelect(id: string) {
 		goto(`/book/${id}`);
 	}
 

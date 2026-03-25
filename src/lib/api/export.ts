@@ -1,4 +1,4 @@
-import { useConvexClient } from 'convex-svelte';
+import { ConvexClient } from 'convex/browser';
 import { api } from '../../convex/_generated/api';
 
 export interface ExportData {
@@ -9,7 +9,7 @@ export interface ExportData {
 }
 
 export async function exportLibrary(): Promise<void> {
-	const client = useConvexClient();
+	const client = new ConvexClient(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
 
 	const books = await client.query(api.books.getAll, {});
 

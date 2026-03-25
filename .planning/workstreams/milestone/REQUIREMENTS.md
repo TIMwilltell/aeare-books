@@ -21,12 +21,12 @@
 
 ### Screens
 
-- [ ] **SCRN-01**: Design spec provides library screen mockup (list/grid view, search bar)
-- [ ] **SCRN-02**: Design spec provides scan flow screen mockup (camera view, scan button, manual entry)
-- [ ] **SCRN-03**: Design spec provides book detail screen mockup (cover, metadata, AR info, progress)
-- [ ] **SCRN-04**: Design spec provides add/edit progress screen mockup (read date, quiz score, notes)
-- [ ] **SCRN-05**: Design spec provides settings/export screen mockup
-- [ ] **SCRN-06**: Design spec shows responsive behavior for tablet/desktop views
+- [x] **SCRN-01**: Design spec provides library screen mockup (list/grid view, search bar)
+- [x] **SCRN-02**: Design spec provides scan flow screen mockup (camera view, scan button, manual entry)
+- [x] **SCRN-03**: Design spec provides book detail screen mockup (cover, metadata, AR info, progress)
+- [x] **SCRN-04**: Design spec provides add/edit progress screen mockup (read date, quiz score, notes)
+- [x] **SCRN-05**: Design spec provides settings/export screen mockup
+- [x] **SCRN-06**: Design spec shows responsive behavior for tablet/desktop views
 
 ## Future Requirements (Deferred)
 
@@ -59,12 +59,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMP-08 | Phase 5 | Pending |
 | COMP-09 | Phase 5 | Pending |
 | COMP-10 | Phase 5 | Pending |
-| SCRN-01 | Phase 6 | Pending |
-| SCRN-02 | Phase 6 | Pending |
-| SCRN-03 | Phase 6 | Pending |
-| SCRN-04 | Phase 6 | Pending |
-| SCRN-05 | Phase 6 | Pending |
-| SCRN-06 | Phase 6 | Pending |
+| SCRN-01 | Phase 6 | Complete |
+| SCRN-02 | Phase 6 | Complete |
+| SCRN-03 | Phase 6 | Complete |
+| SCRN-04 | Phase 6 | Complete |
+| SCRN-05 | Phase 6 | Complete |
+| SCRN-06 | Phase 6 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 16 total
