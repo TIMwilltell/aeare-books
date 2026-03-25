@@ -37,85 +37,127 @@
 </script>
 
 <div class="progress-timeline">
-	<h3>Progress</h3>
+	<h3 class="timeline-heading">Progress</h3>
 	{#if events.length === 0}
 		<p class="no-events">No progress recorded yet</p>
 	{:else}
-		<ul class="timeline">
-			{#each events as event}
-				<li class="timeline-event">
-					<span class="icon">{getEventIcon(event.eventType)}</span>
-					<div class="event-content">
-						<span class="event-label">{getEventLabel(event.eventType)}</span>
-						<span class="event-date">{formatDate(event.eventDate)}</span>
-						{#if event.value}
-							<span class="event-value">{event.value}</span>
+		<div class="timeline">
+			{#each events as event, i}
+				<div class="timeline-item">
+					<div class="timeline-marker">
+						{#if i < events.length - 1}
+							<div class="timeline-line"></div>
 						{/if}
 					</div>
-				</li>
+					<div class="timeline-content">
+						<span class="event-icon">{getEventIcon(event.eventType)}</span>
+						<div class="event-details">
+							<span class="event-label">{getEventLabel(event.eventType)}</span>
+							<span class="event-date">{formatDate(event.eventDate)}</span>
+							{#if event.value}
+								<span class="event-value">{event.value}</span>
+							{/if}
+						</div>
+					</div>
+				</div>
 			{/each}
-		</ul>
+		</div>
 	{/if}
 </div>
 
 <style>
 	.progress-timeline {
-		margin-top: 24px;
-		padding-top: 24px;
-		border-top: 1px solid #eee;
+		margin-top: var(--space-6);
+		padding-top: var(--space-6);
+		border-top: 1px solid var(--outline-variant);
 	}
 	
-	h3 {
-		font-size: 18px;
-		margin: 0 0 16px;
-		color: #333;
+	.timeline-heading {
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		font-weight: var(--font-semibold);
+		color: var(--on-surface);
+		margin: 0 0 var(--space-4);
 	}
 	
 	.no-events {
-		color: #888;
+		font-family: var(--font-body);
+		font-size: var(--text-base);
+		color: var(--on-surface-variant);
 		font-style: italic;
-	}
-	
-	.timeline {
-		list-style: none;
-		padding: 0;
 		margin: 0;
 	}
 	
-	.timeline-event {
+	.timeline {
+		padding: var(--space-4);
+		background: var(--surface-container-low);
+		border-radius: var(--radius-md);
+	}
+	
+	.timeline-item {
 		display: flex;
-		gap: 12px;
-		padding: 12px 0;
-		border-bottom: 1px solid #f0f0f0;
+		gap: var(--space-4);
+		padding-bottom: var(--space-4);
 	}
 	
-	.timeline-event:last-child {
-		border-bottom: none;
+	.timeline-item:last-child {
+		padding-bottom: 0;
 	}
 	
-	.icon {
-		font-size: 18px;
+	.timeline-marker {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--primary);
+		margin-top: 6px;
+		flex-shrink: 0;
+		position: relative;
 	}
 	
-	.event-content {
+	.timeline-line {
+		position: absolute;
+		top: 12px;
+		left: 3px;
+		width: 2px;
+		height: calc(100% + var(--space-2));
+		background: var(--outline-variant);
+	}
+	
+	.timeline-content {
+		display: flex;
+		gap: var(--space-3);
+		flex: 1;
+	}
+	
+	.event-icon {
+		font-size: var(--text-lg);
+		flex-shrink: 0;
+	}
+	
+	.event-details {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: var(--space-1);
 	}
 	
 	.event-label {
-		font-weight: 500;
-		color: #333;
+		font-family: var(--font-body);
+		font-weight: var(--font-medium);
+		color: var(--on-surface);
+		font-size: var(--text-base);
 	}
 	
 	.event-date {
-		font-size: 13px;
-		color: #888;
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		color: var(--on-surface-variant);
 	}
 	
 	.event-value {
-		font-size: 14px;
-		color: #4a90d9;
-		margin-top: 4px;
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		color: var(--primary);
+		font-weight: var(--font-medium);
+		margin-top: var(--space-1);
 	}
 </style>
