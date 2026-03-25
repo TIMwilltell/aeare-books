@@ -23,11 +23,11 @@
 		right: 24px;
 		width: 56px;
 		height: 56px;
-		border-radius: 50%;
-		background: #4A90D9;
-		color: white;
+		border-radius: 0.75rem;
+		background: linear-gradient(135deg, var(--primary, #4A90D9) 0%, var(--primary-container, #C8E6FF) 100%);
+		color: var(--on-primary, white);
 		border: none;
-		box-shadow: 0 4px 12px rgba(74, 144, 217, 0.4);
+		box-shadow: 0 4px 12px rgba(74, 144, 217, 0.3);
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -37,11 +37,12 @@
 
 	.fab:hover {
 		transform: scale(1.05);
-		box-shadow: 0 6px 16px rgba(74, 144, 217, 0.5);
+		box-shadow: 0 6px 20px rgba(74, 144, 217, 0.4);
 	}
 
 	.fab:active {
 		transform: scale(0.95);
+		background: var(--primary-fixed, #2563eb);
 	}
 
 	svg {
