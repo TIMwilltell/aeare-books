@@ -5,13 +5,18 @@
 	import { lookupBook } from '$lib/api/books';
 	import { lookupAr } from '$lib/api/ar';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import TextInput from '$lib/components/TextInput.svelte';
+	import PrimaryButton from '$lib/components/PrimaryButton.svelte';
+	import SecondaryButton from '$lib/components/SecondaryButton.svelte';
+	import Badge from '$lib/components/Badge.svelte';
 
 	let isbn = $state('');
 	let title = $state('');
 	let author = $state('');
 	let coverUrl = $state('');
-	let arLevel = $state<number | undefined>(undefined);
-	let arPoints = $state<number | undefined>(undefined);
+	// Store as strings for TextInput binding, convert to numbers on save
+	let arLevelStr = $state('');
+	let arPointsStr = $state('');
 	let arDataSource = $state<'fetched' | 'manual'>('manual');
 	let saving = $state(false);
 	let lookupLoading = $state(false);
@@ -40,8 +45,8 @@
 			// Fetch AR data
 			const arResult = await lookupAr(isbn.trim());
 			if (arResult.success && arResult.data) {
-				arLevel = arResult.data.arLevel;
-				arPoints = arResult.data.arPoints;
+				arLevelStr = String(arResult.data.arLevel || '');
+				arPointsStr = String(arResult.data.arPoints || '');
 				arDataSource = 'fetched';
 			}
 		} catch (e) {
@@ -58,6 +63,10 @@
 		}
 
 		saving = true;
+
+		// Convert string inputs to numbers
+		const arLevel = arLevelStr ? parseFloat(arLevelStr) : undefined;
+		const arPoints = arPointsStr ? parseFloat(arPointsStr) : undefined;
 
 		try {
 			await addBook(
@@ -87,17 +96,24 @@
 </svelte:head>
 
 <div class="book-form">
-	<h1>Add Book</h1>
+	<!-- Header with glassmorphism -->
+	<header class="page-header">
+		<div class="header-content">
+			<SecondaryButton label="← Back" onclick={handleCancel} />
+			<h1 class="header-title">Add Book</h1>
+			<div class="header-spacer"></div>
+		</div>
+	</header>
 
-	<form onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
-		<div class="form-group">
-			<label for="isbn">ISBN</label>
-			<div class="isbn-row">
-				<input
-					type="text"
-					id="isbn"
-					bind:value={isbn}
+	<main class="form-container">
+		<form onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
+			<!-- ISBN Lookup -->
+			<div class="form-group">
+				<TextInput
+					label="ISBN"
 					placeholder="Enter ISBN (optional)"
+					bind:value={isbn}
+					type="text"
 				/>
 				<button
 					type="button"
@@ -115,137 +131,153 @@
 			{#if lookupError}
 				<p class="lookup-error">{lookupError}</p>
 			{/if}
-		</div>
 
-		{#if coverUrl}
-			<div class="cover-preview">
-				<img src={coverUrl} alt="Book cover" />
-			</div>
-		{/if}
-
-		<div class="form-group">
-			<label for="title">Title *</label>
-			<input
-				type="text"
-				id="title"
-				bind:value={title}
-				placeholder="Enter book title"
-				required
-			/>
-		</div>
-
-		<div class="form-group">
-			<label for="author">Author *</label>
-			<input
-				type="text"
-				id="author"
-				bind:value={author}
-				placeholder="Enter author name"
-				required
-			/>
-		</div>
-
-		<div class="form-group">
-			<label for="ar-level">AR Level</label>
-			<input
-				type="number"
-				id="ar-level"
-				bind:value={arLevel}
-				step="0.1"
-				min="0"
-				max="20"
-				placeholder="e.g., 4.5"
-			/>
-			{#if arDataSource === 'fetched' && arLevel}
-				<span class="ar-badge fetched">Auto-fetched</span>
-			{:else if arLevel}
-				<span class="ar-badge manual">Manual</span>
+			<!-- Cover Preview -->
+			{#if coverUrl}
+				<div class="cover-preview">
+					<img src={coverUrl} alt="Book cover" />
+				</div>
 			{/if}
-		</div>
 
-		<div class="form-group">
-			<label for="ar-points">AR Points</label>
-			<input
-				type="number"
-				id="ar-points"
-				bind:value={arPoints}
-				step="0.1"
-				min="0"
-				placeholder="e.g., 5"
-			/>
-		</div>
+			<!-- Title -->
+			<div class="form-group">
+				<TextInput
+					label="Title"
+					placeholder="Enter book title"
+					bind:value={title}
+					type="text"
+					required={true}
+				/>
+			</div>
 
-		<div class="form-actions">
-			<button type="button" class="btn-cancel" onclick={handleCancel} disabled={saving}>
-				Cancel
-			</button>
-			<button type="submit" class="btn-save" disabled={saving}>
-				{saving ? 'Saving...' : 'Save'}
-			</button>
-		</div>
-	</form>
+			<!-- Author -->
+			<div class="form-group">
+				<TextInput
+					label="Author"
+					placeholder="Enter author name"
+					bind:value={author}
+					type="text"
+					required={true}
+				/>
+			</div>
+
+			<!-- AR Level -->
+			<div class="form-group">
+				<TextInput
+					label="AR Level"
+					placeholder="e.g., 4.5"
+					bind:value={arLevelStr}
+					type="text"
+				/>
+				{#if arDataSource === 'fetched' && arLevelStr}
+					<Badge label="Auto-fetched" variant="ar-fetched" size="sm" />
+				{:else if arLevelStr}
+					<Badge label="Manual" variant="ar-manual" size="sm" />
+				{/if}
+			</div>
+
+			<!-- AR Points -->
+			<div class="form-group">
+				<TextInput
+					label="AR Points"
+					placeholder="e.g., 5"
+					bind:value={arPointsStr}
+					type="text"
+				/>
+			</div>
+
+			<!-- Form Actions -->
+			<div class="form-actions">
+				<SecondaryButton 
+					label="Cancel" 
+					onclick={handleCancel} 
+					disabled={saving}
+					fullWidth={true} 
+				/>
+				<PrimaryButton 
+					label={saving ? 'Saving...' : 'Save'} 
+					onclick={handleSave}
+					disabled={saving}
+					fullWidth={true}
+					loading={saving}
+				/>
+			</div>
+		</form>
+	</main>
 </div>
 
 <style>
 	.book-form {
-		padding: 20px;
-		max-width: 500px;
-		margin: 0 auto;
+		min-height: 100vh;
+		background: var(--surface);
 	}
 
-	h1 {
-		margin: 0 0 24px;
-		font-size: 24px;
-		text-align: center;
+	/* Header with glassmorphism */
+	.page-header {
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		background: rgba(247, 245, 255, 0.8);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--outline-variant);
+		padding: var(--space-3) var(--space-4);
+	}
+
+	.header-content {
+		max-width: 500px;
+		margin: 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
+	}
+
+	.header-title {
+		font-family: var(--font-display);
+		font-size: var(--text-xl);
+		font-weight: var(--font-semibold);
+		color: var(--on-surface);
+		margin: 0;
+		white-space: nowrap;
+	}
+
+	.header-spacer {
+		width: 80px;
+	}
+
+	.form-container {
+		max-width: 500px;
+		margin: 0 auto;
+		padding: var(--space-4);
 	}
 
 	.form-group {
-		margin-bottom: 16px;
-	}
-
-	label {
-		display: block;
-		margin-bottom: 6px;
-		font-weight: 500;
-		color: #333;
-	}
-
-	input {
-		width: 100%;
-		padding: 12px;
-		font-size: 16px;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		box-sizing: border-box;
-	}
-
-	input:focus {
-		outline: none;
-		border-color: #4a90d9;
-	}
-
-	.isbn-row {
+		margin-bottom: var(--space-4);
 		display: flex;
-		gap: 8px;
-	}
-
-	.isbn-row input {
-		flex: 1;
+		flex-direction: column;
+		gap: var(--space-2);
 	}
 
 	.btn-lookup {
-		padding: 12px 16px;
-		font-size: 16px;
-		background: #10b981;
-		color: white;
+		padding: var(--space-3) var(--space-4);
+		font-family: var(--font-display);
+		font-size: var(--text-sm);
+		font-weight: var(--font-semibold);
+		background: var(--tertiary);
+		color: var(--on-tertiary);
 		border: none;
-		border-radius: 8px;
+		border-radius: var(--radius-md);
 		cursor: pointer;
 		white-space: nowrap;
-		min-width: 80px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		transition: transform var(--transition-fast);
+	}
+
+	.btn-lookup:hover:not(:disabled) {
+		transform: scale(1.02);
 	}
 
 	.btn-lookup:disabled {
@@ -254,70 +286,27 @@
 	}
 
 	.lookup-error {
-		color: #dc2626;
-		font-size: 14px;
-		margin: 4px 0 0;
+		color: var(--error);
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		margin: calc(-1 * var(--space-2)) 0 var(--space-2);
 	}
 
 	.cover-preview {
-		margin-bottom: 16px;
+		margin-bottom: var(--space-4);
 		text-align: center;
 	}
 
 	.cover-preview img {
 		max-width: 120px;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	.ar-badge {
-		display: inline-block;
-		font-size: 11px;
-		padding: 2px 6px;
-		border-radius: 4px;
-		margin-left: 8px;
-		vertical-align: middle;
-	}
-
-	.ar-badge.fetched {
-		background: #dbeafe;
-		color: #1d4ed8;
-	}
-
-	.ar-badge.manual {
-		background: #fef3c7;
-		color: #92400e;
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-elevated);
 	}
 
 	.form-actions {
 		display: flex;
-		gap: 12px;
-		margin-top: 24px;
-	}
-
-	.btn-cancel,
-	.btn-save {
-		flex: 1;
-		padding: 14px;
-		font-size: 16px;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-	}
-
-	.btn-cancel {
-		background: #e5e5e5;
-		color: #333;
-	}
-
-	.btn-save {
-		background: #4a90d9;
-		color: white;
-	}
-
-	.btn-cancel:disabled,
-	.btn-save:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+		flex-direction: column;
+		gap: var(--space-3);
+		margin-top: var(--space-6);
 	}
 </style>
