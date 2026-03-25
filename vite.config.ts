@@ -3,6 +3,17 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+	ssr: {
+		external: ['quagga']
+	},
+	server: {
+		https: {
+			key: './ssl/localhost.key',
+			cert: './ssl/localhost.crt'
+		},
+		host: '0.0.0.0',
+		port: 5173
+	},
 	plugins: [
 		sveltekit(),
 		VitePWA({
