@@ -1,12 +1,19 @@
 <script lang="ts">
+	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import StatusBanner from '$lib/components/StatusBanner.svelte';
 	import { setupConvex } from 'convex-svelte';
+	import { browser } from '$app/environment';
 
 	const { children } = $props();
 
-	// Initialize Convex client - must be called inside a component, not at module level
-	setupConvex(import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONvex_DEPLOYMENT_URL);
+	// Initialize Convex client only on the client side (not during SSR)
+	if (browser) {
+		const convexUrl = import.meta.env.PUBLIC_CONVEX_URL ?? import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONVEX_DEPLOYMENT_URL;
+		if (convexUrl) {
+			setupConvex(convexUrl);
+		}
+	}
 </script>
 
 <svelte:head>

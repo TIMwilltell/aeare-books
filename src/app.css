@@ -1,0 +1,275 @@
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap');
+
+/* ===========================================
+   Design System: Enchanted Inkwell
+   Generated from Stitch Project 3676387148203023923
+   =========================================== */
+
+/* CSS Custom Properties (Design Tokens) */
+:root {
+  /* ----- Colors ----- */
+  --primary: #005da7;
+  --primary-container: #68abff;
+  --primary-dim: #005192;
+  --primary-fixed: #d1e4ff;
+  --primary-fixed-dim: #9ECAFF;
+  --on-primary: #ffffff;
+  --on-primary-container: #001d36;
+
+  --secondary: #6c5a00;
+  --secondary-container: #ffd709;
+  --secondary-fixed: #e8c000;
+  --secondary-fixed-dim: #b39700;
+  --on-secondary: #ffffff;
+  --on-secondary-container: #201a00;
+
+  --tertiary: #006a35;
+  --tertiary-container: #6bfe9c;
+  --tertiary-fixed: #69e896;
+  --tertiary-fixed-dim: #4db86e;
+  --on-tertiary: #ffffff;
+  --on-tertiary-container: #00210c;
+
+  --surface: #f7f5ff;
+  --surface-container: #e6e6fe;
+  --surface-container-high: #e0e1fa;
+  --surface-container-highest: #d9dbf6;
+  --surface-container-low: #f0efff;
+  --surface-container-lowest: #ffffff;
+
+  --on-surface: #2c2e3c;
+  --on-surface-variant: #595a6b;
+
+  --error: #b31b25;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #410002;
+
+  --outline: #767680;
+  --outline-variant: #abacbe;
+
+  /* ----- Typography ----- */
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Be Vietnam Pro', sans-serif;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* ----- Spacing ----- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ----- Border Radius ----- */
+  --radius-sm: 0.25rem;
+  --radius-DEFAULT: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-full: 9999px;
+
+  /* ----- Shadows ----- */
+  --shadow-ambient: 0 8px 24px rgba(44, 46, 60, 0.06);
+  --shadow-elevated: 0 16px 32px rgba(44, 46, 60, 0.08);
+  --shadow-sm: 0 2px 8px rgba(44, 46, 60, 0.04);
+
+  /* ----- Transitions ----- */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+}
+
+/* ===========================================
+   Global Reset
+   =========================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
+  color: var(--on-surface);
+  background-color: var(--surface);
+  min-height: 100vh;
+}
+
+/* ===========================================
+   Typography Classes
+   =========================================== */
+.display {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-normal);
+}
+
+.body {
+  font-family: var(--font-body);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
+}
+
+.label {
+  font-family: var(--font-body);
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+}
+
+/* Typography Sizes */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+
+/* Font Weights */
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+
+/* ===========================================
+   Utility Classes
+   =========================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.surface-layer {
+  background-color: var(--surface);
+}
+
+.surface-container-layer {
+  background-color: var(--surface-container);
+}
+
+/* Focus visible outline for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ===========================================
+   Base Element Styles
+   =========================================== */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-dim);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ===========================================
+   Animation Keyframes
+   =========================================== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutToTop {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
