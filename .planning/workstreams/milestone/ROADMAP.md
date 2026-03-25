@@ -190,12 +190,47 @@ Parents can quickly catalog their children's books and track AR reading progress
 | 3. Progress Tracking | 2/2 | Complete   | 2026-03-24 |
 | 4. Cloud Sync & Export | 3/3 | Complete   | 2026-03-24 |
 | 5. Component Specifications | 1/1 | Complete   | 2026-03-24 |
-| 6. Screen Designs | 0/1 | Complete    | 2026-03-25 |
+| 6. Screen Designs | 1/1 | Complete   | 2026-03-25 |
+| 7. Implement Stitch Designs | 0/5 | In Progress | — |
+
+---
+
+### Phase 7: Implement Stitch Designs
+
+**Goal:** Implement the Literary Horizon design system from Stitch across all app screens and components
+
+**Depends on:** Phase 6
+
+**Requirements:** IMPL-01, IMPL-02, IMPL-03, IMPL-04, IMPL-05, IMPL-06, IMPL-07, IMPL-08, IMPL-09, IMPL-10
+
+**Success Criteria** (what must be TRUE):
+1. Global CSS uses design tokens matching Literary Horizon design system
+2. Button components support primary and secondary variants with gradient/ghost styles
+3. TextInput component supports all states (focus, error, disabled)
+4. Badge component displays AR status variants correctly
+5. Toast notifications appear and auto-dismiss
+6. FAB shows gradient fill with md corner radius and ambient shadow
+7. BookCard displays thumbnail, title (serif), author (sans), and AR badges
+8. EmptyState displays with icon, title, description, and CTA
+9. Library page uses glassmorphism header with search bar
+10. All pages use responsive breakpoints for tablet and desktop
+
+**Plans:** 5 plans
+
+**Plan list:**
+- [ ] 07-01-PLAN.md — Design System Foundation (CSS tokens, Button, TextInput, Badge, Toast)
+- [ ] 07-02-PLAN.md — Core Components (BookCard, FAB, EmptyState, Modal, Skeleton)
+- [ ] 07-03-PLAN.md — Library & Navigation (Update layout, library page)
+- [ ] 07-04-PLAN.md — Book Detail & Progress (Detail page, progress form)
+- [ ] 07-05-PLAN.md — Scan, Settings & Responsive (Scan page, settings page, breakpoints)
+
+---
 
 ## Coverage
 
 - **v1 requirements:** 30 total
-- **Mapped to phases:** 30
+- **Implementation requirements:** 10 (IMPL-01 to IMPL-10)
+- **Mapped to phases:** 40
 - **Unmapped:** 0 ✓
 
 ### Coverage Map
@@ -232,6 +267,16 @@ Parents can quickly catalog their children's books and track AR reading progress
 | PWA-04 | Phase 4 | Complete |
 | EXPT-01 | Phase 4 | Complete |
 | EXPT-02 | Phase 4 | Complete |
+| IMPL-01 | Phase 7 | In Progress |
+| IMPL-02 | Phase 7 | In Progress |
+| IMPL-03 | Phase 7 | In Progress |
+| IMPL-04 | Phase 7 | In Progress |
+| IMPL-05 | Phase 7 | In Progress |
+| IMPL-06 | Phase 7 | In Progress |
+| IMPL-07 | Phase 7 | In Progress |
+| IMPL-08 | Phase 7 | In Progress |
+| IMPL-09 | Phase 7 | In Progress |
+| IMPL-10 | Phase 7 | In Progress |
 
 ---
 

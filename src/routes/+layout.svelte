@@ -6,7 +6,7 @@
 	const { children } = $props();
 
 	// Initialize Convex client - must be called inside a component, not at module level
-	setupConvex(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
+	setupConvex(import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONvex_DEPLOYMENT_URL);
 </script>
 
 <svelte:head>
