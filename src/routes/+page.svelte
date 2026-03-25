@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { getAllBooks, searchBooks, type Book } from '$lib/db';
-	import { exportLibrary } from '$lib/api/export';
 	import BookList from '$lib/components/BookList.svelte';
 	import FAB from '$lib/components/FAB.svelte';
+	import TextInput from '$lib/components/TextInput.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
 	let books = $state<Book[]>([]);
 	let searchQuery = $state('');
@@ -15,7 +17,9 @@
 		loading = false;
 	});
 
-	async function handleSearch() {
+	async function handleSearch(event: Event) {
+		const target = event.target as HTMLInputElement;
+		searchQuery = target.value;
 		books = await searchBooks(searchQuery);
 	}
 
@@ -26,15 +30,6 @@
 	function handleScan() {
 		goto('/scan');
 	}
-
-	async function handleExport() {
-		try {
-			await exportLibrary();
-		} catch (error) {
-			console.error('Export failed:', error);
-			alert('Failed to export library. Please try again.');
-		}
-	}
 </script>
 
 <svelte:head>
@@ -42,121 +37,74 @@
 </svelte:head>
 
 <div class="library-page">
-	<div class="header">
-		<div class="search-bar">
-			<input
-				type="text"
+	<header class="library-header">
+		<h1 class="serif">My Library</h1>
+		<div class="search">
+			<TextInput 
+				label="Search"
 				placeholder="Search by title or author..."
-				bind:value={searchQuery}
+				value={searchQuery}
 				oninput={handleSearch}
 			/>
 		</div>
-		<button class="export-btn" onclick={handleExport}>
-			📥 Export
-		</button>
-	</div>
-
-	{#if loading}
-		<div class="loading">
-			<p>Loading your library...</p>
-		</div>
-	{:else if books.length === 0}
-		<div class="empty-state">
-			<h2>Your library is empty</h2>
-			<p>Start by scanning a book barcode to add your first book!</p>
-			<button class="btn-scan" onclick={handleScan}>Scan a Book</button>
-		</div>
-	{:else}
-		<BookList {books} onSelect={handleBookSelect} />
-	{/if}
-
+	</header>
+	
+	<main class="library-content">
+		{#if loading}
+			<div class="loading">
+				<LoadingSpinner size="large" />
+			</div>
+		{:else if books.length === 0}
+			<EmptyState 
+				title="Your library is empty"
+				description="Start by scanning a book barcode to add your first book!"
+				actionLabel="Scan a Book"
+				onAction={handleScan}
+			/>
+		{:else}
+			<BookList {books} onSelect={handleBookSelect} />
+		{/if}
+	</main>
+	
 	<FAB onclick={handleScan} />
 </div>
 
 <style>
 	.library-page {
 		min-height: 100vh;
-		background: #f5f5f5;
-		padding-bottom: 80px;
+		background: var(--surface, #f5f5f5);
 	}
 
-	.header {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 16px;
-		background: white;
-		border-bottom: 1px solid #eee;
+	.library-header {
+		padding: var(--space-4);
+		background: rgba(251, 249, 248, 0.8);
+		backdrop-filter: blur(20px);
+		-webkit-backdrop-filter: blur(20px);
+		position: sticky;
+		top: 0;
+		z-index: 10;
 	}
 
-	.search-bar {
-		flex: 1;
+	.library-header h1 {
+		font-family: var(--font-serif, 'Noto Serif', Georgia, serif);
+		font-size: var(--text-headline-sm, 1.5rem);
+		font-weight: 600;
+		margin: 0 0 var(--space-4) 0;
+		color: var(--on-surface, #1a1a1a);
 	}
 
-	.search-bar input {
+	.search {
 		width: 100%;
-		padding: 12px 16px;
-		font-size: 16px;
-		border: 1px solid #ddd;
-		border-radius: 24px;
-		box-sizing: border-box;
 	}
 
-	.search-bar input:focus {
-		outline: none;
-		border-color: #4A90D9;
-	}
-
-	.export-btn {
-		padding: 10px 16px;
-		background: #f3f4f6;
-		border: none;
-		border-radius: 8px;
-		font-size: 14px;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		white-space: nowrap;
-	}
-
-	.export-btn:hover {
-		background: #e5e7eb;
+	.library-content {
+		padding: var(--space-4);
 	}
 
 	.loading {
-		text-align: center;
-		padding: 60px 20px;
-		color: #666;
-	}
-
-	.empty-state {
-		text-align: center;
-		padding: 60px 20px;
-	}
-
-	.empty-state h2 {
-		margin: 0 0 12px;
-		font-size: 20px;
-		color: #333;
-	}
-
-	.empty-state p {
-		margin: 0 0 24px;
-		color: #666;
-	}
-
-	.btn-scan {
-		padding: 14px 28px;
-		font-size: 16px;
-		background: #4A90D9;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-	}
-
-	.btn-scan:hover {
-		background: #3a7bc8;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 200px;
 	}
 </style>
