@@ -1,8 +1,9 @@
 services:
   - type: web
     name: aeare
+    runtime: Node
     buildCommand: bun install && bun run build
-    startCommand: bun run preview
+    startCommand: bun build/index.js
     envVars:
       - key: BUN_VERSION
         value: "1.3.5"
