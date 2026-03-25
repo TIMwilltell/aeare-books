@@ -74,7 +74,7 @@ Add HTTPS configuration to vite.config.ts. Read current config first, then add:
   <action>
 Start Vite dev server with HTTPS:
 ```bash
-npm run dev -- --host
+bun run dev --host
 ```
 Server should listen on https://0.0.0.0:5173 with HTTPS enabled.
   </action>
