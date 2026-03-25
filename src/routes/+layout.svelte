@@ -12,10 +12,19 @@
 	// Initialize Convex client only on the client side (not during SSR)
 	if (browser) {
 		const convexUrl = import.meta.env.PUBLIC_CONVEX_URL ?? import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONVEX_DEPLOYMENT_URL;
-		if (convexUrl) {
-			setupConvex(convexUrl);
-		}
+		console.log('[layout] PUBLIC_CONVEX_URL:', import.meta.env.PUBLIC_CONVEX_URL);
+		console.log('[layout] Using convexUrl:', convexUrl);
+		// Use fallback for development
+		const finalUrl = convexUrl ?? 'https://jovial-wildcat-461.convex.cloud';
+		setupConvex(finalUrl);
 	}
+
+	// Navigation items
+	const navItems = [
+		{ path: '/', label: 'Library', icon: 'book' },
+		{ path: '/scan', label: 'Scan', icon: 'scan' },
+		{ path: '/settings', label: 'Settings', icon: 'settings' }
+	];
 
 	function navigateTo(path: string) {
 		goto(path);
@@ -29,36 +38,40 @@
 <StatusBanner />
 
 <div class="app-container">
-	{@render children()}
-</div>
+	<nav class="bottom-nav">
+		{#each navItems as item}
+			<button 
+				class="nav-item" 
+				class:active={$page.url.pathname === item.path}
+				onclick={() => navigateTo(item.path)}
+			>
+				{#if item.icon === 'book'}
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+					</svg>
+				{:else if item.icon === 'scan'}
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+						<path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+						<path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+						<path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+						<line x1="7" y1="12" x2="17" y2="12"/>
+					</svg>
+				{:else if item.icon === 'settings'}
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+						<circle cx="12" cy="12" r="3"/>
+					</svg>
+				{/if}
+				<span>{item.label}</span>
+			</button>
+		{/each}
+	</nav>
 
-<nav class="bottom-nav">
-	<button 
-		class="nav-item" 
-		class:active={$page.url.pathname === '/'}
-		onclick={() => navigateTo('/')}
-	>
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-			<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-			<polyline points="9 22 9 12 15 12 15 22"/>
-		</svg>
-		<span>Library</span>
-	</button>
-	<button 
-		class="nav-item" 
-		class:active={$page.url.pathname === '/scan'}
-		onclick={() => navigateTo('/scan')}
-	>
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-			<path d="M3 7V5a2 2 0 0 1 2-2h2"/>
-			<path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-			<path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
-			<path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-			<line x1="7" y1="12" x2="17" y2="12"/>
-		</svg>
-		<span>Scan</span>
-	</button>
-</nav>
+	<main class="main-content">
+		{@render children()}
+	</main>
+</div>
 
 <style>
 	.app-container {
@@ -68,6 +81,11 @@
 		padding-bottom: 80px;
 	}
 
+	.main-content {
+		min-height: calc(100vh - 64px);
+	}
+
+	/* Mobile: Bottom navigation */
 	.bottom-nav {
 		position: fixed;
 		bottom: 0;
@@ -119,9 +137,67 @@
 		font-weight: 600;
 	}
 
-	@media (min-width: 601px) {
+	/* Tablet (600px+) */
+	@media (min-width: 600px) {
 		.bottom-nav {
 			border-radius: 16px 16px 0 0;
+		}
+
+		.app-container {
+			max-width: 100%;
+		}
+
+		.main-content {
+			padding: var(--space-6);
+		}
+	}
+
+	/* Desktop (1024px+) */
+	@media (min-width: 1024px) {
+		.app-container {
+			display: flex;
+			flex-direction: row;
+			max-width: none;
+			padding-bottom: 0;
+		}
+
+		.bottom-nav {
+			position: fixed;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			right: auto;
+			width: 200px;
+			height: 100vh;
+			flex-direction: column;
+			justify-content: flex-start;
+			padding: var(--space-8) var(--space-4);
+			gap: var(--space-2);
+			border-top: none;
+			border-right: 1px solid rgba(193, 199, 212, 0.15);
+			border-radius: 0;
+			transform: none;
+			max-width: none;
+			left: 0;
+		}
+
+		.nav-item {
+			flex-direction: row;
+			width: 100%;
+			padding: var(--space-3) var(--space-4);
+			justify-content: flex-start;
+			gap: var(--space-3);
+		}
+
+		.nav-item span {
+			font-size: var(--text-base);
+		}
+
+		.main-content {
+			margin-left: 200px;
+			padding: var(--space-8);
+			max-width: 900px;
+			width: 100%;
 		}
 	}
 </style>

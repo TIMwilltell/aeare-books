@@ -9,9 +9,9 @@ export interface ExportData {
 }
 
 export async function exportLibrary(): Promise<void> {
-  const client = new ConvexClient(
-    import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONvex_DEPLOYMENT_URL,
-  );
+  const url = import.meta.env.PUBLIC_CONVEX_URL ?? import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONVEX_DEPLOYMENT_URL;
+  const finalUrl = url ?? 'https://jovial-wildcat-461.convex.cloud';
+  const client = new ConvexClient(finalUrl);
 
   const books = await client.query(api.books.getAll, {});
 
@@ -30,13 +30,13 @@ export async function exportLibrary(): Promise<void> {
 
   const jsonString = JSON.stringify(exportData, null, 2);
   const blob = new Blob([jsonString], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
+  const blobUrl = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
-  link.href = url;
+  link.href = blobUrl;
   link.download = `aeare-library-${new Date().toISOString().split("T")[0]}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(blobUrl);
 }
