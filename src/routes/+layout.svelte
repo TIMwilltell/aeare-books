@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import StatusBanner from '$lib/components/StatusBanner.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	import { setupConvex } from 'convex-svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
@@ -11,10 +12,9 @@
 
 	// Initialize Convex client only on the client side (not during SSR)
 	if (browser) {
-		const convexUrl = import.meta.env.PUBLIC_CONVEX_URL ?? import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONVEX_DEPLOYMENT_URL;
-		console.log('[layout] PUBLIC_CONVEX_URL:', import.meta.env.PUBLIC_CONVEX_URL);
-		console.log('[layout] Using convexUrl:', convexUrl);
-		// Use fallback for development
+		// VITE_ prefix is required for Vite to expose env vars to client
+		const convexUrl = import.meta.env.VITE_CONVEX_URL ?? import.meta.env.PUBLIC_CONVEX_URL ?? import.meta.env.CONVEX_DEPLOYMENT_URL;
+		// Fallback for development if env var not set
 		const finalUrl = convexUrl ?? 'https://jovial-wildcat-461.convex.cloud';
 		setupConvex(finalUrl);
 	}
@@ -36,6 +36,8 @@
 </svelte:head>
 
 <StatusBanner />
+
+<Toast />
 
 <div class="app-container">
 	<nav class="bottom-nav">

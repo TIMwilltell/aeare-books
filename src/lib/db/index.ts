@@ -56,9 +56,12 @@ export interface ProgressEvent {
 
 // Create a new Convex client instance
 function createClient(): ConvexClient {
-  return new ConvexClient(
-    import.meta.env.VITE_CONVEX_URL ?? import.meta.env.CONvex_DEPLOYMENT_URL,
-  );
+  // VITE_ prefix is required for Vite to expose env vars to client
+  const url = import.meta.env.VITE_CONVEX_URL ?? import.meta.env.PUBLIC_CONVEX_URL ?? import.meta.env.CONVEX_DEPLOYMENT_URL;
+  
+  // Fallback for development if env var not set
+  const finalUrl = url ?? 'https://jovial-wildcat-461.convex.cloud';
+  return new ConvexClient(finalUrl);
 }
 
 // Helper to get Convex client - creates a new instance
