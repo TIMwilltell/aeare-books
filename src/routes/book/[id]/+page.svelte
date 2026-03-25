@@ -2,10 +2,14 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { getBook, updateBook, deleteBook, addProgressEvent, getProgressEventsByBook, deleteProgressEventsByBook, type ProgressEvent } from '$lib/db';
+	import { getBook, updateBook, deleteBook, addProgressEvent, getProgressEventsByBook, type ProgressEvent } from '$lib/db';
 	import type { Book } from '$lib/db';
 	import DeleteDialog from '$lib/components/DeleteDialog.svelte';
 	import ProgressTimeline from '$lib/components/ProgressTimeline.svelte';
+	import PrimaryButton from '$lib/components/PrimaryButton.svelte';
+	import SecondaryButton from '$lib/components/SecondaryButton.svelte';
+	import Badge from '$lib/components/Badge.svelte';
+	import Skeleton from '$lib/components/Skeleton.svelte';
 
 	let book = $state<Book | null>(null);
 	let loading = $state(true);
@@ -175,136 +179,162 @@
 </svelte:head>
 
 <div class="book-detail">
+	<!-- Header with glassmorphism -->
+	<header class="page-header">
+		<div class="header-content">
+			<SecondaryButton label="← Back" onclick={() => goto('/')} />
+			<h1 class="header-title">Book Details</h1>
+			<div class="header-spacer"></div>
+		</div>
+	</header>
+
 	{#if loading}
-		<p class="loading">Loading...</p>
+		<div class="loading-container">
+			<Skeleton variant="thumbnail" />
+			<Skeleton variant="title" />
+			<Skeleton variant="text" />
+			<Skeleton variant="text" />
+		</div>
 	{:else if book}
-		{#if book.coverUrl}
-			<div class="cover-image">
-				<img src={book.coverUrl} alt="{book.title} cover" />
-			</div>
-		{/if}
+		<main class="book-content">
+			<!-- Cover Image -->
+			{#if book.coverUrl}
+				<div class="cover-container">
+					<img src={book.coverUrl} alt="{book.title} cover" class="cover-image" />
+				</div>
+			{:else}
+				<div class="cover-container cover-fallback">
+					<span class="cover-icon">📚</span>
+				</div>
+			{/if}
 
-		<h1>{book.title}</h1>
-
-		{#if editing}
-			<form onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
-				<div class="form-group">
-					<label for="title">Title</label>
-					<input type="text" id="title" bind:value={title} required />
-				</div>
-				<div class="form-group">
-					<label for="author">Author</label>
-					<input type="text" id="author" bind:value={author} required />
-				</div>
-				<div class="form-group">
-					<label for="isbn">ISBN</label>
-					<input type="text" id="isbn" bind:value={isbn} />
-				</div>
-				<div class="form-group">
-					<label for="ar-level">AR Level</label>
-					<input
-						type="number"
-						id="ar-level"
-						bind:value={arLevel}
-						step="0.1"
-						min="0"
-						max="20"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="ar-points">AR Points</label>
-					<input type="number" id="ar-points" bind:value={arPoints} step="0.1" min="0" />
-				</div>
-				<div class="form-actions">
-					<button type="button" class="btn-cancel" onclick={cancelEdit} disabled={saving}>
-						Cancel
-					</button>
-					<button type="submit" class="btn-save" disabled={saving}>
-						{saving ? 'Saving...' : 'Save'}
-					</button>
-				</div>
-			</form>
-		{:else}
-			<div class="book-info">
-				<p class="author">by {book.author}</p>
-				<p class="isbn">ISBN: {book.isbn || 'N/A'}</p>
-				{#if book.arLevel}
-					<div class="ar-info">
-						<span>AR Level: {book.arLevel}</span>
-						{#if book.arPoints}
-							<span>• {book.arPoints} points</span>
-						{/if}
-						{#if book.arDataSource === 'fetched'}
-							<span class="ar-badge fetched">Auto</span>
-						{:else if book.arDataSource === 'manual'}
-							<span class="ar-badge manual">Manual</span>
-						{/if}
-					</div>
+			<!-- Book Metadata -->
+			<div class="book-metadata">
+				<h2 class="book-title">{book.title}</h2>
+				<p class="book-author">by {book.author}</p>
+				{#if book.isbn}
+					<p class="book-isbn">ISBN: {book.isbn}</p>
 				{/if}
 			</div>
 
-			<!-- Progress Tracking Section -->
-			<div class="progress-section">
-				<div class="read-status">
-					{#if isRead}
-						<span class="read-badge">✓ Read</span>
-						{#if readDate}
-							<span class="read-date">on {new Date(readDate).toLocaleDateString()}</span>
-						{/if}
-					{/if}
-				</div>
-				
-				<button 
-					class="btn-read-toggle" 
-					class:read={isRead}
-					onclick={toggleReadStatus}
-					disabled={savingProgress}
-				>
-					{isRead ? 'Mark as Unread' : 'Mark as Read'}
-				</button>
-				
-				<div class="quiz-section">
-					<label for="quiz-score">AR Quiz Score</label>
-					<div class="quiz-inputs">
-						<input 
-							type="number" 
-							id="quiz-score" 
-							bind:value={quizScore}
+			{#if editing}
+				<!-- Edit Form -->
+				<form onsubmit={(e) => { e.preventDefault(); handleSave(); }} class="edit-form">
+					<div class="form-group">
+						<label for="title">Title</label>
+						<input type="text" id="title" bind:value={title} required />
+					</div>
+					<div class="form-group">
+						<label for="author">Author</label>
+						<input type="text" id="author" bind:value={author} required />
+					</div>
+					<div class="form-group">
+						<label for="isbn">ISBN</label>
+						<input type="text" id="isbn" bind:value={isbn} />
+					</div>
+					<div class="form-group">
+						<label for="ar-level">AR Level</label>
+						<input
+							type="number"
+							id="ar-level"
+							bind:value={arLevel}
+							step="0.1"
 							min="0"
-							max="100"
-							placeholder="0-100"
+							max="20"
 						/>
-						<input 
-							type="date" 
-							bind:value={quizDate}
-						/>
-						<button class="btn-save-quiz" onclick={saveQuizScore} disabled={savingProgress || quizScore === undefined}>
-							Save
+					</div>
+					<div class="form-group">
+						<label for="ar-points">AR Points</label>
+						<input type="number" id="ar-points" bind:value={arPoints} step="0.1" min="0" />
+					</div>
+					<div class="form-actions">
+						<SecondaryButton label="Cancel" onclick={cancelEdit} disabled={saving} fullWidth={true} />
+						<PrimaryButton label={saving ? 'Saving...' : 'Save'} onclick={handleSave} disabled={saving} fullWidth={true} />
+					</div>
+				</form>
+			{:else}
+				<!-- AR Section -->
+				{#if book.arLevel}
+					<div class="ar-section">
+						<div class="ar-level-display">
+							<span class="ar-level-label">AR Level</span>
+							<span class="ar-level-value">{book.arLevel}</span>
+						</div>
+						{#if book.arPoints}
+							<span class="ar-points">{book.arPoints} pts</span>
+						{/if}
+						{#if book.arDataSource === 'fetched'}
+							<Badge label="Auto" variant="ar-fetched" size="sm" />
+						{:else if book.arDataSource === 'manual'}
+							<Badge label="Manual" variant="ar-manual" size="sm" />
+						{/if}
+					</div>
+				{/if}
+
+				<!-- Progress Tracking Section -->
+				<div class="progress-section">
+					<div class="read-status">
+						{#if isRead}
+							<Badge label="✓ Read" variant="ar-fetched" size="sm" />
+							{#if readDate}
+								<span class="read-date">on {new Date(readDate).toLocaleDateString()}</span>
+							{/if}
+						{/if}
+					</div>
+					
+					<button 
+						class="btn-read-toggle" 
+						class:read={isRead}
+						onclick={toggleReadStatus}
+						disabled={savingProgress}
+					>
+						{isRead ? 'Mark as Unread' : 'Mark as Read'}
+					</button>
+					
+					<div class="quiz-section">
+						<label for="quiz-score" class="input-label">AR Quiz Score</label>
+						<div class="quiz-inputs">
+							<input 
+								type="number" 
+								id="quiz-score" 
+								bind:value={quizScore}
+								min="0"
+								max="100"
+								placeholder="0-100"
+							/>
+							<input 
+								type="date" 
+								bind:value={quizDate}
+							/>
+							<button class="btn-save-quiz" onclick={saveQuizScore} disabled={savingProgress || quizScore === undefined}>
+								Save
+							</button>
+						</div>
+					</div>
+					
+					<div class="notes-section">
+						<label for="notes" class="input-label">Notes</label>
+						<textarea 
+							id="notes" 
+							bind:value={notes}
+							placeholder="Add reading notes..."
+							rows="4"
+						></textarea>
+						<button class="btn-save-notes" onclick={saveNotes} disabled={savingProgress}>
+							Save Notes
 						</button>
 					</div>
+					
+					<ProgressTimeline events={progressEvents} />
 				</div>
-				
-				<div class="notes-section">
-					<label for="notes">Notes</label>
-					<textarea 
-						id="notes" 
-						bind:value={notes}
-						placeholder="Add reading notes..."
-						rows="4"
-					></textarea>
-					<button class="btn-save-notes" onclick={saveNotes} disabled={savingProgress}>
-						Save Notes
-					</button>
-				</div>
-				
-				<ProgressTimeline events={progressEvents} />
-			</div>
 
-			<div class="book-actions">
-				<button class="btn-edit" onclick={startEdit}>Edit</button>
-				<button class="btn-delete" onclick={confirmDelete}>Delete</button>
-			</div>
-		{/if}
+				<!-- Action Buttons -->
+				<div class="book-actions">
+					<PrimaryButton label="Edit" onclick={startEdit} fullWidth={true} />
+					<SecondaryButton label="Delete" onclick={confirmDelete} fullWidth={true} />
+				</div>
+			{/if}
+		</main>
 
 		<DeleteDialog
 			open={showDeleteDialog}
@@ -317,237 +347,274 @@
 
 <style>
 	.book-detail {
-		padding: 20px;
+		min-height: 100vh;
+		background: var(--surface);
+	}
+
+	/* Header with glassmorphism */
+	.page-header {
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		background: rgba(247, 245, 255, 0.8);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--outline-variant);
+		padding: var(--space-3) var(--space-4);
+	}
+
+	.header-content {
 		max-width: 500px;
 		margin: 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
+	}
+
+	.header-title {
+		font-family: var(--font-display);
+		font-size: var(--text-xl);
+		font-weight: var(--font-semibold);
+		color: var(--on-surface);
+		margin: 0;
+		white-space: nowrap;
+	}
+
+	.header-spacer {
+		width: 80px;
+	}
+
+	.loading-container {
+		max-width: 500px;
+		margin: 0 auto;
+		padding: var(--space-4);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+
+	.book-content {
+		max-width: 500px;
+		margin: 0 auto;
+		padding: var(--space-4);
+	}
+
+	/* Cover Image */
+	.cover-container {
+		margin-bottom: var(--space-4);
+		text-align: center;
 	}
 
 	.cover-image {
-		margin-bottom: 20px;
-		text-align: center;
+		max-width: 240px;
+		width: 100%;
+		aspect-ratio: 2/3;
+		object-fit: cover;
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-elevated);
 	}
 
-	.cover-image img {
-		max-width: 150px;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	h1 {
-		margin: 0 0 16px;
-		font-size: 24px;
-	}
-
-	.loading {
-		text-align: center;
-		color: #666;
-	}
-
-	.book-info {
-		margin-bottom: 24px;
-	}
-
-	.author {
-		font-size: 18px;
-		color: #555;
-		margin: 0 0 8px;
-	}
-
-	.isbn {
-		color: #888;
-		margin: 0 0 8px;
-	}
-
-	.ar-info {
+	.cover-fallback {
+		max-width: 240px;
+		margin: 0 auto var(--space-4);
+		aspect-ratio: 2/3;
+		background: var(--surface-container-low);
+		border-radius: var(--radius-lg);
 		display: flex;
 		align-items: center;
-		flex-wrap: wrap;
-		gap: 4px;
-		color: #4a90d9;
-		font-weight: 500;
+		justify-content: center;
+	}
+
+	.cover-icon {
+		font-size: 4rem;
+		opacity: 0.5;
+	}
+
+	/* Book Metadata */
+	.book-metadata {
+		text-align: center;
+		margin-bottom: var(--space-6);
+	}
+
+	.book-title {
+		font-family: var(--font-display);
+		font-size: var(--text-2xl);
+		font-weight: var(--font-semibold);
+		color: var(--on-surface);
+		margin: 0 0 var(--space-2);
+		line-height: var(--leading-tight);
+	}
+
+	.book-author {
+		font-family: var(--font-body);
+		font-size: var(--text-lg);
+		color: var(--on-surface-variant);
+		margin: 0 0 var(--space-2);
+	}
+
+	.book-isbn {
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		color: var(--on-surface-variant);
 		margin: 0;
 	}
 
-	.ar-badge {
-		display: inline-block;
-		font-size: 11px;
-		padding: 2px 6px;
-		border-radius: 4px;
-		margin-left: 8px;
-	}
-
-	.ar-badge.fetched {
-		background: #dbeafe;
-		color: #1d4ed8;
-	}
-
-	.ar-badge.manual {
-		background: #fef3c7;
-		color: #92400e;
-	}
-
-	.book-actions {
+	/* AR Section */
+	.ar-section {
 		display: flex;
-		gap: 12px;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: var(--space-3);
+		padding: var(--space-4);
+		background: var(--surface-container-low);
+		border-radius: var(--radius-md);
+		margin-bottom: var(--space-6);
 	}
 
-	.btn-edit,
-	.btn-delete {
-		flex: 1;
-		padding: 14px;
-		font-size: 16px;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-	}
-
-	.btn-edit {
-		background: #e5e5e5;
-		color: #333;
-	}
-
-	.btn-delete {
-		background: #fee2e2;
-		color: #dc2626;
-	}
-
-	.form-group {
-		margin-bottom: 16px;
-	}
-
-	label {
-		display: block;
-		margin-bottom: 6px;
-		font-weight: 500;
-		color: #333;
-	}
-
-	input {
-		width: 100%;
-		padding: 12px;
-		font-size: 16px;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		box-sizing: border-box;
-	}
-
-	input:focus {
-		outline: none;
-		border-color: #4a90d9;
-	}
-
-	.form-actions {
+	.ar-level-display {
 		display: flex;
-		gap: 12px;
-		margin-top: 24px;
+		flex-direction: column;
 	}
 
-	.btn-cancel,
-	.btn-save {
-		flex: 1;
-		padding: 14px;
-		font-size: 16px;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
+	.ar-level-label {
+		font-family: var(--font-body);
+		font-size: var(--text-xs);
+		color: var(--on-surface-variant);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.btn-cancel {
-		background: #e5e5e5;
-		color: #333;
+	.ar-level-value {
+		font-family: var(--font-display);
+		font-size: var(--text-2xl);
+		font-weight: var(--font-bold);
+		color: var(--on-surface);
+		line-height: 1;
 	}
 
-	.btn-save {
-		background: #4a90d9;
-		color: white;
+	.ar-points {
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		font-weight: var(--font-semibold);
+		color: var(--primary);
 	}
 
-	.btn-cancel:disabled,
-	.btn-save:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	/* Progress Tracking Styles */
+	/* Progress Section */
 	.progress-section {
-		margin-top: 24px;
-		padding-top: 24px;
-		border-top: 1px solid #eee;
+		margin-bottom: var(--space-6);
 	}
 
 	.read-status {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		margin-bottom: 12px;
-	}
-
-	.read-badge {
-		background: #d1fae5;
-		color: #065f46;
-		padding: 4px 10px;
-		border-radius: 12px;
-		font-size: 14px;
-		font-weight: 500;
+		gap: var(--space-2);
+		margin-bottom: var(--space-3);
 	}
 
 	.read-date {
-		color: #888;
-		font-size: 14px;
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		color: var(--on-surface-variant);
 	}
 
 	.btn-read-toggle {
 		width: 100%;
-		padding: 14px;
-		font-size: 16px;
+		padding: var(--space-3) var(--space-4);
+		font-family: var(--font-display);
+		font-size: var(--text-base);
+		font-weight: var(--font-semibold);
 		border: none;
-		border-radius: 8px;
+		border-radius: var(--radius-md);
 		cursor: pointer;
-		background: #e5e5e5;
-		color: #333;
-		margin-bottom: 20px;
+		background: var(--surface-container-high);
+		color: var(--on-surface);
+		transition: background var(--transition-fast), transform var(--transition-fast);
+		margin-bottom: var(--space-4);
+	}
+
+	.btn-read-toggle:hover:not(:disabled) {
+		transform: scale(1.01);
 	}
 
 	.btn-read-toggle.read {
-		background: #fef3c7;
-		color: #92400e;
+		background: var(--secondary-fixed);
+		color: var(--on-secondary-container);
+	}
+
+	.btn-read-toggle:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	.quiz-section,
 	.notes-section {
-		margin-bottom: 20px;
+		margin-bottom: var(--space-4);
 	}
 
-	.quiz-section label,
-	.notes-section label {
+	.input-label {
 		display: block;
-		font-weight: 500;
-		margin-bottom: 8px;
-		color: #333;
+		font-family: var(--font-display);
+		font-size: var(--text-sm);
+		font-weight: var(--font-medium);
+		color: var(--on-surface-variant);
+		margin-bottom: var(--space-2);
 	}
 
 	.quiz-inputs {
 		display: flex;
-		gap: 8px;
+		gap: var(--space-2);
 	}
 
 	.quiz-inputs input[type="number"] {
 		width: 80px;
+		padding: var(--space-2) var(--space-3);
+		font-family: var(--font-body);
+		font-size: var(--text-base);
+		border: 2px solid transparent;
+		border-radius: var(--radius-DEFAULT);
+		background: var(--surface-container-highest);
+		color: var(--on-surface);
+	}
+
+	.quiz-inputs input[type="number"]:focus {
+		outline: none;
+		border-color: var(--primary);
 	}
 
 	.quiz-inputs input[type="date"] {
 		flex: 1;
+		padding: var(--space-2) var(--space-3);
+		font-family: var(--font-body);
+		font-size: var(--text-base);
+		border: 2px solid transparent;
+		border-radius: var(--radius-DEFAULT);
+		background: var(--surface-container-highest);
+		color: var(--on-surface);
+	}
+
+	.quiz-inputs input[type="date"]:focus {
+		outline: none;
+		border-color: var(--primary);
 	}
 
 	.btn-save-quiz,
 	.btn-save-notes {
-		padding: 10px 16px;
-		font-size: 14px;
+		padding: var(--space-2) var(--space-4);
+		font-family: var(--font-display);
+		font-size: var(--text-sm);
+		font-weight: var(--font-semibold);
 		border: none;
-		border-radius: 6px;
+		border-radius: var(--radius-md);
 		cursor: pointer;
-		background: #4a90d9;
-		color: white;
+		background: var(--primary);
+		color: var(--on-primary);
+		transition: transform var(--transition-fast);
+	}
+
+	.btn-save-quiz:hover:not(:disabled),
+	.btn-save-notes:hover:not(:disabled) {
+		transform: scale(1.02);
 	}
 
 	.btn-save-quiz:disabled,
@@ -558,21 +625,79 @@
 
 	textarea {
 		width: 100%;
-		padding: 12px;
-		font-size: 16px;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		font-family: inherit;
+		padding: var(--space-3) var(--space-4);
+		font-family: var(--font-body);
+		font-size: var(--text-base);
+		border: 2px solid transparent;
+		border-radius: var(--radius-DEFAULT);
+		background: var(--surface-container-highest);
+		color: var(--on-surface);
 		resize: vertical;
 		box-sizing: border-box;
 	}
 
 	textarea:focus {
 		outline: none;
-		border-color: #4a90d9;
+		border-color: var(--primary);
+	}
+
+	textarea::placeholder {
+		color: var(--on-surface-variant);
+		opacity: 0.6;
 	}
 
 	.btn-save-notes {
-		margin-top: 8px;
+		margin-top: var(--space-2);
+	}
+
+	/* Action Buttons */
+	.book-actions {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+
+	/* Edit Form */
+	.edit-form {
+		background: var(--surface-container-low);
+		border-radius: var(--radius-md);
+		padding: var(--space-4);
+	}
+
+	.form-group {
+		margin-bottom: var(--space-4);
+	}
+
+	.form-group label {
+		display: block;
+		font-family: var(--font-display);
+		font-size: var(--text-sm);
+		font-weight: var(--font-medium);
+		color: var(--on-surface-variant);
+		margin-bottom: var(--space-2);
+	}
+
+	.form-group input {
+		width: 100%;
+		padding: var(--space-3) var(--space-4);
+		font-family: var(--font-body);
+		font-size: var(--text-base);
+		border: 2px solid transparent;
+		border-radius: var(--radius-DEFAULT);
+		background: var(--surface-container-highest);
+		color: var(--on-surface);
+		box-sizing: border-box;
+	}
+
+	.form-group input:focus {
+		outline: none;
+		border-color: var(--primary);
+	}
+
+	.form-actions {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+		margin-top: var(--space-4);
 	}
 </style>
