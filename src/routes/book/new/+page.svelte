@@ -21,6 +21,7 @@
 	let saving = $state(false);
 	let lookupLoading = $state(false);
 	let lookupError = $state('');
+	let arLookupError = $state('');
 
 	// Pre-fill ISBN from URL param
 	isbn = page.url.searchParams.get('isbn') || '';
@@ -30,6 +31,7 @@
 
 		lookupLoading = true;
 		lookupError = '';
+		arLookupError = '';
 
 		try {
 			// Fetch Google Books metadata
@@ -48,6 +50,8 @@
 				arLevelStr = String(arResult.data.arLevel || '');
 				arPointsStr = String(arResult.data.arPoints || '');
 				arDataSource = 'fetched';
+			} else if (arResult.error) {
+				arLookupError = arResult.error;
 			}
 		} catch (e) {
 			lookupError = 'Lookup failed. Please enter details manually.';
@@ -130,6 +134,9 @@
 			</div>
 			{#if lookupError}
 				<p class="lookup-error">{lookupError}</p>
+			{/if}
+			{#if arLookupError}
+				<p class="ar-lookup-error">AR: {arLookupError}</p>
 			{/if}
 
 			<!-- Cover Preview -->
@@ -287,6 +294,13 @@
 
 	.lookup-error {
 		color: var(--error);
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		margin: calc(-1 * var(--space-2)) 0 var(--space-2);
+	}
+
+	.ar-lookup-error {
+		color: var(--tertiary);
 		font-family: var(--font-body);
 		font-size: var(--text-sm);
 		margin: calc(-1 * var(--space-2)) 0 var(--space-2);
