@@ -4,7 +4,7 @@
 		color?: string;
 	}
 
-	let { size = 'medium', color = '#4A90D9' }: Props = $props();
+	let { size = 'medium', color = 'var(--primary, #4A90D9)' }: Props = $props();
 
 	const sizes = {
 		small: '20px',
