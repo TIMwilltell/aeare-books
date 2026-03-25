@@ -16,7 +16,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 - [x] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes (completed 2026-03-24)
 - [x] **Phase 4: Cloud Sync & Export** - Convex sync, offline handling, JSON export (completed 2026-03-24)
 - [x] **Phase 5: Component Specifications** - Design spec defines all reusable UI components with states ✅
-- [ ] **Phase 6: Screen Designs** - Design spec provides mockups for all app screens with responsive behavior
+- [x] **Phase 6: Screen Designs** - Design spec provides mockups for all app screens with responsive behavior (completed 2026-03-25)
 
 ## Phase Details
 
@@ -174,7 +174,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 5. Design spec includes settings/export screen mockup
 6. Design spec shows responsive behavior for tablet and desktop views
 
-**Plans:** 1/1 plan
+**Plans:** 1/1 plans complete
 
 **Plan list:**
 - [ ] 06-01-PLAN.md — Document all 6 screens in SCREEN-SPEC.md
@@ -190,7 +190,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 | 3. Progress Tracking | 2/2 | Complete   | 2026-03-24 |
 | 4. Cloud Sync & Export | 3/3 | Complete   | 2026-03-24 |
 | 5. Component Specifications | 1/1 | Complete   | 2026-03-24 |
-| 6. Screen Designs | 0/1 | Planned | - |
+| 6. Screen Designs | 0/1 | Complete    | 2026-03-25 |
 
 ## Coverage
 
@@ -235,5 +235,21 @@ Parents can quickly catalog their children's books and track AR reading progress
 
 ---
 
+## Backlog
+
+### Phase 999.1: Open Library fallback (BACKLOG)
+
+**Goal:** Add Open Library as fallback when Google Books lookup fails
+
+**Requirements:** TBD
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+---
+
 *Roadmap created: 2026-03-23*
 *v1.1 phases added: 2026-03-24*
+*Backlog added: 2026-03-25*
