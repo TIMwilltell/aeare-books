@@ -15,7 +15,7 @@ Parents can quickly catalog their children's books and track AR reading progress
 - [x] **Phase 2: API Integrations** - Google Books metadata, AR lookup with BFF proxy (completed 2026-03-24)
 - [x] **Phase 3: Progress Tracking** - Reading status, quiz scores, notes (completed 2026-03-24)
 - [x] **Phase 4: Cloud Sync & Export** - Convex sync, offline handling, JSON export (completed 2026-03-24)
-- [ ] **Phase 5: Component Specifications** - Design spec defines all reusable UI components with states
+- [x] **Phase 5: Component Specifications** - Design spec defines all reusable UI components with states ✅
 - [ ] **Phase 6: Screen Designs** - Design spec provides mockups for all app screens with responsive behavior
 
 ## Phase Details
@@ -174,7 +174,10 @@ Parents can quickly catalog their children's books and track AR reading progress
 5. Design spec includes settings/export screen mockup
 6. Design spec shows responsive behavior for tablet and desktop views
 
-**Plans**: TBD
+**Plans:** 1/1 plan
+
+**Plan list:**
+- [ ] 06-01-PLAN.md — Document all 6 screens in SCREEN-SPEC.md
 
 ---
 
@@ -186,8 +189,8 @@ Parents can quickly catalog their children's books and track AR reading progress
 | 2. API Integrations | 3/3 | Complete   | 2026-03-24 |
 | 3. Progress Tracking | 2/2 | Complete   | 2026-03-24 |
 | 4. Cloud Sync & Export | 3/3 | Complete   | 2026-03-24 |
-| 5. Component Specifications | 1/1 | Planned    | - |
-| 6. Screen Designs | 0/1 | Not started | - |
+| 5. Component Specifications | 1/1 | Complete   | 2026-03-24 |
+| 6. Screen Designs | 0/1 | Planned | - |
 
 ## Coverage
 
