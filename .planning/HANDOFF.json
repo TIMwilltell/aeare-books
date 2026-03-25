@@ -1,43 +1,74 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-24T22:08:10.679Z",
-  "phase": "ad-hoc",
-  "phase_name": "Scanner Bug Fixes",
-  "phase_dir": "ad-hoc",
+  "timestamp": "2026-03-25T05:10:18.548Z",
+  "phase": "debug",
+  "phase_name": "arbookfind-scraper-prod-failure",
+  "phase_dir": "debug",
   "plan": null,
   "task": null,
   "total_tasks": null,
-  "status": "in_progress",
+  "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Fix IndexedDB to Convex storage", "status": "done", "progress": "Books now write to Convex instead of IndexedDB"},
-    {"id": 2, "name": "Fix Svelte lifecycle error with useConvexClient", "status": "done", "progress": "Changed to use ConvexClient from convex/browser directly"},
-    {"id": 3, "name": "Fix scanner black screen", "status": "done", "progress": "Changed Quagga target from videoElement to container div"},
-    {"id": 4, "name": "Fix barcode detection not working", "status": "done", "progress": "Added area config, changed patchSize to large, added decoders"},
-    {"id": 5, "name": "Fix ISBN parsing", "status": "done", "progress": "Added checksum validation and ISBN-10 to ISBN-13 conversion"},
-    {"id": 6, "name": "Fix book lookup", "status": "done", "progress": "Switched from Google Books API to Open Library API"},
-    {"id": 7, "name": "Fix getUserMedia SSR error", "status": "in_progress", "progress": "Changed Quagga loading approach multiple times - still not working"}
+    {
+      "id": 1,
+      "name": "Investigated ARbookfind scraper failure",
+      "status": "done",
+      "progress": "Found root cause: Playwright browser binaries not installed in production"
+    },
+    {
+      "id": 2,
+      "name": "Fixed render.yaml build command",
+      "status": "done",
+      "progress": "Added 'npx playwright install chromium' to build command"
+    },
+    {
+      "id": 3,
+      "name": "Added frontend error handling",
+      "status": "done",
+      "progress": "Added error display in src/routes/book/new/+page.svelte"
+    }
   ],
   "remaining_tasks": [
-    {"id": 7, "name": "Fix getUserMedia SSR error", "status": "in_progress"},
-    {"id": 8, "name": "Test scanner end-to-end", "status": "not_started"}
+    {
+      "id": 4,
+      "name": "Push changes to trigger deployment",
+      "status": "not_started"
+    },
+    {
+      "id": 5,
+      "name": "Verify AR lookup works in production",
+      "status": "not_started"
+    }
   ],
-  "blockers": [
-    {"description": "Scanner still shows 'getUserMedia is not defined' error after trying multiple fix approaches", "type": "technical", "workaround": "None found yet"}
-  ],
+  "blockers": [],
   "human_actions_pending": [
-    {"action": "Test scanner in browser after latest fix (CDN script tag approach)", "context": "Need to verify if loading Quagga via CDN script tag in app.html resolves the SSR issue", "blocking": true}
+    {
+      "action": "Push changes to remote",
+      "context": "Need to push render.yaml and +page.svelte changes to trigger Render deployment",
+      "blocking": true
+    },
+    {
+      "action": "Test in production",
+      "context": "After deployment completes, test AR lookup from UI to verify fix works",
+      "blocking": true
+    }
   ],
   "decisions": [
-    {"decision": "Load Quagga via CDN script tag instead of npm import", "rationale": "To avoid SSR issues with Quagga's browser-only dependencies"},
-    {"decision": "Use Open Library API instead of Google Books", "rationale": "Google Books has rate limits, Open Library is free"}
+    {
+      "decision": "Added playwright install to Render build",
+      "rationale": "Production build only runs 'bun install' which doesn't install browser binaries",
+      "phase": "debug"
+    },
+    {
+      "decision": "Added frontend error handling",
+      "rationale": "Frontend was silently ignoring AR lookup failures",
+      "phase": "debug"
+    }
   ],
   "uncommitted_files": [
-    "src/lib/components/Scanner.svelte",
-    "src/app.html",
-    "vite.config.ts",
-    "src/lib/db/index.ts",
-    "src/routes/api/books/+server.ts"
+    "render.yaml",
+    "src/routes/book/new/+page.svelte"
   ],
-  "next_action": "Test scanner in browser - the latest fix loads Quagga via CDN script tag in app.html",
-  "context_notes": "Been debugging scanner for several iterations. Tried: (1) dynamic import in onMount, (2) ssr.external in vite config, (3) CDN script tag approach. All resulted in same getUserMedia error. The error occurs when Quagga.init() is called - it seems Quagga is still being loaded/processed during SSR despite our guards."
+  "next_action": "Push changes to remote to trigger Render deployment, then test AR lookup in production",
+  "context_notes": "Debug session found root cause - Playwright browsers not installed in production. Fixes applied to render.yaml and frontend. Session awaiting user verification - they need to push and test. Previous scanner work still in progress in ad-hoc-continue.md."
 }
