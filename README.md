@@ -1,4 +1,4 @@
-# AeAre Books
+# WonderBound
 
 A PWA for scanning book barcodes, auto-populating book data (title, author, ISBN, AR level), and tracking reading progress and quiz scores for children.
 
@@ -49,7 +49,7 @@ A PWA for scanning book barcodes, auto-populating book data (title, author, ISBN
    This will create a Convex deployment and set up the backend schema. Follow the prompts to authenticate with Convex.
 
 4. **Configure environment variables**
-   
+
    Create a `.env.local` file:
    ```bash
    CONVEX_DEPLOYMENT=your-convex-deployment-url

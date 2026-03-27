@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
 	ssr: {
-		external: ['quagga']
+		external: ['quagga', 'playwright', 'playwright-core']
 	},
 	server: {
 		https: {
