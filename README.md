@@ -56,13 +56,24 @@ A PWA for scanning book barcodes, auto-populating book data (title, author, ISBN
    PUBLIC_CONVEX_URL=your-convex-deployment-url
    ```
 
-5. **Start the development server**
+5. **Optional: enable local HTTPS for camera/service worker testing**
+
+   Generate local certs (recommended with `mkcert`):
+   ```bash
+   mkdir -p ssl
+   mkcert -install
+   mkcert -key-file ssl/localhost.key -cert-file ssl/localhost.crt localhost 127.0.0.1 ::1
+   ```
+
+   If these files are not present, Vite will run on HTTP.
+
+6. **Start the development server**
    ```bash
    bun dev
    ```
 
-6. **Access the app**
-   Open http://localhost:5173 in your browser. On mobile, use your computer's local IP address (e.g., http://192.168.1.x:5173) to test barcode scanning.
+7. **Access the app**
+   Open https://localhost:5173 (or http://localhost:5173 if no local certs are present). On mobile, use your computer's local IP address (e.g., https://192.168.1.x:5173) to test barcode scanning.
 
 ## Usage
 

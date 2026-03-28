@@ -1,16 +1,23 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { existsSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const httpsKeyPath = './ssl/localhost.key';
+const httpsCertPath = './ssl/localhost.crt';
+const useHttps = existsSync(httpsKeyPath) && existsSync(httpsCertPath);
 
 export default defineConfig({
 	ssr: {
 		external: ['quagga', 'playwright', 'playwright-core']
 	},
 	server: {
-		https: {
-			key: './ssl/localhost.key',
-			cert: './ssl/localhost.crt'
-		},
+		https: useHttps
+			? {
+				key: httpsKeyPath,
+				cert: httpsCertPath
+			}
+			: undefined,
 		host: '0.0.0.0',
 		port: 5173
 	},

@@ -30,3 +30,7 @@ vite.config.ts.timestamp-*
 !.dev.vars.example
 /.planning/debug/.continue-here.md
 /.planning
+
+# Local SSL certs for Vite HTTPS
+/ssl/localhost.key
+/ssl/localhost.crt
