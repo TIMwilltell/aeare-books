@@ -14,7 +14,7 @@ projects:
       - key: CONvex_DEPLOYMENT_URL
         sync: false
       region: virginia
-      buildCommand: bun install && bun run build
+      buildCommand: bun install && npx playwright install chromium && bun run build
       startCommand: bun build/index.js
       autoDeployTrigger: commit
       previews:

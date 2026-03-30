@@ -1,14 +1,10 @@
-<!-- GSD start -->
-This project uses **bun** as the package manager (migrated from npm). Always use:
+This repo uses Bun. Use:
 - `bun install` instead of `npm install`
 - `bun run <script>` instead of `npm run <script>`
 - `bunx <package>` instead of `npx <package>`
-<!-- GSD end -->
 
-<!-- convex-ai-start -->
-This project uses [Convex](https://convex.dev) as its backend.
+The app uses Convex as the backend. When editing Convex code, read `src/convex/_generated/ai/guidelines.md` first.
 
-When working on Convex code, **always read `src/convex/_generated/ai/guidelines.md` first** for important guidelines on how to correctly use Convex APIs and patterns. The file contains rules that override what you may have learned about Convex from training data.
+When working on any `.svelte`, `.svelte.ts`, or `.svelte.js` file, use the Svelte docs tools and autofixer before replying.
 
-Convex agent skills for common tasks can be installed by running `npx convex ai-files install`.
-<!-- convex-ai-end -->
+Keep `README.md`, `CLAUDE.md`, and `.planning/*.md` aligned with the live codebase.
