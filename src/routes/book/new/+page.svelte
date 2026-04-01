@@ -17,7 +17,6 @@
 	let lookupLoading = $state(false);
 	let lookupError = $state('');
 
-	// Pre-fill ISBN from URL param
 	isbn = page.url.searchParams.get('isbn') || '';
 
 	async function handleLookup() {
@@ -27,7 +26,6 @@
 		lookupError = '';
 
 		try {
-			// Fetch Google Books metadata
 			const bookResult = await lookupBook(isbn.trim());
 			if (bookResult.success && bookResult.data) {
 				title = bookResult.data.title;
@@ -37,7 +35,6 @@
 				lookupError = bookResult.error || 'Book not found';
 			}
 
-			// Fetch AR data
 			const arResult = await lookupAr(isbn.trim());
 			if (arResult.success && arResult.data) {
 				arLevel = arResult.data.arLevel;
@@ -60,15 +57,7 @@
 		saving = true;
 
 		try {
-			await addBook(
-				title.trim(),
-				author.trim(),
-				isbn.trim(),
-				coverUrl || undefined,
-				arLevel,
-				arPoints,
-				arDataSource
-			);
+			await addBook(title.trim(), author.trim(), isbn.trim(), coverUrl || undefined, arLevel, arPoints, arDataSource);
 			goto('/');
 		} catch (e) {
 			console.error(e);
@@ -86,238 +75,255 @@
 	<title>Add Book - AeAre Books</title>
 </svelte:head>
 
-<div class="book-form">
-	<h1>Add Book</h1>
+<div class="book-form-page">
+	<section class="intro">
+		<p class="eyebrow">New entry</p>
+		<h1 class="page-title">Add a book to the shelf.</h1>
+		<p>Look up details from the ISBN, then refine the record before saving it into your library.</p>
+	</section>
 
-	<form onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
-		<div class="form-group">
-			<label for="isbn">ISBN</label>
-			<div class="isbn-row">
-				<input
-					type="text"
-					id="isbn"
-					bind:value={isbn}
-					placeholder="Enter ISBN (optional)"
-				/>
-				<button
-					type="button"
-					class="btn-lookup"
-					onclick={handleLookup}
-					disabled={!isbn.trim() || lookupLoading}
-				>
-					{#if lookupLoading}
-						<LoadingSpinner size="small" />
-					{:else}
-						Lookup
-					{/if}
-				</button>
+	<form class="book-form" onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
+		<section class="hero-card section-card">
+			<div class:has-cover={!!coverUrl} class="cover-preview">
+				{#if coverUrl}
+					<img src={coverUrl} alt="Book cover" />
+				{:else}
+					<div class="cover-placeholder" aria-hidden="true">
+						<span>Book</span>
+						<small>Cover</small>
+					</div>
+				{/if}
 			</div>
-			{#if lookupError}
-				<p class="lookup-error">{lookupError}</p>
-			{/if}
-		</div>
 
-		{#if coverUrl}
-			<div class="cover-preview">
-				<img src={coverUrl} alt="Book cover" />
+			<div class="lookup-panel">
+				<div>
+					<p class="eyebrow">Quick lookup</p>
+					<h2>Start with an ISBN</h2>
+					<p>Scan or type a code to prefill title, author, cover, and AR details.</p>
+				</div>
+
+				<label class="field" for="isbn">
+					<span>ISBN</span>
+					<div class="isbn-row">
+						<input type="text" id="isbn" bind:value={isbn} placeholder="Enter ISBN (optional)" />
+						<button type="button" class="secondary-button lookup-button" onclick={handleLookup} disabled={!isbn.trim() || lookupLoading}>
+							{#if lookupLoading}
+								<LoadingSpinner size="small" color="var(--color-cream-0)" />
+							{:else}
+								Lookup
+							{/if}
+						</button>
+					</div>
+				</label>
+
+				{#if lookupError}
+					<p class="lookup-error" aria-live="polite">{lookupError}</p>
+				{/if}
 			</div>
-		{/if}
+		</section>
 
-		<div class="form-group">
-			<label for="title">Title *</label>
-			<input
-				type="text"
-				id="title"
-				bind:value={title}
-				placeholder="Enter book title"
-				required
-			/>
-		</div>
+		<section class="details-grid">
+			<div class="section-card form-section">
+				<div class="section-header">
+					<p class="eyebrow">Book details</p>
+					<h2>Core metadata</h2>
+				</div>
 
-		<div class="form-group">
-			<label for="author">Author *</label>
-			<input
-				type="text"
-				id="author"
-				bind:value={author}
-				placeholder="Enter author name"
-				required
-			/>
-		</div>
+				<label class="field" for="title">
+					<span>Title *</span>
+					<input type="text" id="title" bind:value={title} placeholder="Enter book title" required />
+				</label>
 
-		<div class="form-group">
-			<label for="ar-level">AR Level</label>
-			<input
-				type="number"
-				id="ar-level"
-				bind:value={arLevel}
-				step="0.1"
-				min="0"
-				max="20"
-				placeholder="e.g., 4.5"
-			/>
-			{#if arDataSource === 'fetched' && arLevel}
-				<span class="ar-badge fetched">Auto-fetched</span>
-			{:else if arLevel}
-				<span class="ar-badge manual">Manual</span>
-			{/if}
-		</div>
+				<label class="field" for="author">
+					<span>Author *</span>
+					<input type="text" id="author" bind:value={author} placeholder="Enter author name" required />
+				</label>
+			</div>
 
-		<div class="form-group">
-			<label for="ar-points">AR Points</label>
-			<input
-				type="number"
-				id="ar-points"
-				bind:value={arPoints}
-				step="0.1"
-				min="0"
-				placeholder="e.g., 5"
-			/>
-		</div>
+			<div class="section-card form-section">
+				<div class="section-header">
+					<p class="eyebrow">AR metrics</p>
+					<h2>AR tracking</h2>
+				</div>
+
+				<label class="field" for="ar-level">
+					<span>AR Level</span>
+					<input type="number" id="ar-level" bind:value={arLevel} step="0.1" min="0" max="20" placeholder="e.g. 4.5" />
+				</label>
+
+				<label class="field" for="ar-points">
+					<span>AR Points</span>
+					<input type="number" id="ar-points" bind:value={arPoints} step="0.1" min="0" placeholder="e.g. 5" />
+				</label>
+
+				{#if arLevel}
+					<span class="pill source-pill {arDataSource}">
+						{arDataSource === 'fetched' ? 'Auto-fetched data' : 'Manual data'}
+					</span>
+				{/if}
+			</div>
+		</section>
 
 		<div class="form-actions">
-			<button type="button" class="btn-cancel" onclick={handleCancel} disabled={saving}>
-				Cancel
-			</button>
-			<button type="submit" class="btn-save" disabled={saving}>
-				{saving ? 'Saving...' : 'Save'}
-			</button>
+			<button type="button" class="ghost-button" onclick={handleCancel} disabled={saving}>Cancel</button>
+			<button type="submit" class="primary-button" disabled={saving}>{saving ? 'Saving…' : 'Save book'}</button>
 		</div>
 	</form>
 </div>
 
 <style>
+	.book-form-page {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.intro {
+		display: grid;
+		gap: 0.7rem;
+		padding: 0.4rem 0.1rem 0;
+	}
+
+	.intro p:last-child,
+	.lookup-panel p,
+	.section-header h2 {
+		margin: 0;
+	}
+
+	.intro p:last-child,
+	.lookup-panel p,
+	.form-section {
+		line-height: 1.6;
+	}
+
 	.book-form {
-		padding: 20px;
-		max-width: 500px;
-		margin: 0 auto;
+		display: grid;
+		gap: 1rem;
 	}
 
-	h1 {
-		margin: 0 0 24px;
-		font-size: 24px;
-		text-align: center;
+	.hero-card {
+		display: grid;
+		grid-template-columns: 8rem 1fr;
+		gap: 1rem;
+		padding: 1rem;
 	}
 
-	.form-group {
-		margin-bottom: 16px;
+	.cover-preview {
+		border-radius: 1.3rem;
+		background: var(--surface-strong);
+		min-height: 12rem;
+		overflow: hidden;
+		border: 1px solid var(--border-subtle);
 	}
 
-	label {
-		display: block;
-		margin-bottom: 6px;
-		font-weight: 500;
-		color: #333;
-	}
-
-	input {
+	.cover-preview img,
+	.cover-placeholder {
 		width: 100%;
-		padding: 12px;
-		font-size: 16px;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		box-sizing: border-box;
+		height: 100%;
 	}
 
-	input:focus {
-		outline: none;
-		border-color: #4a90d9;
+	.cover-preview img {
+		object-fit: cover;
+	}
+
+	.cover-placeholder {
+		display: grid;
+		place-items: center;
+		align-content: center;
+		gap: 0.15rem;
+		font-family: var(--font-serif);
+		color: var(--text-default);
+	}
+
+	.cover-placeholder span {
+		font-size: 1.1rem;
+	}
+
+	.cover-placeholder small {
+		font-size: 0.82rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.lookup-panel,
+	.form-section {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.lookup-panel h2,
+	.section-header h2 {
+		font-family: var(--font-serif);
+		font-size: 1.45rem;
+		color: var(--text-strong);
+	}
+
+	.details-grid {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.form-section {
+		padding: 1rem;
+	}
+
+	.field {
+		display: grid;
+		gap: 0.45rem;
+	}
+
+	.field > span {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: var(--text-strong);
 	}
 
 	.isbn-row {
 		display: flex;
-		gap: 8px;
+		gap: 0.75rem;
 	}
 
-	.isbn-row input {
-		flex: 1;
-	}
-
-	.btn-lookup {
-		padding: 12px 16px;
-		font-size: 16px;
-		background: #10b981;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-		white-space: nowrap;
-		min-width: 80px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.btn-lookup:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+	.lookup-button {
+		min-width: 7rem;
 	}
 
 	.lookup-error {
-		color: #dc2626;
-		font-size: 14px;
-		margin: 4px 0 0;
+		margin: 0;
+		padding: 0.85rem 1rem;
+		border-radius: var(--radius-sm);
+		background: rgba(185, 85, 71, 0.1);
+		color: var(--color-danger);
 	}
 
-	.cover-preview {
-		margin-bottom: 16px;
-		text-align: center;
+	.source-pill.fetched {
+		background: rgba(70, 97, 79, 0.12);
+		color: var(--color-moss-1);
 	}
 
-	.cover-preview img {
-		max-width: 120px;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	.ar-badge {
-		display: inline-block;
-		font-size: 11px;
-		padding: 2px 6px;
-		border-radius: 4px;
-		margin-left: 8px;
-		vertical-align: middle;
-	}
-
-	.ar-badge.fetched {
-		background: #dbeafe;
-		color: #1d4ed8;
-	}
-
-	.ar-badge.manual {
-		background: #fef3c7;
-		color: #92400e;
+	.source-pill.manual {
+		background: rgba(240, 201, 119, 0.22);
+		color: #8b6321;
 	}
 
 	.form-actions {
-		display: flex;
-		gap: 12px;
-		margin-top: 24px;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
 	}
 
-	.btn-cancel,
-	.btn-save {
-		flex: 1;
-		padding: 14px;
-		font-size: 16px;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-	}
+	@media (max-width: 640px) {
+		.hero-card {
+			grid-template-columns: 1fr;
+		}
 
-	.btn-cancel {
-		background: #e5e5e5;
-		color: #333;
-	}
+		.cover-preview {
+			max-width: 9rem;
+			min-height: 12rem;
+		}
 
-	.btn-save {
-		background: #4a90d9;
-		color: white;
-	}
-
-	.btn-cancel:disabled,
-	.btn-save:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+		.isbn-row,
+		.form-actions {
+			grid-template-columns: 1fr;
+			display: grid;
+		}
 	}
 </style>

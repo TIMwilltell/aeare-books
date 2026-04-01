@@ -15,10 +15,8 @@
 			permissionDenied = true;
 			scanError = '';
 		} else if (error === 'not-isbn') {
-			// Non-ISBN barcode scanned - show helpful message
-			// Clear any existing timeout and set new one
 			if (errorTimeout) clearTimeout(errorTimeout);
-			scanError = 'Scanned code is not a valid book ISBN. Please scan the ISBN barcode on the book.';
+			scanError = 'That code doesn’t look like a book ISBN yet. Try the barcode near the back cover.';
 			errorTimeout = setTimeout(() => {
 				scanError = '';
 			}, 3000);
@@ -35,92 +33,154 @@
 </svelte:head>
 
 <div class="scan-page">
-	<h1>Scan Book</h1>
+	<section class="scan-hero">
+		<p class="eyebrow">Capture a title</p>
+		<h1 class="page-title">Scan the next book into your reading circle.</h1>
+		<p>
+			Use your camera for a quick ISBN capture, or switch to manual entry when the barcode is hard to reach.
+		</p>
+	</section>
 
 	{#if permissionDenied}
-		<div class="permission-denied">
-			<p>Camera access was denied.</p>
-			<p>Please allow camera access in your browser settings, or enter the ISBN manually.</p>
-			<button class="btn-primary" onclick={handleManualEntry}>Enter ISBN Manually</button>
-		</div>
+		<section class="permission-denied section-card">
+			<div class="denied-icon" aria-hidden="true">Camera</div>
+			<h2>Camera access is turned off.</h2>
+			<p>Please allow camera access in your browser settings, or continue by entering the ISBN manually.</p>
+			<button class="secondary-button" onclick={handleManualEntry}>Enter ISBN manually</button>
+		</section>
 	{:else}
-		<div class="scanner-wrapper">
-			<Scanner onDetected={handleDetected} onError={handleError} />
-		</div>
-		{#if scanError}
-			<div class="scan-error">
-				<p>{scanError}</p>
+		<section class="scan-stage section-card">
+			<div class="scanner-wrapper">
+				<Scanner onDetected={handleDetected} onError={handleError} />
 			</div>
-		{/if}
-		<div class="manual-entry">
-			<button class="btn-link" onclick={handleManualEntry}>Enter ISBN manually</button>
-		</div>
+
+			<div class="scan-guidance">
+				<div class="guide-card surface-muted">
+					<p><strong>Framing</strong> Center the barcode in the frame and hold steady for a moment.</p>
+				</div>
+				<div class="guide-card surface-muted">
+					<p><strong>Barcode type</strong> Use the ISBN barcode, not a general retail product code.</p>
+				</div>
+			</div>
+
+			{#if scanError}
+				<div class="scan-error" aria-live="polite">
+					<p>{scanError}</p>
+				</div>
+			{/if}
+
+			<div class="manual-entry">
+				<button class="ghost-button" onclick={handleManualEntry}>Prefer typing it in?</button>
+			</div>
+		</section>
 	{/if}
 </div>
 
 <style>
 	.scan-page {
-		padding: 20px;
-		min-height: 100vh;
-		background: #f5f5f5;
+		display: grid;
+		gap: 1rem;
 	}
 
-	h1 {
-		margin: 0 0 20px;
-		font-size: 24px;
-		text-align: center;
+	.scan-hero {
+		display: grid;
+		gap: 0.8rem;
+		padding: 0.4rem 0.1rem 0;
+	}
+
+	.scan-hero p:last-child {
+		margin: 0;
+		max-width: 38rem;
+		line-height: 1.6;
+	}
+
+	.scan-stage,
+	.permission-denied {
+		display: grid;
+		gap: 0.95rem;
+		padding: 1rem;
 	}
 
 	.scanner-wrapper {
-		height: 450px;
-		border-radius: 12px;
+		border-radius: calc(var(--radius-md) - 0.2rem);
 		overflow: hidden;
+		min-height: 28rem;
+		background: #171311;
 	}
 
-	.permission-denied {
-		text-align: center;
-		padding: 40px 20px;
+	.scan-guidance {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
 	}
 
-	.permission-denied p {
-		margin: 0 0 16px;
-		color: #666;
+	.guide-card {
+		display: grid;
+		gap: 0.35rem;
+		align-items: start;
+		padding: 0.9rem;
 	}
 
-	.manual-entry {
-		text-align: center;
-		margin-top: 20px;
+	.guide-card p {
+		line-height: 1.45;
 	}
 
-	.btn-primary {
-		padding: 14px 28px;
-		font-size: 16px;
-		background: #4A90D9;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-	}
-
-	.btn-link {
-		background: none;
-		border: none;
-		color: #4A90D9;
-		font-size: 16px;
-		cursor: pointer;
-		text-decoration: underline;
+	.guide-card p,
+	.scan-error p,
+	.permission-denied p,
+	.permission-denied h2 {
+		margin: 0;
 	}
 
 	.scan-error {
-		text-align: center;
-		padding: 12px;
-		margin-top: 16px;
-		background: #fef3c7;
-		border-radius: 8px;
-		color: #92400e;
+		padding: 0.9rem 1rem;
+		border-radius: var(--radius-sm);
+		background: rgba(240, 201, 119, 0.18);
+		border: 1px solid rgba(240, 201, 119, 0.32);
+		color: #7c5a19;
 	}
 
-	.scan-error p {
-		margin: 0;
+	.manual-entry {
+		display: flex;
+		justify-content: center;
+	}
+
+	.permission-denied {
+		justify-items: center;
+		text-align: center;
+		padding: 2rem 1.3rem;
+	}
+
+	.denied-icon {
+		display: grid;
+		place-items: center;
+		padding: 0.45rem 0.8rem;
+		border-radius: var(--radius-pill);
+		background: var(--surface-strong);
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--text-muted);
+	}
+
+	.permission-denied h2 {
+		font-family: var(--font-serif);
+		font-size: 1.7rem;
+		color: var(--text-strong);
+	}
+
+	.permission-denied p {
+		line-height: 1.6;
+	}
+
+	@media (max-width: 640px) {
+		.scanner-wrapper {
+			min-height: 24rem;
+		}
+
+		.scan-guidance {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

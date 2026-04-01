@@ -13,11 +13,9 @@
 	let status = $state<'initializing' | 'scanning' | 'found' | 'error'>('initializing');
 	let errorMessage = $state<string>('');
 
-	// ISBN validation and conversion utilities
 	function isValidISBN10(code: string): boolean {
-		// ISBN-10: 9 digits + check digit (0-9 or X)
 		if (!/^\d{9}[\dX]$/i.test(code)) return false;
-		
+
 		let sum = 0;
 		for (let i = 0; i < 9; i++) {
 			sum += (10 - i) * parseInt(code[i], 10);
@@ -28,9 +26,8 @@
 	}
 
 	function isValidISBN13(code: string): boolean {
-		// ISBN-13: 13 digits, should start with 978 or 979
 		if (!/^\d{13}$/.test(code)) return false;
-		
+
 		let sum = 0;
 		for (let i = 0; i < 12; i++) {
 			const digit = parseInt(code[i], 10);
@@ -41,10 +38,9 @@
 	}
 
 	function convertISBN10to13(isbn10: string): string {
-		// ISBN-10: first 9 digits + prefix 978 + new check digit
 		const base9 = isbn10.substring(0, 9);
 		const withPrefix = '978' + base9;
-		
+
 		let sum = 0;
 		for (let i = 0; i < 12; i++) {
 			const digit = parseInt(withPrefix[i], 10);
@@ -55,29 +51,21 @@
 	}
 
 	function normalizeISBN(code: string): string | null {
-		// Remove any hyphens or spaces
 		const clean = code.replace(/[-\s]/g, '');
-		
-		// Try ISBN-13 first
-		// ISBN-13 must start with 978 or 979 to be a book ISBN
+
 		if (/^\d{13}$/.test(clean)) {
 			if ((clean.startsWith('978') || clean.startsWith('979')) && isValidISBN13(clean)) {
 				return clean;
 			}
-			// Log why invalid ISBN-13 was rejected
 			if (isValidISBN13(clean)) {
 				console.log('[Scanner] Rejected: valid checksum but not ISBN-13 prefix (must start with 978 or 979)');
 			}
 		}
-		
-		// Try ISBN-10
-		if (/^\d{9}[\dX]$/i.test(clean)) {
-			if (isValidISBN10(clean)) {
-				// Convert to ISBN-13 for compatibility
-				return convertISBN10to13(clean);
-			}
+
+		if (/^\d{9}[\dX]$/i.test(clean) && isValidISBN10(clean)) {
+			return convertISBN10to13(clean);
 		}
-		
+
 		return null;
 	}
 
@@ -91,7 +79,7 @@
 
 	function initScanner() {
 		console.log('[Scanner] Starting Quagga init, container:', scannerContainer);
-		
+
 		Quagga.init(
 			{
 				inputStream: {
@@ -132,8 +120,7 @@
 				const code = result.codeResult.code;
 				const format = result.codeResult.format;
 				console.log(`[Scanner] Detected: ${code} (format: ${format})`);
-				
-				// Use proper ISBN validation with checksum verification
+
 				const normalizedISBN = normalizeISBN(code);
 				if (normalizedISBN) {
 					console.log('[Scanner] Valid ISBN detected:', normalizedISBN, '(from original:', code + ')');
@@ -142,7 +129,6 @@
 					onDetected(normalizedISBN);
 				} else {
 					console.log('[Scanner] Detected but not valid ISBN:', code, '- this may be a product barcode, not a book ISBN. Make sure to scan the ISBN barcode (usually on the back cover).');
-					// Show helpful error to user (but not for every detection - only once per invalid scan attempt)
 					if (status !== 'error') {
 						onError?.('not-isbn');
 					}
@@ -151,10 +137,7 @@
 		});
 
 		Quagga.onProcessed((processingResult) => {
-			// processingResult can be undefined before first frame is processed
-			// or when processing errors occur
 			if (!processingResult) return;
-			// Log detection attempts
 			if (processingResult.boxes?.length) {
 				console.log('[Scanner] Found boxes:', processingResult.boxes.length);
 			}
@@ -174,20 +157,29 @@
 </script>
 
 <div class="scanner-container" bind:this={scannerContainer}>
-	<div class="scanner-overlay">
-		<div class="scanner-frame"></div>
+	<div class="scanner-overlay" aria-hidden="true">
+		<div class="scanner-frame">
+			<span class="corner top left"></span>
+			<span class="corner top right"></span>
+			<span class="corner bottom left"></span>
+			<span class="corner bottom right"></span>
+			<div class="scan-line"></div>
+		</div>
 	</div>
 
-	<div class="scanner-status">
-		{#if status === 'initializing'}
-			<span class="status-text">Initializing camera...</span>
-		{:else if status === 'scanning'}
-			<span class="status-text">Point camera at barcode</span>
-		{:else if status === 'found'}
-			<span class="status-text status-found">Barcode found!</span>
-		{:else if status === 'error'}
-			<span class="status-text status-error">{errorMessage}</span>
-		{/if}
+	<div class="scanner-copy">
+		<p class="eyebrow">Live camera</p>
+		<div class="scanner-status">
+			{#if status === 'initializing'}
+				<span class="status-text">Preparing camera…</span>
+			{:else if status === 'scanning'}
+				<span class="status-text">Line up the ISBN barcode within the frame.</span>
+			{:else if status === 'found'}
+				<span class="status-text status-found">Book found — opening details.</span>
+			{:else if status === 'error'}
+				<span class="status-text status-error">{errorMessage}</span>
+			{/if}
+		</div>
 	</div>
 </div>
 
@@ -196,8 +188,10 @@
 		position: relative;
 		width: 100%;
 		height: 100%;
-		min-height: 400px;
-		background: #000;
+		min-height: 25rem;
+		background:
+			radial-gradient(circle at top, rgba(213, 111, 91, 0.18), transparent 30%),
+			linear-gradient(180deg, rgba(18, 14, 13, 0.45), rgba(18, 14, 13, 0.7));
 		overflow: hidden;
 	}
 
@@ -205,50 +199,117 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		filter: saturate(0.88) contrast(1.04);
 	}
 
 	.scanner-overlay {
 		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		inset: 0;
+		display: grid;
+		place-items: center;
 		pointer-events: none;
 	}
 
 	.scanner-frame {
-		width: 280px;
-		height: 150px;
-		border: 2px solid rgba(74, 144, 217, 0.8);
-		border-radius: 8px;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+		position: relative;
+		width: min(84%, 19rem);
+		height: 10.5rem;
+		border-radius: 1.6rem;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.18);
+		box-shadow: 0 0 0 999px rgba(14, 10, 9, 0.44), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+		backdrop-filter: blur(2px);
+	}
+
+	.corner {
+		position: absolute;
+		width: 1.8rem;
+		height: 1.8rem;
+		border-color: rgba(240, 201, 119, 0.94);
+		border-style: solid;
+	}
+
+	.corner.top {
+		top: 0.8rem;
+		border-bottom: none;
+	}
+
+	.corner.bottom {
+		bottom: 0.8rem;
+		border-top: none;
+	}
+
+	.corner.left {
+		left: 0.8rem;
+		border-right: none;
+	}
+
+	.corner.right {
+		right: 0.8rem;
+		border-left: none;
+	}
+
+	.scan-line {
+		position: absolute;
+		left: 1rem;
+		right: 1rem;
+		top: 50%;
+		height: 2px;
+		background: linear-gradient(90deg, transparent, rgba(213, 111, 91, 0.95), transparent);
+		box-shadow: 0 0 18px rgba(213, 111, 91, 0.8);
+		animation: scan 2.4s ease-in-out infinite;
+	}
+
+	.scanner-copy {
+		position: absolute;
+		inset: auto 1rem 1rem;
+		display: grid;
+		gap: 0.6rem;
 	}
 
 	.scanner-status {
-		position: absolute;
-		bottom: 20px;
-		left: 0;
-		right: 0;
-		text-align: center;
+		display: flex;
+		justify-content: start;
 	}
 
 	.status-text {
-		display: inline-block;
-		padding: 8px 16px;
-		background: rgba(0, 0, 0, 0.7);
-		color: #fff;
-		border-radius: 20px;
-		font-size: 14px;
+		display: inline-flex;
+		align-items: center;
+		min-height: 2.8rem;
+		padding: 0.75rem 1rem;
+		border-radius: var(--radius-pill);
+		background: rgba(22, 17, 15, 0.75);
+		color: rgba(255, 251, 245, 0.96);
+		font-size: 0.92rem;
+		line-height: 1.4;
+		backdrop-filter: blur(18px);
 	}
 
 	.status-found {
-		color: #4ade80;
+		background: rgba(70, 97, 79, 0.86);
 	}
 
 	.status-error {
-		color: #f87171;
+		background: rgba(185, 85, 71, 0.86);
+	}
+
+	@keyframes scan {
+		0%,
+		100% {
+			transform: translateY(-2.9rem);
+			opacity: 0.55;
+		}
+
+		50% {
+			transform: translateY(2.9rem);
+			opacity: 1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.scan-line {
+			animation: none;
+			opacity: 0.75;
+		}
 	}
 </style>

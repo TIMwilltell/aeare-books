@@ -2,34 +2,22 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { getBook, updateBook, deleteBook, addProgressEvent, getProgressEventsByBook, deleteProgressEventsByBook, type ProgressEvent } from '$lib/db';
+	import { getBook, updateBook, deleteBook } from '$lib/db';
 	import type { Book } from '$lib/db';
 	import DeleteDialog from '$lib/components/DeleteDialog.svelte';
-	import ProgressTimeline from '$lib/components/ProgressTimeline.svelte';
 
 	let book = $state<Book | null>(null);
 	let loading = $state(true);
 	let editing = $state(false);
 	let saving = $state(false);
 
-	// Edit form state
 	let title = $state('');
 	let author = $state('');
 	let isbn = $state('');
 	let arLevel = $state(0);
 	let arPoints = $state(0);
 
-	// Delete dialog state
 	let showDeleteDialog = $state(false);
-
-	// Progress tracking state
-	let isRead = $state(false);
-	let readDate = $state<string>('');
-	let quizScore = $state<number | undefined>(undefined);
-	let quizDate = $state<string>('');
-	let notes = $state('');
-	let progressEvents = $state<ProgressEvent[]>([]);
-	let savingProgress = $state(false);
 
 	const bookId = page.params.id;
 
@@ -46,12 +34,6 @@
 			isbn = loadedBook.isbn;
 			arLevel = loadedBook.arLevel || 0;
 			arPoints = loadedBook.arPoints || 0;
-			isRead = loadedBook.isRead || false;
-			readDate = loadedBook.readDate ? new Date(loadedBook.readDate).toISOString().split('T')[0] : '';
-			quizScore = loadedBook.quizScore;
-			quizDate = loadedBook.quizDate ? new Date(loadedBook.quizDate).toISOString().split('T')[0] : '';
-			notes = loadedBook.notes || '';
-			progressEvents = await getProgressEventsByBook(bookId);
 		} else {
 			goto('/');
 		}
@@ -117,462 +99,309 @@
 	function closeDeleteDialog() {
 		showDeleteDialog = false;
 	}
-
-	// Progress tracking functions
-	async function toggleReadStatus() {
-		if (!book?.id) return;
-		savingProgress = true;
-		const newIsRead = !isRead;
-		const eventDate = newIsRead ? (readDate || new Date().toISOString().split('T')[0]) : undefined;
-		
-		await updateBook(book.id, { 
-			isRead: newIsRead,
-			readDate: eventDate ? new Date(eventDate).getTime() : null
-		});
-		
-		if (newIsRead) {
-			await addProgressEvent(book.id, 'marked_read', undefined, eventDate ? new Date(eventDate) : undefined);
-		}
-		
-		isRead = newIsRead;
-		readDate = eventDate || '';
-		progressEvents = await getProgressEventsByBook(book.id);
-		savingProgress = false;
-	}
-
-	async function saveQuizScore() {
-		if (!book?.id || quizScore === undefined) return;
-		savingProgress = true;
-		const qDate = quizDate || new Date().toISOString().split('T')[0];
-		
-		await updateBook(book.id, { 
-			quizScore: quizScore,
-			quizDate: new Date(qDate).getTime()
-		});
-		
-		await addProgressEvent(book.id, 'quiz_completed', `${quizScore}%`, new Date(qDate));
-		
-		quizDate = qDate;
-		progressEvents = await getProgressEventsByBook(book.id);
-		savingProgress = false;
-	}
-
-	async function saveNotes() {
-		if (!book?.id) return;
-		savingProgress = true;
-		
-		await updateBook(book.id, { notes });
-		
-		await addProgressEvent(book.id, 'notes_added', notes);
-		
-		progressEvents = await getProgressEventsByBook(book.id);
-		savingProgress = false;
-	}
 </script>
 
 <svelte:head>
 	<title>{book?.title || 'Book'} - AeAre Books</title>
 </svelte:head>
 
-<div class="book-detail">
+<div class="book-detail-page">
 	{#if loading}
-		<p class="loading">Loading...</p>
+		<section class="section-card loading-card">
+			<p>Loading this book…</p>
+		</section>
 	{:else if book}
-		{#if book.coverUrl}
-			<div class="cover-image">
-				<img src={book.coverUrl} alt="{book.title} cover" />
-			</div>
-		{/if}
-
-		<h1>{book.title}</h1>
-
-		{#if editing}
-			<form onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
-				<div class="form-group">
-					<label for="title">Title</label>
-					<input type="text" id="title" bind:value={title} required />
-				</div>
-				<div class="form-group">
-					<label for="author">Author</label>
-					<input type="text" id="author" bind:value={author} required />
-				</div>
-				<div class="form-group">
-					<label for="isbn">ISBN</label>
-					<input type="text" id="isbn" bind:value={isbn} />
-				</div>
-				<div class="form-group">
-					<label for="ar-level">AR Level</label>
-					<input
-						type="number"
-						id="ar-level"
-						bind:value={arLevel}
-						step="0.1"
-						min="0"
-						max="20"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="ar-points">AR Points</label>
-					<input type="number" id="ar-points" bind:value={arPoints} step="0.1" min="0" />
-				</div>
-				<div class="form-actions">
-					<button type="button" class="btn-cancel" onclick={cancelEdit} disabled={saving}>
-						Cancel
-					</button>
-					<button type="submit" class="btn-save" disabled={saving}>
-						{saving ? 'Saving...' : 'Save'}
-					</button>
-				</div>
-			</form>
-		{:else}
-			<div class="book-info">
-				<p class="author">by {book.author}</p>
-				<p class="isbn">ISBN: {book.isbn || 'N/A'}</p>
-				{#if book.arLevel}
-					<div class="ar-info">
-						<span>AR Level: {book.arLevel}</span>
-						{#if book.arPoints}
-							<span>• {book.arPoints} points</span>
-						{/if}
-						{#if book.arDataSource === 'fetched'}
-							<span class="ar-badge fetched">Auto</span>
-						{:else if book.arDataSource === 'manual'}
-							<span class="ar-badge manual">Manual</span>
-						{/if}
+		<section class="hero-card section-card">
+			<div class="cover-wrap">
+				{#if book.coverUrl}
+					<img class="cover-image" src={book.coverUrl} alt="{book.title} cover" />
+				{:else}
+					<div class="cover-fallback" aria-hidden="true">
+						<span>{book.title.slice(0, 2).toUpperCase()}</span>
 					</div>
 				{/if}
 			</div>
 
-			<!-- Progress Tracking Section -->
-			<div class="progress-section">
-				<div class="read-status">
-					{#if isRead}
-						<span class="read-badge">✓ Read</span>
-						{#if readDate}
-							<span class="read-date">on {new Date(readDate).toLocaleDateString()}</span>
-						{/if}
+			<div class="hero-copy">
+				<p class="eyebrow">Book detail</p>
+				<h1 class="page-title">{book.title}</h1>
+				<p class="author-line">by {book.author}</p>
+
+				<div class="meta-row">
+					<span class="pill neutral">{book.isbn ? `ISBN ${book.isbn}` : 'ISBN unavailable'}</span>
+					{#if book.arLevel}
+						<span class="pill ar">AR {book.arLevel}{book.arPoints ? ` • ${book.arPoints} pts` : ''}</span>
+					{/if}
+					{#if book.arDataSource === 'fetched'}
+						<span class="pill source fetched">Auto-fetched</span>
+					{:else if book.arDataSource === 'manual'}
+						<span class="pill source manual">Manual</span>
 					{/if}
 				</div>
-				
-				<button 
-					class="btn-read-toggle" 
-					class:read={isRead}
-					onclick={toggleReadStatus}
-					disabled={savingProgress}
-				>
-					{isRead ? 'Mark as Unread' : 'Mark as Read'}
-				</button>
-				
-				<div class="quiz-section">
-					<label for="quiz-score">AR Quiz Score</label>
-					<div class="quiz-inputs">
-						<input 
-							type="number" 
-							id="quiz-score" 
-							bind:value={quizScore}
-							min="0"
-							max="100"
-							placeholder="0-100"
-						/>
-						<input 
-							type="date" 
-							bind:value={quizDate}
-						/>
-						<button class="btn-save-quiz" onclick={saveQuizScore} disabled={savingProgress || quizScore === undefined}>
-							Save
-						</button>
+
+				<div class="action-row">
+					<button class="primary-button" onclick={startEdit}>Edit details</button>
+					<button class="danger-button" onclick={confirmDelete}>Delete book</button>
+				</div>
+			</div>
+		</section>
+
+		{#if editing}
+			<section class="section-card form-card">
+				<div class="section-header">
+					<p class="eyebrow">Edit metadata</p>
+					<h2>Update the book record</h2>
+				</div>
+
+				<form class="edit-form" onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
+					<label class="field" for="title">
+						<span>Title</span>
+						<input type="text" id="title" bind:value={title} required />
+					</label>
+
+					<label class="field" for="author">
+						<span>Author</span>
+						<input type="text" id="author" bind:value={author} required />
+					</label>
+
+					<label class="field" for="isbn">
+						<span>ISBN</span>
+						<input type="text" id="isbn" bind:value={isbn} />
+					</label>
+
+					<div class="split-fields">
+						<label class="field" for="ar-level">
+							<span>AR Level</span>
+							<input type="number" id="ar-level" bind:value={arLevel} step="0.1" min="0" max="20" />
+						</label>
+
+						<label class="field" for="ar-points">
+							<span>AR Points</span>
+							<input type="number" id="ar-points" bind:value={arPoints} step="0.1" min="0" />
+						</label>
+					</div>
+
+					<div class="form-actions">
+						<button type="button" class="ghost-button" onclick={cancelEdit} disabled={saving}>Cancel</button>
+						<button type="submit" class="primary-button" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
+					</div>
+				</form>
+			</section>
+		{:else}
+			<section class="detail-grid">
+				<div class="section-card detail-card metadata-card">
+					<div class="section-header compact">
+						<p class="eyebrow">Metadata</p>
+						<h2>Catalog details</h2>
+					</div>
+
+					<div class="metadata-list surface-muted">
+						<div>
+							<span>Title</span>
+							<strong>{book.title}</strong>
+						</div>
+						<div>
+							<span>Author</span>
+							<strong>{book.author}</strong>
+						</div>
+						<div>
+							<span>ISBN</span>
+							<strong>{book.isbn || 'Not provided'}</strong>
+						</div>
+						<div>
+							<span>AR Level</span>
+							<strong>{book.arLevel ?? 'Not provided'}</strong>
+						</div>
+						<div>
+							<span>AR Points</span>
+							<strong>{book.arPoints ?? 'Not provided'}</strong>
+						</div>
+						<div>
+							<span>AR Source</span>
+							<strong>{book.arDataSource === 'fetched' ? 'Auto-fetched' : book.arDataSource === 'manual' ? 'Manual' : 'Not set'}</strong>
+						</div>
 					</div>
 				</div>
-				
-				<div class="notes-section">
-					<label for="notes">Notes</label>
-					<textarea 
-						id="notes" 
-						bind:value={notes}
-						placeholder="Add reading notes..."
-						rows="4"
-					></textarea>
-					<button class="btn-save-notes" onclick={saveNotes} disabled={savingProgress}>
-						Save Notes
-					</button>
-				</div>
-				
-				<ProgressTimeline events={progressEvents} />
-			</div>
-
-			<div class="book-actions">
-				<button class="btn-edit" onclick={startEdit}>Edit</button>
-				<button class="btn-delete" onclick={confirmDelete}>Delete</button>
-			</div>
+			</section>
 		{/if}
 
-		<DeleteDialog
-			open={showDeleteDialog}
-			bookTitle={book.title}
-			onClose={closeDeleteDialog}
-			onConfirm={handleDelete}
-		/>
+		<DeleteDialog open={showDeleteDialog} bookTitle={book.title} onClose={closeDeleteDialog} onConfirm={handleDelete} />
 	{/if}
 </div>
 
 <style>
-	.book-detail {
-		padding: 20px;
-		max-width: 500px;
-		margin: 0 auto;
+	.book-detail-page {
+		display: grid;
+		gap: 1rem;
 	}
 
-	.cover-image {
-		margin-bottom: 20px;
+	.loading-card {
+		padding: 1.4rem;
 		text-align: center;
 	}
 
-	.cover-image img {
-		max-width: 150px;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	h1 {
-		margin: 0 0 16px;
-		font-size: 24px;
-	}
-
-	.loading {
-		text-align: center;
-		color: #666;
-	}
-
-	.book-info {
-		margin-bottom: 24px;
-	}
-
-	.author {
-		font-size: 18px;
-		color: #555;
-		margin: 0 0 8px;
-	}
-
-	.isbn {
-		color: #888;
-		margin: 0 0 8px;
-	}
-
-	.ar-info {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 4px;
-		color: #4a90d9;
-		font-weight: 500;
+	.loading-card p {
 		margin: 0;
 	}
 
-	.ar-badge {
-		display: inline-block;
-		font-size: 11px;
-		padding: 2px 6px;
-		border-radius: 4px;
-		margin-left: 8px;
+	.hero-card {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 1rem;
+		padding: 1rem;
 	}
 
-	.ar-badge.fetched {
-		background: #dbeafe;
-		color: #1d4ed8;
+	.cover-wrap {
+		width: 8.7rem;
 	}
 
-	.ar-badge.manual {
-		background: #fef3c7;
-		color: #92400e;
-	}
-
-	.book-actions {
-		display: flex;
-		gap: 12px;
-	}
-
-	.btn-edit,
-	.btn-delete {
-		flex: 1;
-		padding: 14px;
-		font-size: 16px;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-	}
-
-	.btn-edit {
-		background: #e5e5e5;
-		color: #333;
-	}
-
-	.btn-delete {
-		background: #fee2e2;
-		color: #dc2626;
-	}
-
-	.form-group {
-		margin-bottom: 16px;
-	}
-
-	label {
-		display: block;
-		margin-bottom: 6px;
-		font-weight: 500;
-		color: #333;
-	}
-
-	input {
+	.cover-image,
+	.cover-fallback {
 		width: 100%;
-		padding: 12px;
-		font-size: 16px;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		box-sizing: border-box;
+		aspect-ratio: 3 / 4.2;
+		border-radius: 1.4rem;
 	}
 
-	input:focus {
-		outline: none;
-		border-color: #4a90d9;
+	.cover-image {
+		object-fit: cover;
+		box-shadow: var(--shadow-card);
 	}
 
+	.cover-fallback {
+		display: grid;
+		place-items: center;
+		background: var(--surface-strong);
+		font-family: var(--font-serif);
+		font-size: 2rem;
+		color: var(--text-strong);
+	}
+
+	.hero-copy {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.author-line,
+	.meta-row,
+	.section-header h2 {
+		margin: 0;
+	}
+
+	.author-line {
+		font-size: 1.05rem;
+		color: var(--text-default);
+	}
+
+	.meta-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.pill.neutral {
+		background: rgba(255, 251, 244, 0.92);
+		color: var(--text-default);
+		border: 1px solid var(--border-subtle);
+	}
+
+	.pill.ar {
+		background: rgba(240, 201, 119, 0.22);
+		color: #8b6321;
+	}
+
+	.pill.source.fetched {
+		background: rgba(70, 97, 79, 0.12);
+		color: var(--color-moss-1);
+	}
+
+	.pill.source.manual {
+		background: rgba(213, 111, 91, 0.12);
+		color: var(--color-coral-1);
+	}
+
+	.action-row,
 	.form-actions {
-		display: flex;
-		gap: 12px;
-		margin-top: 24px;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
 	}
 
-	.btn-cancel,
-	.btn-save {
-		flex: 1;
-		padding: 14px;
-		font-size: 16px;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
+	.form-card,
+	.detail-card {
+		padding: 1rem;
 	}
 
-	.btn-cancel {
-		background: #e5e5e5;
-		color: #333;
+	.section-header {
+		display: grid;
+		gap: 0.35rem;
+		margin-bottom: 1rem;
 	}
 
-	.btn-save {
-		background: #4a90d9;
-		color: white;
+	.section-header h2 {
+		font-family: var(--font-serif);
+		font-size: 1.45rem;
+		color: var(--text-strong);
 	}
 
-	.btn-cancel:disabled,
-	.btn-save:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+	.edit-form,
+	.detail-grid {
+		display: grid;
+		gap: 1rem;
 	}
 
-	/* Progress Tracking Styles */
-	.progress-section {
-		margin-top: 24px;
-		padding-top: 24px;
-		border-top: 1px solid #eee;
+	.field {
+		display: grid;
+		gap: 0.45rem;
 	}
 
-	.read-status {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 12px;
+	.field > span {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: var(--text-strong);
 	}
 
-	.read-badge {
-		background: #d1fae5;
-		color: #065f46;
-		padding: 4px 10px;
-		border-radius: 12px;
-		font-size: 14px;
-		font-weight: 500;
+	.split-fields {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
 	}
 
-	.read-date {
-		color: #888;
-		font-size: 14px;
+	.metadata-list {
+		display: grid;
+		gap: 0.75rem;
+		padding: 0.95rem;
 	}
 
-	.btn-read-toggle {
-		width: 100%;
-		padding: 14px;
-		font-size: 16px;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-		background: #e5e5e5;
-		color: #333;
-		margin-bottom: 20px;
+	.metadata-list > div {
+		display: grid;
+		gap: 0.2rem;
 	}
 
-	.btn-read-toggle.read {
-		background: #fef3c7;
-		color: #92400e;
+	.metadata-list span {
+		font-size: 0.78rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--text-muted);
 	}
 
-	.quiz-section,
-	.notes-section {
-		margin-bottom: 20px;
+	.metadata-list strong {
+		font-size: 0.98rem;
+		color: var(--text-strong);
 	}
 
-	.quiz-section label,
-	.notes-section label {
-		display: block;
-		font-weight: 500;
-		margin-bottom: 8px;
-		color: #333;
-	}
+	@media (max-width: 720px) {
+		.hero-card {
+			grid-template-columns: 1fr;
+		}
 
-	.quiz-inputs {
-		display: flex;
-		gap: 8px;
-	}
+		.cover-wrap {
+			width: 8rem;
+		}
 
-	.quiz-inputs input[type="number"] {
-		width: 80px;
-	}
-
-	.quiz-inputs input[type="date"] {
-		flex: 1;
-	}
-
-	.btn-save-quiz,
-	.btn-save-notes {
-		padding: 10px 16px;
-		font-size: 14px;
-		border: none;
-		border-radius: 6px;
-		cursor: pointer;
-		background: #4a90d9;
-		color: white;
-	}
-
-	.btn-save-quiz:disabled,
-	.btn-save-notes:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	textarea {
-		width: 100%;
-		padding: 12px;
-		font-size: 16px;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		font-family: inherit;
-		resize: vertical;
-		box-sizing: border-box;
-	}
-
-	textarea:focus {
-		outline: none;
-		border-color: #4a90d9;
-	}
-
-	.btn-save-notes {
-		margin-top: 8px;
+		.action-row,
+		.form-actions,
+		.split-fields {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>
