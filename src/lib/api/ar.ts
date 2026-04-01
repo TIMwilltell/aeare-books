@@ -1,9 +1,11 @@
+import type { ArSource } from '$lib/types/ar';
+
 export interface ArLookupResult {
 	success: boolean;
 	data?: {
-		arLevel: number;
-		arPoints: number;
-		source: 'cache' | 'scrape';
+		arLevel?: number;
+		arPoints?: number;
+		source: ArSource;
 	};
 	error?: string;
 }

@@ -1,9 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getArCache, setArCache } from '$lib/db';
+import type { ArSource } from '$lib/types/ar';
 
 // Playwright will be imported dynamically to avoid issues when not needed
 let playwright: typeof import('playwright') | null = null;
+const ARBOOKFIND_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+const arbookfindCooldownByIsbn = new Map<string, number>();
 
 async function getPlaywright() {
 	if (!playwright) {
@@ -20,7 +23,10 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 
 	// Clean ISBN (remove hyphens and spaces)
-	const cleanIsbn = isbn.replace(/[-\s]/g, '');
+	const cleanIsbn = isbn.replace(/[-\s]/g, '').toUpperCase();
+	if (!/^(\d{13}|\d{9}[\dXx])$/.test(cleanIsbn)) {
+		return json({ error: 'Invalid ISBN format' }, { status: 400 });
+	}
 
 	// Check cache first
 	const cached = await getArCache(cleanIsbn);
@@ -32,39 +38,118 @@ export const GET: RequestHandler = async ({ url }) => {
 		});
 	}
 
-	// Scrape with Playwright
+	const bookrooResult = await lookupArFromBookroo(cleanIsbn);
+	let arLevel = bookrooResult?.arLevel;
+	let arPoints = bookrooResult?.arPoints;
+	let source: ArSource | null = bookrooResult ? 'bookroo' : null;
+
+	const needsFallback = arLevel === undefined || arPoints === undefined;
+	if (needsFallback) {
+		if (isArbookfindInCooldown(cleanIsbn)) {
+			if (arLevel !== undefined || arPoints !== undefined) {
+				return json({ arLevel, arPoints, source: source ?? 'bookroo' });
+			}
+			return json({ error: 'AR fallback temporarily unavailable for this ISBN' }, { status: 503 });
+		}
+
+		const scrapeResult = await scrapeArBookFindWithBrowser(cleanIsbn);
+		if (scrapeResult.notFound) {
+			markArbookfindCooldown(cleanIsbn);
+			if (arLevel !== undefined || arPoints !== undefined) {
+				return json({ arLevel, arPoints, source: source ?? 'bookroo' });
+			}
+			return json({ error: scrapeResult.error ?? 'Book not found in AR database' }, { status: 404 });
+		}
+
+		if (scrapeResult.error) {
+			if (arLevel !== undefined || arPoints !== undefined) {
+				return json({ arLevel, arPoints, source: source ?? 'bookroo' });
+			}
+			return json({ error: scrapeResult.error }, { status: 503 });
+		}
+
+		if (arLevel === undefined) {
+			arLevel = scrapeResult.arLevel;
+		}
+		if (arPoints === undefined) {
+			arPoints = scrapeResult.arPoints;
+		}
+
+		if (scrapeResult.arLevel !== undefined || scrapeResult.arPoints !== undefined) {
+			source = source ?? 'scrape';
+		}
+	}
+
+	if (arLevel !== undefined && arPoints !== undefined) {
+		await setArCache(cleanIsbn, arLevel, arPoints);
+	}
+
+	if (arLevel !== undefined || arPoints !== undefined) {
+		return json({ arLevel, arPoints, source: source ?? 'scrape' });
+	}
+
+	return json({ error: 'Book not found in AR database' }, { status: 404 });
+};
+
+async function scrapeArBookFindWithBrowser(isbn: string): Promise<ScrapeResult> {
 	try {
 		const pw = await getPlaywright();
 		const browser = await pw.chromium.launch({ headless: true });
-		const page = await browser.newPage();
 
-		const result = await scrapeArBookFind(page, cleanIsbn);
-		await browser.close();
+		try {
+			const page = await browser.newPage();
+			page.setDefaultTimeout(7000);
+			page.setDefaultNavigationTimeout(10000);
+			await page.route('**/*', (route) => {
+				const resourceType = route.request().resourceType();
+				if (
+					resourceType === 'image' ||
+					resourceType === 'font' ||
+					resourceType === 'media' ||
+					resourceType === 'stylesheet'
+				) {
+					void route.abort();
+					return;
+				}
+				void route.continue();
+			});
 
-		if (result.error) {
-			return json({ error: result.error }, { status: 404 });
+			return await scrapeArBookFind(page, isbn);
+		} finally {
+			await browser.close();
 		}
-
-		// Cache successful result
-		if (result.arLevel !== undefined && result.arPoints !== undefined) {
-			await setArCache(cleanIsbn, result.arLevel, result.arPoints);
-		}
-
-		return json({
-			arLevel: result.arLevel,
-			arPoints: result.arPoints,
-			source: 'scrape'
-		});
 	} catch (error) {
 		console.error('AR scrape error:', error);
-		return json({ error: 'AR lookup failed' }, { status: 503 });
+		return { error: 'AR lookup failed' };
 	}
-};
+}
+
+function isArbookfindInCooldown(isbn: string): boolean {
+	const retryAfter = arbookfindCooldownByIsbn.get(isbn);
+	if (!retryAfter) {
+		return false;
+	}
+	if (Date.now() >= retryAfter) {
+		arbookfindCooldownByIsbn.delete(isbn);
+		return false;
+	}
+	return true;
+}
+
+function markArbookfindCooldown(isbn: string): void {
+	arbookfindCooldownByIsbn.set(isbn, Date.now() + ARBOOKFIND_COOLDOWN_MS);
+}
 
 interface ScrapeResult {
 	arLevel?: number;
 	arPoints?: number;
 	error?: string;
+	notFound?: boolean;
+}
+
+interface BookrooResult {
+	arLevel?: number;
+	arPoints?: number;
 }
 
 async function scrapeArBookFind(page: any, isbn: string): Promise<ScrapeResult> {
@@ -88,7 +173,7 @@ async function scrapeArBookFind(page: any, isbn: string): Promise<ScrapeResult> 
 		// Check for failure message
 		const failLocator = page.locator('#ctl00_ContentPlaceHolder1_lblSearchResultFailedLabel');
 		if (await failLocator.count() > 0) {
-			return { error: 'Book not found in AR database' };
+			return { notFound: true, error: 'Book not found in AR database' };
 		}
 
 		// Click on book title
@@ -109,5 +194,74 @@ async function scrapeArBookFind(page: any, isbn: string): Promise<ScrapeResult> 
 		return { arLevel, arPoints };
 	} catch (e) {
 		return { error: `Scrape failed: ${e}` };
+	}
+}
+
+async function lookupArFromBookroo(isbn: string): Promise<BookrooResult | null> {
+	try {
+		const searchResponse = await fetchWithTimeout(
+			`https://auth.bookroo.com/api/search/books-dynamic?query=${encodeURIComponent(isbn)}`
+		);
+		if (!searchResponse.ok) {
+			return null;
+		}
+		const searchPayload = await searchResponse.json();
+		const books = searchPayload?.data?.books;
+		if (!Array.isArray(books) || books.length === 0) {
+			return null;
+		}
+
+		const normalizedIsbn = isbn.replace(/[-\s]/g, '').toUpperCase();
+		const matchedBook = books.find((book: any) => {
+			const candidate = String(book?.isbn ?? '')
+				.replace(/[-\s]/g, '')
+				.toUpperCase();
+			return candidate === normalizedIsbn;
+		});
+		if (!matchedBook?.slug) {
+			return null;
+		}
+
+		const detailsResponse = await fetchWithTimeout(
+			`https://bookroo.com/books/${matchedBook.slug}?isbn=${encodeURIComponent(isbn)}`
+		);
+		if (!detailsResponse.ok) {
+			return null;
+		}
+
+		const html = await detailsResponse.text();
+		const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json"[^>]*>([\s\S]*?)<\/script>/);
+		if (!nextDataMatch?.[1]) {
+			return null;
+		}
+
+		const parsed = JSON.parse(nextDataMatch[1]);
+		const pageProps = parsed?.props?.pageProps ?? parsed?.pageProps;
+		const book = pageProps?.book;
+		if (!book) {
+			return null;
+		}
+
+		const arLevel = typeof book.atos?.value === 'number' ? book.atos.value : undefined;
+		const arPoints = typeof book.ar_points === 'number' ? book.ar_points : undefined;
+
+		if (arLevel === undefined && arPoints === undefined) {
+			return null;
+		}
+
+		return { arLevel, arPoints };
+	} catch {
+		return null;
+	}
+}
+
+async function fetchWithTimeout(input: string, timeoutMs = 10000): Promise<Response> {
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+	try {
+		return await fetch(input, { signal: controller.signal });
+	} finally {
+		clearTimeout(timeoutId);
 	}
 }
