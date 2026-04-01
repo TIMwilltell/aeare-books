@@ -10,7 +10,9 @@
 
 	function getInitials(title: string) {
 		return title
-			.split(' ')
+			.trim()
+			.split(/\s+/)
+			.filter(Boolean)
 			.slice(0, 2)
 			.map((part) => part[0])
 			.join('')
@@ -29,7 +31,7 @@
 				<button class="book-card section-card" onclick={() => book.id && onSelect(book.id)}>
 					<div class="book-cover">
 						{#if book.coverUrl}
-							<img src={book.coverUrl} alt="{book.title} cover" />
+							<img src={book.coverUrl} alt="" />
 						{:else}
 							<div class="cover-placeholder" aria-hidden="true">
 								<span>{getInitials(book.title)}</span>

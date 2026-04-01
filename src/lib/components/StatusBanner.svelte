@@ -1,40 +1,46 @@
 <script lang="ts">
 	import { isOnline, syncStatus, triggerSync } from '$lib/stores/sync';
 	import { fade } from 'svelte/transition';
+
+	const bannerState = $derived.by(() => {
+		if ($syncStatus === 'pending' || $syncStatus === 'syncing' || $syncStatus === 'error') {
+			return $syncStatus;
+		}
+
+		if (!$isOnline) {
+			return 'offline';
+		}
+
+		return '';
+	});
 </script>
 
-{#if !$isOnline || $syncStatus !== 'synced'}
+{#if bannerState}
 	<div
-		class={{
-			'status-banner': true,
-			offline: !$isOnline,
-			pending: $syncStatus === 'pending',
-			syncing: $syncStatus === 'syncing',
-			error: $syncStatus === 'error'
-		}}
+		class={`status-banner ${bannerState}`}
 		transition:fade={{ duration: 180 }}
 		aria-live="polite"
 	>
-		{#if !$isOnline}
+		{#if bannerState === 'offline'}
 			<span class="icon" aria-hidden="true">Off</span>
 			<div class="message-block">
 				<span class="label">Offline mode</span>
 				<span class="message">Changes are safe and will sync when you reconnect.</span>
 			</div>
-		{:else if $syncStatus === 'syncing'}
+		{:else if bannerState === 'syncing'}
 			<span class="icon" aria-hidden="true">Now</span>
 			<div class="message-block">
 				<span class="label">Syncing now</span>
 				<span class="message">Refreshing your latest reading updates.</span>
 			</div>
-		{:else if $syncStatus === 'pending'}
+		{:else if bannerState === 'pending'}
 			<span class="icon" aria-hidden="true">Soon</span>
 			<div class="message-block">
 				<span class="label">Pending sync</span>
 				<span class="message">Recent changes haven’t been sent yet.</span>
 			</div>
 			<button class="sync-btn" onclick={triggerSync}>Sync now</button>
-		{:else if $syncStatus === 'error'}
+		{:else if bannerState === 'error'}
 			<span class="icon" aria-hidden="true">Alert</span>
 			<div class="message-block">
 				<span class="label">Sync needs attention</span>

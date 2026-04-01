@@ -57,7 +57,8 @@
 		saving = true;
 
 		try {
-			await addBook(title.trim(), author.trim(), isbn.trim(), coverUrl || undefined, arLevel, arPoints, arDataSource);
+			const effectiveArDataSource = arLevel != null || arPoints != null ? arDataSource : undefined;
+			await addBook(title.trim(), author.trim(), isbn.trim(), coverUrl || undefined, arLevel, arPoints, effectiveArDataSource);
 			goto('/');
 		} catch (e) {
 			console.error(e);
@@ -156,7 +157,7 @@
 					<input type="number" id="ar-points" bind:value={arPoints} step="0.1" min="0" placeholder="e.g. 5" />
 				</label>
 
-				{#if arLevel}
+				{#if arLevel != null || arPoints != null}
 					<span class="pill source-pill {arDataSource}">
 						{arDataSource === 'fetched' ? 'Auto-fetched data' : 'Manual data'}
 					</span>

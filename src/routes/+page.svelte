@@ -10,6 +10,7 @@
 	let books = $state<Book[]>([]);
 	let searchQuery = $state('');
 	let loading = $state(true);
+	let requestId = 0;
 
 	let totalBooks = $derived(books.length);
 	let arPointsTotal = $derived(
@@ -17,12 +18,26 @@
 	);
 
 	onMount(async () => {
-		books = await getAllBooks();
+		const currentRequestId = ++requestId;
+		const allBooks = await getAllBooks();
+		if (currentRequestId !== requestId) {
+			return;
+		}
+		books = allBooks;
 		loading = false;
 	});
 
 	async function handleSearch() {
-		books = await searchBooks(searchQuery);
+		if (loading) {
+			return;
+		}
+
+		const currentRequestId = ++requestId;
+		const results = await searchBooks(searchQuery);
+		if (currentRequestId !== requestId) {
+			return;
+		}
+		books = results;
 	}
 
 	function handleBookSelect(id: string) {
@@ -83,12 +98,14 @@
 			<input
 				id="library-search"
 				type="search"
+				aria-label="Search by title or author"
 				placeholder="Search by title or author"
 				bind:value={searchQuery}
+				disabled={loading}
 				oninput={handleSearch}
 			/>
 		</label>
-		<button class="ghost-button export-inline" onclick={handleExport}>Export</button>
+		<button class="ghost-button export-inline" onclick={handleExport} disabled={loading}>Export</button>
 	</section>
 
 	{#if loading}

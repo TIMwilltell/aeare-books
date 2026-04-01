@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tick } from 'svelte';
+
 	interface Props {
 		open: boolean;
 		bookTitle: string;
@@ -8,27 +10,93 @@
 
 	let { open, bookTitle, onClose, onConfirm }: Props = $props();
 	const dialogId = $props.id();
+	let dialogContent = $state<HTMLDivElement | null>(null);
+	let previousFocusedElement: HTMLElement | null = null;
+
+	function getFocusableElements() {
+		if (!dialogContent) {
+			return [];
+		}
+
+		return Array.from(
+			dialogContent.querySelectorAll<HTMLElement>(
+				'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+			)
+		);
+	}
+
+	async function focusDialog() {
+		await tick();
+		const focusable = getFocusableElements();
+		if (focusable[0]) {
+			focusable[0].focus();
+			return;
+		}
+		dialogContent?.focus();
+	}
 
 	function handleKeydown(event: KeyboardEvent) {
-		if (open && event.key === 'Escape') {
+		if (!open) {
+			return;
+		}
+
+		if (event.key === 'Escape') {
+			event.preventDefault();
 			onClose();
+			return;
+		}
+
+		if (event.key === 'Tab') {
+			const focusable = getFocusableElements();
+			if (focusable.length === 0) {
+				event.preventDefault();
+				dialogContent?.focus();
+				return;
+			}
+
+			const first = focusable[0];
+			const last = focusable[focusable.length - 1];
+			const active = document.activeElement as HTMLElement | null;
+
+			if (!event.shiftKey && active === last) {
+				event.preventDefault();
+				first.focus();
+			}
+
+			if (event.shiftKey && active === first) {
+				event.preventDefault();
+				last.focus();
+			}
 		}
 	}
+
+	$effect(() => {
+		if (open) {
+			previousFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+			void focusDialog();
+			return;
+		}
+
+		if (previousFocusedElement) {
+			previousFocusedElement.focus();
+			previousFocusedElement = null;
+		}
+	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-	<div class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby={`${dialogId}-title`} aria-describedby={`${dialogId}-description`}>
-		<button class="backdrop-hit" type="button" aria-label="Close dialog" onclick={onClose}></button>
-		<div class="dialog-content section-card" role="document">
+	<div class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby={`${dialogId}-title`} aria-describedby={`${dialogId}-description ${dialogId}-warning`}>
+		<button class="backdrop-hit" type="button" tabindex="-1" aria-label="Close dialog" onclick={onClose}></button>
+		<div class="dialog-content section-card" role="document" tabindex="-1" bind:this={dialogContent}>
 			<p class="eyebrow">Delete entry</p>
 			<h2 id={`${dialogId}-title`}>Remove this book?</h2>
 			<p id={`${dialogId}-description`}>“{bookTitle}” will be deleted from your library.</p>
-			<p class="warning">This action cannot be undone.</p>
+			<p id={`${dialogId}-warning`} class="warning">This action cannot be undone.</p>
 			<div class="dialog-actions">
-				<button class="ghost-button" onclick={onClose}>Cancel</button>
-				<button class="danger-button" onclick={onConfirm}>Delete book</button>
+				<button type="button" class="ghost-button" onclick={onClose}>Cancel</button>
+				<button type="button" class="danger-button" onclick={onConfirm}>Delete book</button>
 			</div>
 		</div>
 	</div>

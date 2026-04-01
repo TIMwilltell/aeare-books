@@ -169,7 +169,7 @@
 
 	<div class="scanner-copy">
 		<p class="eyebrow">Live camera</p>
-		<div class="scanner-status">
+		<div class="scanner-status" aria-live="polite" aria-atomic="true">
 			{#if status === 'initializing'}
 				<span class="status-text">Preparing camera…</span>
 			{:else if status === 'scanning'}

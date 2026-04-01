@@ -129,8 +129,14 @@
 
 				<div class="meta-row">
 					<span class="pill neutral">{book.isbn ? `ISBN ${book.isbn}` : 'ISBN unavailable'}</span>
-					{#if book.arLevel}
-						<span class="pill ar">AR {book.arLevel}{book.arPoints ? ` • ${book.arPoints} pts` : ''}</span>
+					{#if book.arLevel != null || book.arPoints != null}
+						<span class="pill ar">
+							{#if book.arLevel != null}
+								AR {book.arLevel}{book.arPoints != null ? ` • ${book.arPoints} pts` : ''}
+							{:else if book.arPoints != null}
+								AR {book.arPoints} pts
+							{/if}
+						</span>
 					{/if}
 					{#if book.arDataSource === 'fetched'}
 						<span class="pill source fetched">Auto-fetched</span>

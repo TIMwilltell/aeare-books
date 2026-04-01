@@ -128,7 +128,13 @@
 		color: inherit;
 	}
 
-	:global(input),
+	:global(input[type='text']),
+	:global(input[type='search']),
+	:global(input[type='email']),
+	:global(input[type='password']),
+	:global(input[type='tel']),
+	:global(input[type='url']),
+	:global(input[type='number']),
 	:global(textarea) {
 		width: 100%;
 		border: 1px solid var(--border-subtle);
@@ -140,12 +146,24 @@
 		transition: border-color var(--transition-soft), box-shadow var(--transition-soft), background var(--transition-soft);
 	}
 
-	:global(input::placeholder),
+	:global(input[type='text']::placeholder),
+	:global(input[type='search']::placeholder),
+	:global(input[type='email']::placeholder),
+	:global(input[type='password']::placeholder),
+	:global(input[type='tel']::placeholder),
+	:global(input[type='url']::placeholder),
+	:global(input[type='number']::placeholder),
 	:global(textarea::placeholder) {
 		color: color-mix(in srgb, var(--text-muted) 78%, white);
 	}
 
-	:global(input:focus-visible),
+	:global(input[type='text']:focus-visible),
+	:global(input[type='search']:focus-visible),
+	:global(input[type='email']:focus-visible),
+	:global(input[type='password']:focus-visible),
+	:global(input[type='tel']:focus-visible),
+	:global(input[type='url']:focus-visible),
+	:global(input[type='number']:focus-visible),
 	:global(textarea:focus-visible),
 	:global(button:focus-visible),
 	:global(a:focus-visible) {
