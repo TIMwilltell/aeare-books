@@ -3,7 +3,7 @@ export interface ArLookupResult {
 	data?: {
 		arLevel: number;
 		arPoints: number;
-		source: 'cache' | 'scrape';
+		source: 'cache' | 'bookroo' | 'scrape';
 	};
 	error?: string;
 }
