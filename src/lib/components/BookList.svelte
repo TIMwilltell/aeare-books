@@ -40,11 +40,11 @@
 					</div>
 
 					<div class="book-info">
-						<div class="book-topline">
-							{#if book.arLevel}
+						{#if typeof book.arLevel === 'number'}
+							<div class="book-topline">
 								<span class="pill ar-pill">AR {book.arLevel}</span>
-							{/if}
-						</div>
+							</div>
+						{/if}
 
 						<div class="title-block">
 							<span class="book-title">{book.title}</span>
@@ -52,7 +52,7 @@
 						</div>
 
 						<div class="book-meta">
-							{#if book.arPoints}
+							{#if typeof book.arPoints === 'number'}
 								<span>{book.arPoints} AR pts</span>
 							{/if}
 							{#if book.isbn}
