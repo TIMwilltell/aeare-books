@@ -12,7 +12,7 @@ Parents can securely access and manage only their own family library data.
 
 ## Phases
 
-- [ ] **Phase 1: Auth Foundation** - Provider setup, session plumbing, and base user identity mapping
+- [x] **Phase 1: Auth Foundation** - Provider setup, session plumbing, and base user identity mapping
 - [ ] **Phase 2: Route + Data Protection** - Protected routes and account-scoped Convex reads/writes
 - [ ] **Phase 3: Migration + Hardening** - Legacy data handling, error UX, and auth regression validation
 
@@ -69,7 +69,7 @@ Parents can securely access and manage only their own family library data.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Auth Foundation | 2/3 | In progress | - |
+| 1. Auth Foundation | 3/3 | Complete | 2026-04-02 |
 | 2. Route + Data Protection | 0/0 | Not started | - |
 | 3. Migration + Hardening | 0/0 | Not started | - |
 
