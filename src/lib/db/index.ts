@@ -1,4 +1,5 @@
 import { ConvexClient } from 'convex/browser';
+import { fetchAccessToken } from '$lib/auth/auth0';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 
@@ -52,7 +53,9 @@ export interface ProgressEvent {
 
 // Create a new Convex client instance
 function createClient(): ConvexClient {
-	return new ConvexClient(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
+	const client = new ConvexClient(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
+	client.setAuth(fetchAccessToken);
+	return client;
 }
 
 // Helper to get Convex client - creates a new instance

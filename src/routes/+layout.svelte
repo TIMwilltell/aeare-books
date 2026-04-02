@@ -1,11 +1,46 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 	import StatusBanner from '$lib/components/StatusBanner.svelte';
-	import { setupConvex } from 'convex-svelte';
+	import { authState, fetchAccessToken, initAuthSession, signIn, signOut } from '$lib/auth/auth0';
+	import { setupConvex, useConvexClient } from 'convex-svelte';
+	import { onMount } from 'svelte';
 
 	const { children } = $props();
+	let authActionPending = $state(false);
+	let authActionError = $state<string | null>(null);
 
 	setupConvex(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
+
+	const convexClient = useConvexClient();
+	convexClient.setAuth(fetchAccessToken);
+
+	onMount(() => {
+		void initAuthSession();
+	});
+
+	async function handleSignIn() {
+		authActionPending = true;
+		authActionError = null;
+
+		try {
+			await signIn();
+		} catch (error) {
+			authActionError = error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
+			authActionPending = false;
+		}
+	}
+
+	async function handleSignOut() {
+		authActionPending = true;
+		authActionError = null;
+
+		try {
+			await signOut();
+		} catch (error) {
+			authActionError = error instanceof Error ? error.message : 'Sign-out failed. Please try again.';
+			authActionPending = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -24,6 +59,38 @@
 			</div>
 		</div>
 		<StatusBanner />
+		<section class="auth-shell" aria-live="polite">
+			{#if $authState.status === 'loading'}
+				<p class="auth-copy">Checking session…</p>
+			{:else if $authState.status === 'signed-out'}
+				<div class="auth-row">
+					<p class="auth-copy">Signed out</p>
+					<button class="primary-button" type="button" onclick={handleSignIn} disabled={authActionPending}>
+						{authActionPending ? 'Starting sign in…' : 'Sign in'}
+					</button>
+				</div>
+			{:else if $authState.status === 'signed-in'}
+				<div class="auth-row">
+					<p class="auth-copy">
+						Signed in{#if $authState.user?.name} as <strong>{$authState.user.name}</strong>{/if}
+					</p>
+					<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
+						{authActionPending ? 'Signing out…' : 'Sign out'}
+					</button>
+				</div>
+			{:else}
+				<div class="auth-error" role="alert">
+					<p class="auth-copy">Authentication is not configured.</p>
+					{#if $authState.error}
+						<p class="auth-error-copy">{$authState.error}</p>
+					{/if}
+				</div>
+			{/if}
+
+			{#if authActionError}
+				<p class="auth-error-copy" role="alert">{authActionError}</p>
+			{/if}
+		</section>
 	</header>
 
 	<main id="main-content" class="page-shell">
@@ -343,6 +410,40 @@
 		font-family: var(--font-serif);
 		font-size: 1.35rem;
 		color: var(--text-strong);
+	}
+
+	.auth-shell {
+		display: grid;
+		gap: 0.55rem;
+		padding: 0.85rem 1rem;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--border-subtle);
+		background: rgba(255, 252, 246, 0.76);
+	}
+
+	.auth-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.8rem;
+	}
+
+	.auth-copy {
+		margin: 0;
+		color: var(--text-strong);
+		font-weight: 600;
+		font-size: 0.92rem;
+	}
+
+	.auth-error {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.auth-error-copy {
+		margin: 0;
+		font-size: 0.84rem;
+		color: var(--color-danger);
 	}
 
 	.page-shell {
