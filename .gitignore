@@ -23,3 +23,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .planning
 .agents
+/.playwright-mcp
+/.planning
+/.planning
+/.planning/PROJECT.md
