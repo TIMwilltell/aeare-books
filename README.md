@@ -81,6 +81,58 @@ A progressive web app for parents to scan book barcodes, auto-populate metadata 
 6. **Access the app**
    Open http://localhost:5173 in your browser. On mobile, use your computer's local IP address (e.g., http://192.168.1.x:5173) to test barcode scanning.
 
+## Auth setup and recovery runbook
+
+Phase 1 auth is built around Auth0 + Convex JWT validation. Use this checklist when onboarding a new machine or recovering from auth issues.
+
+### Required environment variables
+
+Frontend (`.env.local` or `.env`):
+
+```bash
+VITE_CONVEX_URL=https://your-deployment.convex.cloud
+VITE_AUTH0_DOMAIN=your-tenant.us.auth0.com
+VITE_AUTH0_CLIENT_ID=your-auth0-spa-client-id
+VITE_AUTH0_AUDIENCE=your-convex-api-audience
+VITE_AUTH0_REDIRECT_URI=http://localhost:5173
+```
+
+Convex deployment variables (must match Auth0 tenant/audience):
+
+```bash
+bunx convex env set AUTH0_DOMAIN https://your-tenant.us.auth0.com
+bunx convex env set AUTH0_APPLICATION_ID your-convex-api-audience
+```
+
+### Provider setup checklist (Auth0 dashboard)
+
+1. Create or open a **Single Page Application**.
+2. Set **Allowed Callback URLs** to your local and deployed URLs (for local dev: `http://localhost:5173`).
+3. Set **Allowed Logout URLs** to the same origins (for local dev: `http://localhost:5173`).
+4. Ensure API audience matches `VITE_AUTH0_AUDIENCE` and `AUTH0_APPLICATION_ID`.
+5. Keep `Token Endpoint Authentication Method` compatible with SPA defaults.
+
+### Recovery guide
+
+- **"Missing auth environment values" on load or sign-in**
+  - Confirm all `VITE_AUTH0_*` values are present in frontend env.
+  - Restart `bun dev` after env updates.
+
+- **Signed in, but account bootstrap fails**
+  - Confirm `AUTH0_DOMAIN` and `AUTH0_APPLICATION_ID` are set in Convex env.
+  - Confirm Auth0 API audience exactly matches `AUTH0_APPLICATION_ID`.
+  - Retry using the in-app **Retry authentication** button.
+
+- **401/403 from Convex after successful Auth0 login**
+  - Check Auth0 issuer URL format (`https://<tenant>.us.auth0.com`).
+  - Re-run `bunx convex env list` and verify domain/audience values.
+  - Sign out and sign in again to refresh token claims.
+
+- **Stuck redirect callback (`?code=...&state=...`)**
+  - Verify callback URL is allowed in Auth0 app settings.
+  - Ensure `VITE_AUTH0_REDIRECT_URI` points at the served app origin.
+  - Clear site storage for local host and retry sign-in.
+
 ## Usage
 
 ### Adding a Book
