@@ -1,14 +1,6 @@
-import { query } from './_generated/server';
-import { v } from 'convex/values';
+import Resend from '@auth/core/providers/resend';
+import { convexAuth } from '@convex-dev/auth/server';
 
-export const getAuthState = query({
-	args: {},
-	handler: async (ctx) => {
-		const identity = await ctx.auth.getUserIdentity();
-
-		return {
-			isAuthenticated: identity !== null,
-			tokenIdentifier: identity?.tokenIdentifier ?? null,
-		};
-	},
+export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
+	providers: [Resend],
 });

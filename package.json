@@ -24,7 +24,8 @@
 		"workbox-window": "^7.4.0"
 	},
 	"dependencies": {
-		"@auth0/auth0-spa-js": "^2.18.3",
+		"@auth/core": "0.37.0",
+		"@convex-dev/auth": "^0.0.91",
 		"@playwright/test": "^1.58.2",
 		"convex": "^1.34.0",
 		"convex-svelte": "^0.0.12",
