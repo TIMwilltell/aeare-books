@@ -1,6 +1,8 @@
 import { createAuth0Client, type Auth0Client, type User } from '@auth0/auth0-spa-js';
 import { browser } from '$app/environment';
+import { ConvexClient } from 'convex/browser';
 import { writable } from 'svelte/store';
+import { api } from '../../convex/_generated/api';
 
 type AuthStatus = 'loading' | 'signed-out' | 'signed-in' | 'error';
 
@@ -24,6 +26,7 @@ export const authState = writable<AuthState>({
 });
 
 let clientPromise: Promise<Auth0Client> | null = null;
+let convexClient: ConvexClient | null = null;
 
 function authConfig(): AuthConfig {
 	const domain = import.meta.env.VITE_AUTH0_DOMAIN as string | undefined;
@@ -69,6 +72,30 @@ async function getClient(): Promise<Auth0Client> {
 	return clientPromise;
 }
 
+function getConvexClient(): ConvexClient {
+	if (!convexClient) {
+		convexClient = new ConvexClient(
+			import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud'
+		);
+		convexClient.setAuth(fetchAccessToken);
+	}
+
+	return convexClient;
+}
+
+async function bootstrapUserProfile() {
+	const client = getConvexClient();
+
+	try {
+		await client.mutation(api.users.ensureCurrentUser, {});
+	} catch (error) {
+		const detail = error instanceof Error ? error.message : 'Unknown error';
+		throw new Error(
+			`Signed in, but we could not finish account setup. Please retry. If this keeps happening, verify Auth0 audience/application settings. (${detail})`
+		);
+	}
+}
+
 export async function initAuthSession() {
 	if (!browser) {
 		return;
@@ -93,6 +120,7 @@ export async function initAuthSession() {
 
 		const user = await client.getUser();
 		authState.set({ status: 'signed-in', user: user ?? null, error: null });
+		await bootstrapUserProfile();
 	} catch (error) {
 		authState.set({
 			status: 'error',

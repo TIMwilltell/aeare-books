@@ -41,6 +41,19 @@
 			authActionPending = false;
 		}
 	}
+
+	async function handleRetryAuth() {
+		authActionPending = true;
+		authActionError = null;
+
+		try {
+			await initAuthSession();
+		} catch (error) {
+			authActionError = error instanceof Error ? error.message : 'Retry failed. Please try again.';
+		} finally {
+			authActionPending = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -80,10 +93,19 @@
 				</div>
 			{:else}
 				<div class="auth-error" role="alert">
-					<p class="auth-copy">Authentication is not configured.</p>
+					<p class="auth-copy">We could not finish authentication setup.</p>
 					{#if $authState.error}
 						<p class="auth-error-copy">{$authState.error}</p>
 					{/if}
+					<p class="auth-error-copy">Retry now, or sign out and sign in again.</p>
+					<div class="auth-row auth-actions">
+						<button class="primary-button" type="button" onclick={handleRetryAuth} disabled={authActionPending}>
+							{authActionPending ? 'Retrying…' : 'Retry authentication'}
+						</button>
+						<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
+							Sign out
+						</button>
+					</div>
 				</div>
 			{/if}
 
@@ -426,6 +448,11 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.8rem;
+	}
+
+	.auth-actions {
+		justify-content: flex-start;
+		flex-wrap: wrap;
 	}
 
 	.auth-copy {
