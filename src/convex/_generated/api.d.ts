@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as books from "../books.js";
 import type * as progress from "../progress.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -22,6 +23,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   books: typeof books;
   progress: typeof progress;
+  users: typeof users;
 }>;
 
 /**
