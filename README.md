@@ -1,24 +1,24 @@
 # AeAre Books
 
-A PWA for scanning book barcodes, auto-populating book data (title, author, ISBN, AR level), and tracking reading progress and quiz scores for children.
+A progressive web app for parents to scan book barcodes, auto-populate metadata (title, author, ISBN) from Open Library, attempt AR level/points lookup from arbookfind.com, and track reading progress and AR quiz scores for children.
 
 ## Features
 
 - **Barcode Scanning** — Scan book barcodes with your phone's camera to quickly add books
-- **Auto-Populate Book Data** — Automatically fetch title, author, and cover image from Google Books API
+- **Auto-Populate Book Data** — Automatically fetch title, author, and cover image from Open Library
 - **AR Level Integration** — Fetch Accelerated Reader (AR) levels from arbookfind.com (with manual fallback)
 - **Reading Progress Tracking** — Track when books are read with date tracking
 - **Quiz Score Recording** — Record AR quiz scores for each book
-- **Offline-First** — Works offline using IndexedDB, syncs to the cloud when connected
+- **Graceful Fallbacks** — If AR lookup fails, manual entry keeps the workflow moving
 - **PWA** — Installable to home screen, works on iOS and Android
 
 ## Tech Stack
 
 - **Frontend:** SvelteKit
 - **Backend:** Convex (real-time database & serverless functions)
-- **Local Storage:** Dexie.js (IndexedDB wrapper)
+- **Local Storage:** Client-side persistence is partial and under active verification
 - **Barcode Scanning:** Quagga
-- **APIs:** Google Books API, arbookfind.com (scraped)
+- **APIs:** Open Library, arbookfind.com (scraped)
 - **Build:** Vite with PWA plugin
 - **Package Manager:** Bun
 
@@ -83,7 +83,7 @@ A PWA for scanning book barcodes, auto-populating book data (title, author, ISBN
 
 ### Offline Use
 
-The app works offline by storing data locally first. When you reconnect, changes automatically sync to Convex.
+The app is designed to keep key flows usable with degraded behavior when network or AR lookups fail. True offline persistence remains an active verification item.
 
 ## Contributing
 
