@@ -49,11 +49,28 @@ A progressive web app for parents to scan book barcodes, auto-populate metadata 
    This will create a Convex deployment and set up the backend schema. Follow the prompts to authenticate with Convex.
 
 4. **Configure environment variables**
-   
-   Create a `.env.local` file:
+
+   Create a `.env.local` file for the web app:
+
    ```bash
-   CONVEX_DEPLOYMENT=your-convex-deployment-url
-   PUBLIC_CONVEX_URL=your-convex-deployment-url
+   # Convex URL used by the frontend client
+   VITE_CONVEX_URL=https://your-deployment.convex.cloud
+
+   # Auth0 SPA client settings
+   VITE_AUTH0_DOMAIN=your-tenant.us.auth0.com
+   VITE_AUTH0_CLIENT_ID=your-auth0-spa-client-id
+   VITE_AUTH0_AUDIENCE=your-convex-api-audience
+
+   # Optional override (defaults to window.location.origin)
+   VITE_AUTH0_REDIRECT_URI=http://localhost:5173
+   ```
+
+   Configure matching Convex environment variables so `src/convex/auth.config.ts`
+   can validate incoming JWTs:
+
+   ```bash
+   bunx convex env set AUTH0_DOMAIN https://your-tenant.us.auth0.com
+   bunx convex env set AUTH0_APPLICATION_ID your-convex-api-audience
    ```
 
 5. **Start the development server**
