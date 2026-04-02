@@ -69,7 +69,7 @@ Parents can securely access and manage only their own family library data.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Auth Foundation | 1/3 | In progress | - |
+| 1. Auth Foundation | 2/3 | In progress | - |
 | 2. Route + Data Protection | 0/0 | Not started | - |
 | 3. Migration + Hardening | 0/0 | Not started | - |
 
