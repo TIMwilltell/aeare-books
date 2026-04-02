@@ -60,7 +60,7 @@ A progressive web app for parents to scan book barcodes, auto-populate metadata 
    Configure Convex Auth variables:
 
    ```bash
-   # Local app URL used in magic links
+   # Local app URL used in magic links (must match your dev server protocol)
    bunx convex env set SITE_URL http://localhost:5173
 
    # Required by Convex Auth (usually set by `bunx @convex-dev/auth`)
@@ -76,8 +76,15 @@ A progressive web app for parents to scan book barcodes, auto-populate metadata 
    bun dev
    ```
 
+   Optional HTTPS mode (for devices/workflows that require TLS):
+
+   ```bash
+   DEV_HTTPS=true bun dev
+   bunx convex env set SITE_URL https://localhost:5173
+   ```
+
 6. **Access the app**
-   Open http://localhost:5173 in your browser. On mobile, use your computer's local IP address (e.g., http://192.168.1.x:5173) to test barcode scanning.
+   Open http://localhost:5173 in your browser. If you started with `DEV_HTTPS=true`, use https://localhost:5173 instead. Always keep `SITE_URL` on the same protocol/host as the running app to avoid redirect failures.
 
 ## Auth setup and recovery runbook
 
@@ -105,6 +112,7 @@ bunx convex env set AUTH_RESEND_KEY <your-resend-key>
 2. Verify your sending domain/address in Resend.
 3. Set `AUTH_RESEND_KEY` in Convex env.
 4. Confirm `SITE_URL` matches your app origin.
+   - If running `DEV_HTTPS=true bun dev`, `SITE_URL` must be `https://localhost:5173`.
 5. In the app, use **Sign in** and enter an email to send a magic link.
 
 ### Recovery guide

@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { replaceState } from '$app/navigation';
 import { ConvexClient } from 'convex/browser';
 import { writable } from 'svelte/store';
 import { api } from '../../convex/_generated/api';
@@ -23,6 +24,8 @@ type SignInResult = {
 type FetchTokenArgs = {
 	forceRefreshToken?: boolean;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const JWT_STORAGE_KEY = '__convexAuthJWT';
 const REFRESH_TOKEN_STORAGE_KEY = '__convexAuthRefreshToken';
@@ -72,11 +75,13 @@ function storeTokens(tokens: StoredTokens | null) {
 	if (!tokens) {
 		window.localStorage.removeItem(JWT_STORAGE_KEY);
 		window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+		convexClient?.setAuth(fetchAccessToken);
 		return;
 	}
 
 	window.localStorage.setItem(JWT_STORAGE_KEY, tokens.token);
 	window.localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, tokens.refreshToken);
+	convexClient?.setAuth(fetchAccessToken);
 }
 
 function normalizeSignInResult(result: unknown): SignInResult {
@@ -105,10 +110,40 @@ function normalizeSignInResult(result: unknown): SignInResult {
 	};
 }
 
+function getSignInErrorMessage(error: unknown): string {
+	const rawMessage = error instanceof Error ? error.message : 'Sign-in request failed.';
+
+	if (rawMessage.includes('Invalid `to` field')) {
+		return 'That email address format looks invalid. Please enter a valid email and try again.';
+	}
+
+	if (rawMessage.includes('only send testing emails to your own email address')) {
+		return 'Email sending is currently in Resend testing mode. Use the account owner email, or verify a sending domain in Resend first.';
+	}
+
+	return rawMessage;
+}
+
 async function runSignInAction(args: Record<string, unknown>): Promise<SignInResult> {
 	const client = getConvexClient();
 	const result = await client.action(api.auth.signIn, args as never);
 	return normalizeSignInResult(result);
+}
+
+function extractVerificationCode(rawCode: string): string | null {
+	const trimmed = rawCode.trim();
+	if (/^[0-9a-z]{32}$/i.test(trimmed)) {
+		return trimmed;
+	}
+
+	try {
+		const decoded = decodeURIComponent(trimmed);
+		const match = decoded.match(/[0-9a-z]{32}/i);
+		return match?.[0] ?? null;
+	} catch {
+		const match = trimmed.match(/[0-9a-z]{32}/i);
+		return match?.[0] ?? null;
+	}
 }
 
 async function exchangeCodeFromUrl() {
@@ -117,18 +152,25 @@ async function exchangeCodeFromUrl() {
 	}
 
 	const url = new URL(window.location.href);
-	const code = url.searchParams.get('code');
-	if (!code) {
+	const rawCode = url.searchParams.get('code');
+	if (!rawCode) {
 		return;
 	}
 
-	const result = await runSignInAction({ params: { code } });
-	if (result.tokens) {
-		storeTokens(result.tokens);
+	const code = extractVerificationCode(rawCode);
+	if (!code) {
+		throw new Error('Magic-link code format was invalid. Please request a fresh sign-in link.');
 	}
 
+	const result = await runSignInAction({ params: { code } });
+	if (!result.tokens) {
+		throw new Error('Magic-link code was invalid or expired. Please request a new sign-in link.');
+	}
+
+	storeTokens(result.tokens);
+
 	url.searchParams.delete('code');
-	window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+	replaceState(`${url.pathname}${url.search}${url.hash}`, {});
 }
 
 async function loadSignedInUser(): Promise<UserProfile | null> {
@@ -187,17 +229,37 @@ export async function signIn() {
 		return;
 	}
 
-	const result = await runSignInAction({
-		provider: 'resend',
-		params: {
-			email,
-			redirectTo: window.location.pathname,
-		},
-	});
+	if (!EMAIL_PATTERN.test(email)) {
+		authState.set({
+			status: 'error',
+			user: null,
+			error: 'Please enter a valid email address to receive a magic sign-in link.',
+		});
+		return;
+	}
 
-	if (result.tokens) {
-		storeTokens(result.tokens);
-		await initAuthSession();
+	try {
+		const result = await runSignInAction({
+			provider: 'resend',
+			params: {
+				email,
+				redirectTo: window.location.pathname,
+			},
+		});
+
+		if (result.tokens) {
+			storeTokens(result.tokens);
+			await initAuthSession();
+			return;
+		}
+
+		authState.set({ status: 'signed-out', user: null, error: null });
+	} catch (error) {
+		authState.set({
+			status: 'error',
+			user: null,
+			error: getSignInErrorMessage(error),
+		});
 	}
 }
 
