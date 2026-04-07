@@ -126,11 +126,15 @@ export const backfillOwnedProgressEvents = internalMutation({
   },
   returns: backfillBatchResultValidator,
   handler: async (ctx, args) => {
-    const page = await ctx.db.query("progressEvents").order("asc").paginate(args.paginationOpts);
-    const limit = args.batchSize ?? DEFAULT_BATCH_SIZE;
+	const limit = args.batchSize ?? DEFAULT_BATCH_SIZE;
+	const paginationOpts = {
+		...args.paginationOpts,
+		numItems: Math.min(args.paginationOpts.numItems, limit),
+	};
+	const page = await ctx.db.query("progressEvents").order("asc").paginate(paginationOpts);
 
-    let scanned = 0;
-    let updated = 0;
+	let scanned = 0;
+	let updated = 0;
 
     for (const progressEvent of page.page) {
       if (progressEvent.userId !== undefined) {

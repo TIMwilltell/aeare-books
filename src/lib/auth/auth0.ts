@@ -1,7 +1,6 @@
 import { browser } from '$app/environment';
 import { replaceState } from '$app/navigation';
 import { getBrowserConvexClient } from '$lib/convex/client';
-import { getPublicConvexUrl } from '$lib/convex/url';
 import { ConvexClient } from 'convex/browser';
 import { writable } from 'svelte/store';
 import { api } from '../../convex/_generated/api';
@@ -52,7 +51,7 @@ export function peekProtectedRouteIntent(): string | null {
 		return null;
 	}
 
-	const storedIntent = window.localStorage.getItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
+	const storedIntent = window.sessionStorage.getItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
 	if (!storedIntent) {
 		return null;
 	}
@@ -61,7 +60,7 @@ export function peekProtectedRouteIntent(): string | null {
 		const url = new URL(storedIntent, window.location.origin);
 		return buildProtectedRouteIntent(url.pathname, url.search, url.hash);
 	} catch {
-		window.localStorage.removeItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
+		window.sessionStorage.removeItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
 		return null;
 	}
 }
@@ -76,7 +75,7 @@ export function rememberProtectedRouteIntent(pathname: string, search = '', hash
 		return null;
 	}
 
-	window.localStorage.setItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY, intent);
+	window.sessionStorage.setItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY, intent);
 	return intent;
 }
 
@@ -85,7 +84,7 @@ export function clearProtectedRouteIntent() {
 		return;
 	}
 
-	window.localStorage.removeItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
+	window.sessionStorage.removeItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
 }
 
 export function consumeProtectedRouteIntent(): string | null {
@@ -250,6 +249,10 @@ async function exchangeCodeFromUrl() {
 	}
 
 	const url = new URL(window.location.href);
+	const clearCodeFromUrl = () => {
+		url.searchParams.delete('code');
+		replaceState(`${url.pathname}${url.search}${url.hash}`, {});
+	};
 	const rawCode = url.searchParams.get('code');
 	if (!rawCode) {
 		return;
@@ -257,18 +260,25 @@ async function exchangeCodeFromUrl() {
 
 	const code = extractVerificationCode(rawCode);
 	if (!code) {
+		clearCodeFromUrl();
 		throw new Error('Magic-link code format was invalid. Please request a fresh sign-in link.');
 	}
 
-	const result = await runSignInAction({ params: { code } });
+	let result: SignInResult;
+	try {
+		result = await runSignInAction({ params: { code } });
+	} catch (error) {
+		clearCodeFromUrl();
+		throw error;
+	}
+
 	if (!result.tokens) {
+		clearCodeFromUrl();
 		throw new Error('Magic-link code was invalid or expired. Please request a new sign-in link.');
 	}
 
 	storeTokens(result.tokens);
-
-	url.searchParams.delete('code');
-	replaceState(`${url.pathname}${url.search}${url.hash}`, {});
+	clearCodeFromUrl();
 }
 
 async function loadSignedInUser(): Promise<UserProfile | null> {

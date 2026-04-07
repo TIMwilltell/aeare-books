@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as books from "../books.js";
 import type * as devInbox from "../devInbox.js";
 import type * as http from "../http.js";
+import type * as lib_env from "../lib/env.js";
 import type * as lib_ownership from "../lib/ownership.js";
 import type * as migrationRunner from "../migrationRunner.js";
 import type * as migrations from "../migrations.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   books: typeof books;
   devInbox: typeof devInbox;
   http: typeof http;
+  "lib/env": typeof lib_env;
   "lib/ownership": typeof lib_ownership;
   migrationRunner: typeof migrationRunner;
   migrations: typeof migrations;

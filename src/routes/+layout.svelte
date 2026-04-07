@@ -5,14 +5,14 @@
 	import StatusBanner from '$lib/components/StatusBanner.svelte';
 	import {
 		authState,
-		clearProtectedRouteIntent,
-		consumeProtectedRouteIntent,
+		clearProtectedRouteIntent as clearStoredProtectedRouteIntent,
+		consumeProtectedRouteIntent as consumeStoredProtectedRouteIntent,
 		describeProtectedRouteIntent,
 		fetchAccessToken,
 		initAuthSession,
 		isProtectedPath,
-		peekProtectedRouteIntent,
-		rememberProtectedRouteIntent,
+		peekProtectedRouteIntent as peekStoredProtectedRouteIntent,
+		rememberProtectedRouteIntent as rememberStoredProtectedRouteIntent,
 		signIn,
 		signOut
 	} from '$lib/auth/auth0';
@@ -22,6 +22,7 @@
 	import { get } from 'svelte/store';
 
 	const { children } = $props();
+	const PROTECTED_ROUTE_INTENT_SESSION_KEY = '__aeareProtectedRouteIntent';
 	let authActionPending = $state(false);
 	let authActionError = $state<string | null>(null);
 	let redirectingProtectedPath = $state<string | null>(null);
@@ -51,6 +52,47 @@
 		syncProtectedRouteRedirect();
 		void syncProtectedRouteIntentRestore();
 	});
+
+	function peekProtectedRouteIntent() {
+		if (typeof window === 'undefined') {
+			return peekStoredProtectedRouteIntent();
+		}
+
+		const storedIntent = window.sessionStorage.getItem(PROTECTED_ROUTE_INTENT_SESSION_KEY);
+		if (storedIntent) {
+			return storedIntent;
+		}
+
+		return peekStoredProtectedRouteIntent();
+	}
+
+	function rememberProtectedRouteIntent(pathname: string, search = '', hash = '') {
+		const intent = rememberStoredProtectedRouteIntent(pathname, search, hash);
+
+		if (typeof window !== 'undefined' && intent) {
+			window.sessionStorage.setItem(PROTECTED_ROUTE_INTENT_SESSION_KEY, intent);
+		}
+
+		return intent;
+	}
+
+	function clearProtectedRouteIntent() {
+		if (typeof window !== 'undefined') {
+			window.sessionStorage.removeItem(PROTECTED_ROUTE_INTENT_SESSION_KEY);
+		}
+
+		clearStoredProtectedRouteIntent();
+	}
+
+	function consumeProtectedRouteIntent() {
+		const intent = peekProtectedRouteIntent();
+		if (intent) {
+			clearProtectedRouteIntent();
+			return intent;
+		}
+
+		return consumeStoredProtectedRouteIntent();
+	}
 
 	function syncProtectedRouteRedirect(pathname = page.url.pathname) {
 		pendingProtectedRouteIntent = peekProtectedRouteIntent();
@@ -128,7 +170,7 @@
 		try {
 			await signIn();
 		} catch (error) {
-			authActionError = error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
+			authActionError = error instanceof Error ? error.message : 'Sign-in failed. Try again.';
 		} finally {
 			authActionPending = false;
 		}
@@ -141,7 +183,7 @@
 		try {
 			await signOut();
 		} catch (error) {
-			authActionError = error instanceof Error ? error.message : 'Sign-out failed. Please try again.';
+			authActionError = error instanceof Error ? error.message : 'Sign-out failed. Try again.';
 		} finally {
 			authActionPending = false;
 		}
@@ -154,7 +196,7 @@
 		try {
 			await initAuthSession();
 		} catch (error) {
-			authActionError = error instanceof Error ? error.message : 'Retry failed. Please try again.';
+			authActionError = error instanceof Error ? error.message : 'Retry failed. Try again.';
 		} finally {
 			authActionPending = false;
 		}
@@ -172,23 +214,23 @@
 		<div class="brand-row">
 			<div class="brand-mark" aria-hidden="true">Ae</div>
 			<div class="brand-copy">
-				<p class="eyebrow">Reading companion</p>
+				<p class="eyebrow">Library</p>
 				<p class="brand-title">AeAre Books</p>
 			</div>
 		</div>
 		<StatusBanner />
 		<section class="auth-shell" aria-live="polite">
 			{#if $authState.status === 'loading'}
-				<p class="auth-copy">Checking session…</p>
+				<p class="auth-copy">Checking session...</p>
 			{:else if $authState.status === 'signed-out'}
 				<div class="auth-row">
 					<p class="auth-copy">Signed out</p>
 					<button class="primary-button" type="button" onclick={handleSignIn} disabled={authActionPending}>
-						{authActionPending ? 'Starting sign in…' : 'Sign in'}
+						{authActionPending ? 'Starting sign-in...' : 'Sign in'}
 					</button>
 				</div>
 				{#if protectedRouteIntentLabel}
-					<p class="auth-intent-copy">Sign in and we will return you to {protectedRouteIntentLabel}.</p>
+					<p class="auth-intent-copy">Sign in to open {protectedRouteIntentLabel}.</p>
 				{/if}
 			{:else if $authState.status === 'signed-in'}
 				<div class="auth-row">
@@ -196,22 +238,22 @@
 						Signed in{#if $authState.user?.name} as <strong>{$authState.user.name}</strong>{/if}
 					</p>
 					<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
-						{authActionPending ? 'Signing out…' : 'Sign out'}
+						{authActionPending ? 'Signing out...' : 'Sign out'}
 					</button>
 				</div>
 				{#if showProtectedRestore && protectedRouteIntentLabel}
-					<p class="auth-intent-copy">Returning you to {protectedRouteIntentLabel} now.</p>
+					<p class="auth-intent-copy">Opening {protectedRouteIntentLabel}...</p>
 				{/if}
 			{:else}
 				<div class="auth-error" role="alert">
-					<p class="auth-copy">We could not finish authentication setup.</p>
+					<p class="auth-copy">Could not finish sign-in.</p>
 					{#if $authState.error}
 						<p class="auth-error-copy">{$authState.error}</p>
 					{/if}
-					<p class="auth-error-copy">Retry now, or sign out and sign in again.</p>
+					<p class="auth-error-copy">Try again, or sign out and start over.</p>
 					<div class="auth-row auth-actions">
 						<button class="primary-button" type="button" onclick={handleRetryAuth} disabled={authActionPending}>
-							{authActionPending ? 'Retrying…' : 'Retry authentication'}
+							{authActionPending ? 'Retrying...' : 'Retry sign-in'}
 						</button>
 						<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
 							Sign out
@@ -230,26 +272,26 @@
 		{#if showProtectedLoading}
 			<section class="section-card route-guard-card" aria-live="polite">
 				<p class="eyebrow">Protected route</p>
-				<h1>Checking your session before we open this task.</h1>
-				<p>Hold on while we confirm your library access.</p>
+				<h1>Checking your session.</h1>
+				<p>Please wait while we confirm access.</p>
 			</section>
 		{:else if showProtectedRedirect}
 			<section class="section-card route-guard-card" aria-live="polite">
 				<p class="eyebrow">Sign-in required</p>
-				<h1>This task is only available in a signed-in library.</h1>
-				<p>Returning you to the home shelf now.</p>
+				<h1>Sign in to open this page.</h1>
+				<p>Sending you back home.</p>
 			</section>
 		{:else if showProtectedError}
 			<section class="section-card route-guard-card" aria-live="polite">
 				<p class="eyebrow">Protected route</p>
-				<h1>We need to restore authentication before opening this page.</h1>
-				<p>Use the auth controls above to retry or sign out, then try again.</p>
+				<h1>We need to restore your session first.</h1>
+				<p>Use the sign-in controls above to try again.</p>
 			</section>
 		{:else if showProtectedRestore}
 			<section class="section-card route-guard-card" aria-live="polite">
 				<p class="eyebrow">Protected route</p>
-				<h1>We restored your session and are reopening that task.</h1>
-				<p>Hold on while we return you to the page you asked for.</p>
+				<h1>Session restored.</h1>
+				<p>Opening your page.</p>
 			</section>
 		{:else}
 			{@render children()}

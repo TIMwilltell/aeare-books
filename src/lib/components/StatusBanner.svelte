@@ -24,27 +24,27 @@
 		{#if bannerState === 'offline'}
 			<span class="icon" aria-hidden="true">Off</span>
 			<div class="message-block">
-				<span class="label">Offline mode</span>
-				<span class="message">Changes are safe and will sync when you reconnect.</span>
+				<span class="label">Offline</span>
+				<span class="message">Changes will sync when you're back online.</span>
 			</div>
 		{:else if bannerState === 'syncing'}
 			<span class="icon" aria-hidden="true">Now</span>
 			<div class="message-block">
-				<span class="label">Syncing now</span>
-				<span class="message">Refreshing your latest reading updates.</span>
+				<span class="label">Syncing</span>
+				<span class="message">Updating your latest changes.</span>
 			</div>
 		{:else if bannerState === 'pending'}
 			<span class="icon" aria-hidden="true">Soon</span>
 			<div class="message-block">
-				<span class="label">Pending sync</span>
-				<span class="message">Recent changes haven’t been sent yet.</span>
+				<span class="label">Sync pending</span>
+				<span class="message">Recent changes haven't synced yet.</span>
 			</div>
 			<button class="sync-btn" onclick={triggerSync}>Sync now</button>
 		{:else if bannerState === 'error'}
 			<span class="icon" aria-hidden="true">Alert</span>
 			<div class="message-block">
-				<span class="label">Sync needs attention</span>
-				<span class="message">We couldn’t sync your latest changes.</span>
+				<span class="label">Sync failed</span>
+				<span class="message">We couldn't sync your latest changes.</span>
 			</div>
 			<button class="sync-btn" onclick={triggerSync}>Retry</button>
 		{/if}
