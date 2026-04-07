@@ -6,6 +6,7 @@ export default defineSchema({
   ...authTables,
 
   books: defineTable({
+    userId: v.optional(v.id("users")),
     isbn: v.string(),
     title: v.string(),
     author: v.string(),
@@ -23,15 +24,30 @@ export default defineSchema({
   })
     .index("isbn", ["isbn"])
     .index("title", ["title"])
-    .index("createdAt", ["createdAt"]),
+    .index("createdAt", ["createdAt"])
+    .index("by_userId_and_createdAt", ["userId", "createdAt"]),
 
   progressEvents: defineTable({
-    bookId: v.string(),
+    userId: v.optional(v.id("users")),
+    bookId: v.id("books"),
     eventType: v.string(),
     value: v.optional(v.string()),
     eventDate: v.number(),
     createdAt: v.number(),
   })
     .index("bookId", ["bookId"])
-    .index("eventDate", ["eventDate"]),
+    .index("eventDate", ["eventDate"])
+    .index("by_userId_and_createdAt", ["userId", "createdAt"])
+    .index("by_userId_and_bookId_and_eventDate", ["userId", "bookId", "eventDate"]),
+
+  devMagicLinks: defineTable({
+    email: v.string(),
+    url: v.string(),
+    token: v.string(),
+    subject: v.string(),
+    html: v.string(),
+    text: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_email_and_createdAt", ["email", "createdAt"]),
 });

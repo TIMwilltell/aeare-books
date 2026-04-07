@@ -1,17 +1,25 @@
-import { query, mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { canReadOwnedBook, requireCurrentUserId, requireOwnedBook } from "./lib/ownership";
 
 export const get = query({
   args: { id: v.id("books") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const userId = await requireCurrentUserId(ctx);
+    const book = await ctx.db.get(args.id);
+    return canReadOwnedBook(book, userId) ? book : null;
   },
 });
 
 export const getAll = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("books").order("desc").collect();
+    const userId = await requireCurrentUserId(ctx);
+    return await ctx.db
+      .query("books")
+      .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
   },
 });
 
@@ -31,8 +39,10 @@ export const add = mutation({
     quizDate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const userId = await requireCurrentUserId(ctx);
     const now = Date.now();
     return await ctx.db.insert("books", {
+      userId,
       ...args,
       createdAt: now,
       updatedAt: now,
@@ -57,7 +67,10 @@ export const updateBook = mutation({
     quizDate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const userId = await requireCurrentUserId(ctx);
     const { id, ...updates } = args;
+    const book = await ctx.db.get(id);
+    requireOwnedBook(book, userId);
     await ctx.db.patch(id, { ...updates, updatedAt: Date.now() });
   },
 });
@@ -65,6 +78,9 @@ export const updateBook = mutation({
 export const remove = mutation({
   args: { id: v.id("books") },
   handler: async (ctx, args) => {
+    const userId = await requireCurrentUserId(ctx);
+    const book = await ctx.db.get(args.id);
+    requireOwnedBook(book, userId);
     await ctx.db.delete(args.id);
   },
 });

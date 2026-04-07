@@ -1,22 +1,125 @@
 <script lang="ts">
+	import { afterNavigate, goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
 	import StatusBanner from '$lib/components/StatusBanner.svelte';
-	import { authState, fetchAccessToken, initAuthSession, signIn, signOut } from '$lib/auth/auth0';
-	import { setupConvex, useConvexClient } from 'convex-svelte';
+	import {
+		authState,
+		clearProtectedRouteIntent,
+		consumeProtectedRouteIntent,
+		describeProtectedRouteIntent,
+		fetchAccessToken,
+		initAuthSession,
+		isProtectedPath,
+		peekProtectedRouteIntent,
+		rememberProtectedRouteIntent,
+		signIn,
+		signOut
+	} from '$lib/auth/auth0';
+	import { getBrowserConvexClient } from '$lib/convex/client';
+	import { setConvexClientContext } from 'convex-svelte';
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 
 	const { children } = $props();
 	let authActionPending = $state(false);
 	let authActionError = $state<string | null>(null);
+	let redirectingProtectedPath = $state<string | null>(null);
+	let protectedRoute = $derived(isProtectedPath(page.url.pathname));
+	let pendingProtectedRouteIntent = $state<string | null>(null);
+	let restoringProtectedPath = $state<string | null>(null);
+	let protectedRouteIntentLabel = $derived(describeProtectedRouteIntent(pendingProtectedRouteIntent));
 
-	setupConvex(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
-
-	const convexClient = useConvexClient();
+	const convexClient = getBrowserConvexClient();
 	convexClient.setAuth(fetchAccessToken);
+	setConvexClientContext(convexClient);
 
 	onMount(() => {
 		void initAuthSession();
+		syncProtectedRouteRedirect();
+		void syncProtectedRouteIntentRestore();
+
+		const unsubscribe = authState.subscribe(() => {
+			syncProtectedRouteRedirect();
+			void syncProtectedRouteIntentRestore();
+		});
+
+		return unsubscribe;
 	});
+
+	afterNavigate(() => {
+		syncProtectedRouteRedirect();
+		void syncProtectedRouteIntentRestore();
+	});
+
+	function syncProtectedRouteRedirect(pathname = page.url.pathname) {
+		pendingProtectedRouteIntent = peekProtectedRouteIntent();
+
+		if (get(authState).status === 'signed-in' && pendingProtectedRouteIntent === `${page.url.pathname}${page.url.search}${page.url.hash}`) {
+			clearProtectedRouteIntent();
+			pendingProtectedRouteIntent = null;
+		}
+
+		if (!isProtectedPath(pathname)) {
+			redirectingProtectedPath = null;
+			return;
+		}
+
+		if (get(authState).status !== 'signed-out') {
+			redirectingProtectedPath = null;
+			return;
+		}
+
+		if (redirectingProtectedPath === pathname) {
+			return;
+		}
+
+		pendingProtectedRouteIntent = rememberProtectedRouteIntent(page.url.pathname, page.url.search, page.url.hash);
+		redirectingProtectedPath = pathname;
+		void goto('/', { replaceState: true });
+	}
+
+	async function syncProtectedRouteIntentRestore() {
+		pendingProtectedRouteIntent = peekProtectedRouteIntent();
+
+		if ($authState.status !== 'signed-in') {
+			if ($authState.status !== 'loading') {
+				restoringProtectedPath = null;
+			}
+			return;
+		}
+
+		const currentPath = `${page.url.pathname}${page.url.search}${page.url.hash}`;
+		if (pendingProtectedRouteIntent === currentPath) {
+			clearProtectedRouteIntent();
+			pendingProtectedRouteIntent = null;
+			restoringProtectedPath = null;
+			return;
+		}
+
+		if (page.url.pathname !== '/' || restoringProtectedPath) {
+			return;
+		}
+
+		const nextPath = consumeProtectedRouteIntent();
+		pendingProtectedRouteIntent = peekProtectedRouteIntent();
+		if (!nextPath) {
+			return;
+		}
+
+		restoringProtectedPath = nextPath;
+
+		try {
+			await goto(nextPath, { replaceState: true });
+		} finally {
+			restoringProtectedPath = null;
+		}
+	}
+
+	let showProtectedLoading = $derived(protectedRoute && $authState.status === 'loading');
+	let showProtectedError = $derived(protectedRoute && $authState.status === 'error');
+	let showProtectedRedirect = $derived(protectedRoute && redirectingProtectedPath === page.url.pathname);
+	let showProtectedRestore = $derived(page.url.pathname === '/' && restoringProtectedPath !== null);
 
 	async function handleSignIn() {
 		authActionPending = true;
@@ -26,6 +129,7 @@
 			await signIn();
 		} catch (error) {
 			authActionError = error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
+		} finally {
 			authActionPending = false;
 		}
 	}
@@ -38,6 +142,7 @@
 			await signOut();
 		} catch (error) {
 			authActionError = error instanceof Error ? error.message : 'Sign-out failed. Please try again.';
+		} finally {
 			authActionPending = false;
 		}
 	}
@@ -82,6 +187,9 @@
 						{authActionPending ? 'Starting sign in…' : 'Sign in'}
 					</button>
 				</div>
+				{#if protectedRouteIntentLabel}
+					<p class="auth-intent-copy">Sign in and we will return you to {protectedRouteIntentLabel}.</p>
+				{/if}
 			{:else if $authState.status === 'signed-in'}
 				<div class="auth-row">
 					<p class="auth-copy">
@@ -91,6 +199,9 @@
 						{authActionPending ? 'Signing out…' : 'Sign out'}
 					</button>
 				</div>
+				{#if showProtectedRestore && protectedRouteIntentLabel}
+					<p class="auth-intent-copy">Returning you to {protectedRouteIntentLabel} now.</p>
+				{/if}
 			{:else}
 				<div class="auth-error" role="alert">
 					<p class="auth-copy">We could not finish authentication setup.</p>
@@ -116,7 +227,33 @@
 	</header>
 
 	<main id="main-content" class="page-shell">
-		{@render children()}
+		{#if showProtectedLoading}
+			<section class="section-card route-guard-card" aria-live="polite">
+				<p class="eyebrow">Protected route</p>
+				<h1>Checking your session before we open this task.</h1>
+				<p>Hold on while we confirm your library access.</p>
+			</section>
+		{:else if showProtectedRedirect}
+			<section class="section-card route-guard-card" aria-live="polite">
+				<p class="eyebrow">Sign-in required</p>
+				<h1>This task is only available in a signed-in library.</h1>
+				<p>Returning you to the home shelf now.</p>
+			</section>
+		{:else if showProtectedError}
+			<section class="section-card route-guard-card" aria-live="polite">
+				<p class="eyebrow">Protected route</p>
+				<h1>We need to restore authentication before opening this page.</h1>
+				<p>Use the auth controls above to retry or sign out, then try again.</p>
+			</section>
+		{:else if showProtectedRestore}
+			<section class="section-card route-guard-card" aria-live="polite">
+				<p class="eyebrow">Protected route</p>
+				<h1>We restored your session and are reopening that task.</h1>
+				<p>Hold on while we return you to the page you asked for.</p>
+			</section>
+		{:else}
+			{@render children()}
+		{/if}
 	</main>
 </div>
 
@@ -473,8 +610,36 @@
 		color: var(--color-danger);
 	}
 
+	.auth-intent-copy {
+		margin: 0;
+		font-size: 0.84rem;
+		color: var(--text-muted);
+	}
+
 	.page-shell {
 		padding-bottom: 5.5rem;
+	}
+
+	.route-guard-card {
+		display: grid;
+		gap: 0.75rem;
+		padding: 1.25rem;
+		text-align: center;
+	}
+
+	.route-guard-card h1,
+	.route-guard-card p {
+		margin: 0;
+	}
+
+	.route-guard-card h1 {
+		font-family: var(--font-serif);
+		font-size: 1.7rem;
+		color: var(--text-strong);
+	}
+
+	.route-guard-card p:last-child {
+		line-height: 1.6;
 	}
 
 	@media (min-width: 720px) {

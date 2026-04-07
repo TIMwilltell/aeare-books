@@ -1,54 +1,130 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { authState, signIn } from '$lib/auth/auth0';
 	import { getAllBooks, searchBooks, type Book } from '$lib/db';
 	import { exportLibrary } from '$lib/api/export';
 	import BookList from '$lib/components/BookList.svelte';
 	import FAB from '$lib/components/FAB.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import { onMount } from 'svelte';
 
 	let books = $state<Book[]>([]);
 	let searchQuery = $state('');
 	let loading = $state(true);
+	let libraryError = $state<string | null>(null);
 	let requestId = 0;
+	let isSignedIn = $derived($authState.status === 'signed-in');
 
 	let totalBooks = $derived(books.length);
 	let arPointsTotal = $derived(
 		books.reduce((sum, book) => sum + (typeof book.arPoints === 'number' ? book.arPoints : 0), 0)
 	);
 
-	onMount(async () => {
+	async function loadBooks() {
 		const currentRequestId = ++requestId;
-		const allBooks = await getAllBooks();
-		if (currentRequestId !== requestId) {
-			return;
+		loading = true;
+		libraryError = null;
+
+		try {
+			const allBooks = await getAllBooks();
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			books = allBooks;
+		} catch (error) {
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			books = [];
+			libraryError = error instanceof Error ? error.message : 'Failed to load your library.';
+			console.error('Failed to load books:', error);
+		} finally {
+			if (currentRequestId === requestId) {
+				loading = false;
+			}
 		}
-		books = allBooks;
-		loading = false;
+	}
+
+	onMount(() => {
+		const unsubscribe = authState.subscribe((state) => {
+			void syncLibraryState(state.status);
+		});
+
+		return unsubscribe;
 	});
 
+	async function syncLibraryState(authStatus: 'loading' | 'signed-out' | 'signed-in' | 'error') {
+		if (authStatus === 'loading') {
+			loading = true;
+			return;
+		}
+
+		if (authStatus !== 'signed-in') {
+			requestId += 1;
+			books = [];
+			searchQuery = '';
+			libraryError = null;
+			loading = false;
+			return;
+		}
+
+		void loadBooks();
+	}
+
 	async function handleSearch() {
-		if (loading) {
+		if (!isSignedIn || loading) {
 			return;
 		}
 
 		const currentRequestId = ++requestId;
-		const results = await searchBooks(searchQuery);
-		if (currentRequestId !== requestId) {
+		libraryError = null;
+
+		try {
+			const results = await searchBooks(searchQuery);
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			books = results;
+		} catch (error) {
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			libraryError = error instanceof Error ? error.message : 'Search failed. Please try again.';
+			console.error('Failed to search books:', error);
+		}
+	}
+
+	async function handleRetryLibrary() {
+		if (!isSignedIn) {
 			return;
 		}
-		books = results;
+
+		if (searchQuery.trim()) {
+			await handleSearch();
+			return;
+		}
+
+		await loadBooks();
 	}
 
 	function handleBookSelect(id: string) {
 		goto(`/book/${id}`);
 	}
 
-	function handleScan() {
+	async function handleScan() {
+		if (!isSignedIn) {
+			await signIn();
+			return;
+		}
+
 		goto('/scan');
 	}
 
 	async function handleExport() {
+		if (!isSignedIn || loading) {
+			return;
+		}
+
 		try {
 			await exportLibrary();
 		} catch (error) {
@@ -65,56 +141,94 @@
 <div class="library-page">
 	<section class="hero section-card">
 		<div class="hero-copy">
-			<p class="eyebrow">Your library</p>
-			<h1 class="page-title">A warmer home for every book you track.</h1>
+			<p class="eyebrow">{isSignedIn ? 'Your library' : 'Welcome'}</p>
+			<h1 class="page-title">
+				{isSignedIn ? 'A warmer home for every book you track.' : 'Protected family reading shelves, ready when you sign in.'}
+			</h1>
 			<p class="hero-text">
-				Search your shelf, export your records, and manage your catalog in one calm, mobile-first dashboard.
+				{#if isSignedIn}
+					Search your shelf, export your records, and manage your catalog in one calm, mobile-first dashboard.
+				{:else}
+					Sign in to open your private library, scan books, and keep each account's reading history scoped to the right family.
+				{/if}
 			</p>
 		</div>
 
-		<div class="hero-stats" aria-label="Library summary">
-			<div class="stat surface-muted">
-				<span class="stat-value">{totalBooks}</span>
-				<span class="stat-label">Books shelved</span>
+		{#if isSignedIn}
+			<div class="hero-stats" aria-label="Library summary">
+				<div class="stat surface-muted">
+					<span class="stat-value">{totalBooks}</span>
+					<span class="stat-label">Books shelved</span>
+				</div>
+				<div class="stat surface-muted">
+					<span class="stat-value">{arPointsTotal.toFixed(1)}</span>
+					<span class="stat-label">AR points logged</span>
+				</div>
 			</div>
-			<div class="stat surface-muted">
-				<span class="stat-value">{arPointsTotal.toFixed(1)}</span>
-				<span class="stat-label">AR points logged</span>
+		{:else}
+			<div class="signed-out-note surface-muted">
+				<p>Public home stays open, but book data and task flows unlock only after authentication completes.</p>
 			</div>
-		</div>
+		{/if}
 
 		<div class="hero-actions">
 			<button class="primary-button action-scan" onclick={handleScan}>
-				Scan a book
+				{isSignedIn ? 'Scan a book' : 'Sign in to start'}
 			</button>
-			<button class="ghost-button" onclick={handleExport}>
-				Export library
-			</button>
+			{#if isSignedIn}
+				<button class="ghost-button" onclick={handleExport}>
+					Export library
+				</button>
+			{/if}
 		</div>
 	</section>
 
-	<section class="controls section-card" aria-label="Search and actions">
-		<label class="search-bar" for="library-search">
-			<input
-				id="library-search"
-				type="search"
-				aria-label="Search by title or author"
-				placeholder="Search by title or author"
-				bind:value={searchQuery}
-				disabled={loading}
-				oninput={handleSearch}
-			/>
-		</label>
-		<button class="ghost-button export-inline" onclick={handleExport} disabled={loading}>Export</button>
-	</section>
+	{#if isSignedIn}
+		<section class="controls section-card" aria-label="Search and actions">
+			<label class="search-bar" for="library-search">
+				<input
+					id="library-search"
+					type="search"
+					aria-label="Search by title or author"
+					placeholder="Search by title or author"
+					bind:value={searchQuery}
+					disabled={loading}
+					oninput={handleSearch}
+				/>
+			</label>
+			<button class="ghost-button export-inline" onclick={handleExport} disabled={loading}>Export</button>
+		</section>
 
-	{#if loading}
+		{#if libraryError}
+			<section class="section-card library-error" role="alert">
+				<div>
+					<p class="eyebrow">Library issue</p>
+					<h2>{searchQuery.trim() ? 'Search is temporarily unavailable.' : 'We could not load your shelf.'}</h2>
+					<p>{libraryError}</p>
+				</div>
+				<button class="ghost-button" type="button" onclick={handleRetryLibrary}>Try again</button>
+			</section>
+		{/if}
+	{/if}
+
+	{#if $authState.status === 'loading' || (isSignedIn && loading)}
 		<section class="loading-state section-card" aria-live="polite">
 			<LoadingSpinner size="large" color="var(--color-coral-1)" />
 			<div>
-				<h2>Settling your shelf…</h2>
-				<p>We’re gathering your books and catalog details.</p>
+				<h2>{$authState.status === 'loading' ? 'Checking your library access…' : 'Settling your shelf…'}</h2>
+				<p>
+					{$authState.status === 'loading'
+						? 'We are restoring your session before loading private shelf data.'
+						: 'We’re gathering your books and catalog details.'}
+				</p>
 			</div>
+		</section>
+	{:else if !isSignedIn}
+		<section class="empty-state section-card">
+			<div class="empty-illustration" aria-hidden="true">Library</div>
+			<h2>Sign in to open your family shelf.</h2>
+			<p>Your home page stays available here, while scan, add, and detail routes stay protected until you authenticate.</p>
+			<button class="secondary-button" onclick={handleScan}>Sign in and continue</button>
 		</section>
 	{:else if books.length === 0}
 		<section class="empty-state section-card">
@@ -135,7 +249,9 @@
 		<BookList {books} onSelect={handleBookSelect} />
 	{/if}
 
-	<FAB onclick={handleScan} />
+	{#if isSignedIn}
+		<FAB onclick={handleScan} />
+	{/if}
 </div>
 
 <style>
@@ -195,6 +311,15 @@
 		gap: 0.75rem;
 	}
 
+	.signed-out-note {
+		padding: 0.95rem;
+	}
+
+	.signed-out-note p {
+		margin: 0;
+		line-height: 1.6;
+	}
+
 	.action-scan {
 		min-width: min(100%, 14rem);
 	}
@@ -242,6 +367,25 @@
 	.collection-header p {
 		font-size: 0.92rem;
 		color: var(--text-muted);
+	}
+
+	.library-error {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid rgba(185, 85, 71, 0.25);
+	}
+
+	.library-error h2,
+	.library-error p {
+		margin: 0;
+	}
+
+	.library-error div {
+		display: grid;
+		gap: 0.35rem;
 	}
 
 	.loading-state,
@@ -302,6 +446,11 @@
 		.collection-header {
 			align-items: start;
 			flex-direction: column;
+		}
+
+		.library-error {
+			flex-direction: column;
+			align-items: start;
 		}
 	}
 </style>

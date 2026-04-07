@@ -13,8 +13,8 @@ Parents can securely access and manage only their own family library data.
 ## Phases
 
 - [x] **Phase 1: Auth Foundation** - Provider setup, session plumbing, and base user identity mapping
-- [ ] **Phase 2: Route + Data Protection** - Protected routes and account-scoped Convex reads/writes
-- [ ] **Phase 3: Migration + Hardening** - Legacy data handling, error UX, and auth regression validation
+- [x] **Phase 2: Route + Data Protection** - Protected routes and account-scoped Convex reads/writes
+- [x] **Phase 3: Migration + Hardening** - Legacy data handling, error UX, and auth regression validation
 
 ## Phase Details
 
@@ -59,9 +59,9 @@ Parents can securely access and manage only their own family library data.
 **Requirements:** DATA-03, UX-03
 
 **Success Criteria:**
-1. Existing unauthenticated data handling strategy is implemented or explicitly gated.
+1. Existing unauthenticated data handling strategy is implemented or explicitly gated, with unresolved legacy rows quarantined and inventoried instead of guessed.
 2. Auth error states are visible and actionable.
-3. Regression checklist passes for scan, library, detail, and export paths while signed in.
+3. Regression checklist passes for scan, library, detail, and the export action on `/` while signed in.
 
 ---
 
@@ -70,8 +70,8 @@ Parents can securely access and manage only their own family library data.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Auth Foundation | 3/3 | Complete | 2026-04-02 |
-| 2. Route + Data Protection | 0/0 | Not started | - |
-| 3. Migration + Hardening | 0/0 | Not started | - |
+| 2. Route + Data Protection | 3/3 | Complete | 2026-04-05 |
+| 3. Migration + Hardening | 3/3 | Complete | 2026-04-06 |
 
 ---
 *Roadmap created: 2026-04-01*

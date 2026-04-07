@@ -1,5 +1,7 @@
 import { browser } from '$app/environment';
 import { replaceState } from '$app/navigation';
+import { getBrowserConvexClient } from '$lib/convex/client';
+import { getPublicConvexUrl } from '$lib/convex/url';
 import { ConvexClient } from 'convex/browser';
 import { writable } from 'svelte/store';
 import { api } from '../../convex/_generated/api';
@@ -25,10 +27,96 @@ type FetchTokenArgs = {
 	forceRefreshToken?: boolean;
 };
 
+const PROTECTED_ROUTE_PATTERNS = [/^\/scan$/, /^\/book\/new$/, /^\/book\/[^/]+$/];
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const JWT_STORAGE_KEY = '__convexAuthJWT';
 const REFRESH_TOKEN_STORAGE_KEY = '__convexAuthRefreshToken';
+const PROTECTED_ROUTE_INTENT_STORAGE_KEY = '__aeareProtectedRouteIntent';
+
+export function isProtectedPath(pathname: string): boolean {
+	return PROTECTED_ROUTE_PATTERNS.some((pattern) => pattern.test(pathname));
+}
+
+function buildProtectedRouteIntent(pathname: string, search = '', hash = ''): string | null {
+	if (!isProtectedPath(pathname)) {
+		return null;
+	}
+
+	return `${pathname}${search}${hash}`;
+}
+
+export function peekProtectedRouteIntent(): string | null {
+	if (!browser) {
+		return null;
+	}
+
+	const storedIntent = window.localStorage.getItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
+	if (!storedIntent) {
+		return null;
+	}
+
+	try {
+		const url = new URL(storedIntent, window.location.origin);
+		return buildProtectedRouteIntent(url.pathname, url.search, url.hash);
+	} catch {
+		window.localStorage.removeItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
+		return null;
+	}
+}
+
+export function rememberProtectedRouteIntent(pathname: string, search = '', hash = ''): string | null {
+	if (!browser) {
+		return null;
+	}
+
+	const intent = buildProtectedRouteIntent(pathname, search, hash);
+	if (!intent) {
+		return null;
+	}
+
+	window.localStorage.setItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY, intent);
+	return intent;
+}
+
+export function clearProtectedRouteIntent() {
+	if (!browser) {
+		return;
+	}
+
+	window.localStorage.removeItem(PROTECTED_ROUTE_INTENT_STORAGE_KEY);
+}
+
+export function consumeProtectedRouteIntent(): string | null {
+	const intent = peekProtectedRouteIntent();
+	if (intent) {
+		clearProtectedRouteIntent();
+	}
+
+	return intent;
+}
+
+export function describeProtectedRouteIntent(intent: string | null): string | null {
+	if (!intent) {
+		return null;
+	}
+
+	const pathname = intent.split(/[?#]/, 1)[0] ?? intent;
+	if (pathname === '/scan') {
+		return 'the scanner';
+	}
+
+	if (pathname === '/book/new') {
+		return 'the add-book form';
+	}
+
+	if (isProtectedPath(pathname)) {
+		return 'that book';
+	}
+
+	return null;
+}
 
 export type AuthState = {
 	status: AuthStatus;
@@ -43,14 +131,24 @@ export const authState = writable<AuthState>({
 });
 
 let convexClient: ConvexClient | null = null;
+let authActionQueue: Promise<unknown> = Promise.resolve();
 
 function getConvexClient(): ConvexClient {
 	if (!convexClient) {
-		convexClient = new ConvexClient(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
+		convexClient = getBrowserConvexClient();
 		convexClient.setAuth(fetchAccessToken);
 	}
 
 	return convexClient;
+}
+
+function runSerializedAuthAction<T>(operation: () => Promise<T>): Promise<T> {
+	const run = authActionQueue.catch(() => undefined).then(operation);
+	authActionQueue = run.then(
+		() => undefined,
+		() => undefined
+	);
+	return run;
 }
 
 function readStoredTokens(): StoredTokens | null {
@@ -126,7 +224,7 @@ function getSignInErrorMessage(error: unknown): string {
 
 async function runSignInAction(args: Record<string, unknown>): Promise<SignInResult> {
 	const client = getConvexClient();
-	const result = await client.action(api.auth.signIn, args as never);
+	const result = await runSerializedAuthAction(() => client.action(api.auth.signIn, args as never));
 	return normalizeSignInResult(result);
 }
 
@@ -243,7 +341,7 @@ export async function signIn() {
 			provider: 'resend',
 			params: {
 				email,
-				redirectTo: window.location.pathname,
+				redirectTo: peekProtectedRouteIntent() ?? window.location.pathname,
 			},
 		});
 
@@ -266,8 +364,9 @@ export async function signIn() {
 export async function signOut() {
 	try {
 		const client = getConvexClient();
-		await client.action(api.auth.signOut, {});
+		await runSerializedAuthAction(() => client.action(api.auth.signOut, {}));
 	} finally {
+		clearProtectedRouteIntent();
 		storeTokens(null);
 		authState.set({ status: 'signed-out', user: null, error: null });
 	}
