@@ -2,7 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 const devServerPort = Number(process.env.DEV_SERVER_PORT ?? '4173');
 const devServerBaseUrl = `http://127.0.0.1:${devServerPort}`;
-
 export default defineConfig({
 	testDir: './tests/e2e',
 	timeout: 30_000,

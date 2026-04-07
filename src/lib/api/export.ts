@@ -11,6 +11,7 @@ export interface ExportData {
 
 export async function exportLibrary(): Promise<void> {
 	const client = getBrowserConvexClient();
+	client.setAuth(fetchAccessToken);
 	const accessToken = await fetchAccessToken({ forceRefreshToken: true });
 	if (!accessToken) {
 		throw new Error('Sign in again before exporting your library.');
