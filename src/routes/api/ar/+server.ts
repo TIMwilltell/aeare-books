@@ -1,21 +1,13 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import puppeteer from '@cloudflare/puppeteer';
 import { getArCache, setArCache } from '$lib/db';
 import type { ArSource } from '$lib/types/ar';
-
-// Playwright will be imported dynamically to avoid issues when not needed
-let playwright: typeof import('playwright') | null = null;
 const ARBOOKFIND_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const arbookfindCooldownByIsbn = new Map<string, number>();
+type BrowserBinding = NonNullable<App.Platform['env']>['BROWSER'];
 
-async function getPlaywright() {
-	if (!playwright) {
-		playwright = await import('playwright');
-	}
-	return playwright;
-}
-
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, platform }) => {
 	const isbn = url.searchParams.get('isbn');
 
 	if (!isbn) {
@@ -52,7 +44,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			return json({ error: 'AR fallback temporarily unavailable for this ISBN' }, { status: 503 });
 		}
 
-		const scrapeResult = await scrapeArBookFindWithBrowser(cleanIsbn);
+		const scrapeResult = await scrapeArBookFindWithBrowser(cleanIsbn, platform?.env?.BROWSER);
 		if (scrapeResult.notFound) {
 			markArbookfindCooldown(cleanIsbn);
 			if (arLevel !== undefined || arPoints !== undefined) {
@@ -91,16 +83,19 @@ export const GET: RequestHandler = async ({ url }) => {
 	return json({ error: 'Book not found in AR database' }, { status: 404 });
 };
 
-async function scrapeArBookFindWithBrowser(isbn: string): Promise<ScrapeResult> {
+async function scrapeArBookFindWithBrowser(isbn: string, browserBinding: BrowserBinding | undefined): Promise<ScrapeResult> {
+	if (!browserBinding) {
+		return { error: 'AR fallback is unavailable until the Cloudflare Browser Rendering binding is configured.' };
+	}
+
 	try {
-		const pw = await getPlaywright();
-		const browser = await pw.chromium.launch({ headless: true });
+		const browser = await puppeteer.launch(browserBinding as any);
 
 		try {
 			const page = await browser.newPage();
 			page.setDefaultTimeout(7000);
 			page.setDefaultNavigationTimeout(10000);
-			await page.route('**/*', (route) => {
+			await (page as any).route('**/*', (route: any) => {
 				const resourceType = route.request().resourceType();
 				if (
 					resourceType === 'image' ||

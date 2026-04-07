@@ -42,7 +42,7 @@ export default defineConfig({
 			manifest: false,
 			includeAssets: ['icon-192.png', 'icon-512.png', 'manifest.webmanifest'],
 			workbox: {
-				globPatterns: ['client/**/*']
+				globPatterns: ['**/*']
 			},
 			devOptions: {
 				enabled: false,
