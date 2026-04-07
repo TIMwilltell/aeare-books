@@ -2,9 +2,16 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import fs from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { z } from 'zod';
 
-const useHttps = process.env.DEV_HTTPS === 'true';
-const devServerPort = Number(process.env.DEV_SERVER_PORT ?? '4173');
+const DevServerEnvSchema = z.object({
+	DEV_HTTPS: z.enum(['true', 'false']).optional(),
+	DEV_SERVER_PORT: z.coerce.number().int().positive().default(4173)
+});
+
+const devServerEnv = DevServerEnvSchema.parse(process.env);
+const useHttps = devServerEnv.DEV_HTTPS === 'true';
+const devServerPort = devServerEnv.DEV_SERVER_PORT;
 const httpsKeyPath = './ssl/localhost.key';
 const httpsCertPath = './ssl/localhost.crt';
 
@@ -21,8 +28,8 @@ function resolveHttpsConfig() {
 	}
 
 	return {
-		key: httpsKeyPath,
-		cert: httpsCertPath
+		key: fs.readFileSync(httpsKeyPath),
+		cert: fs.readFileSync(httpsCertPath)
 	};
 }
 

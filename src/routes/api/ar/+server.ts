@@ -95,18 +95,19 @@ async function scrapeArBookFindWithBrowser(isbn: string, browserBinding: Browser
 			const page = await browser.newPage();
 			page.setDefaultTimeout(7000);
 			page.setDefaultNavigationTimeout(10000);
-			await (page as any).route('**/*', (route: any) => {
-				const resourceType = route.request().resourceType();
+			await page.setRequestInterception(true);
+			page.on('request', (request) => {
+				const resourceType = request.resourceType();
 				if (
 					resourceType === 'image' ||
 					resourceType === 'font' ||
 					resourceType === 'media' ||
 					resourceType === 'stylesheet'
 				) {
-					void route.abort();
+					void request.abort();
 					return;
 				}
-				void route.continue();
+				void request.continue();
 			});
 
 			return await scrapeArBookFind(page, isbn);
@@ -150,7 +151,9 @@ interface BookrooResult {
 async function scrapeArBookFind(page: any, isbn: string): Promise<ScrapeResult> {
 	try {
 		// Navigate to UserType.aspx
-		await page.goto('https://www.arbookfind.com/UserType.aspx?RedirectURL=%2fadvanced.aspx');
+		await page.goto('https://www.arbookfind.com/UserType.aspx?RedirectURL=%2fadvanced.aspx', {
+			waitUntil: 'domcontentloaded'
+		});
 
 		// Click Librarian radio and submit
 		await page.click('#radLibrarian');
@@ -160,14 +163,16 @@ async function scrapeArBookFind(page: any, isbn: string): Promise<ScrapeResult> 
 		await page.waitForSelector('#ctl00_ContentPlaceHolder1_txtISBN');
 
 		// Type ISBN and search
-		await page.fill('#ctl00_ContentPlaceHolder1_txtISBN', isbn);
-		await page.click('#ctl00_ContentPlaceHolder1_btnDoIt');
-
-		await page.waitForLoadState('domcontentloaded');
+		await page.click('#ctl00_ContentPlaceHolder1_txtISBN', { clickCount: 3 });
+		await page.type('#ctl00_ContentPlaceHolder1_txtISBN', isbn);
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+			page.click('#ctl00_ContentPlaceHolder1_btnDoIt')
+		]);
 
 		// Check for failure message
-		const failLocator = page.locator('#ctl00_ContentPlaceHolder1_lblSearchResultFailedLabel');
-		if (await failLocator.count() > 0) {
+		const failLabel = await page.$('#ctl00_ContentPlaceHolder1_lblSearchResultFailedLabel');
+		if (failLabel) {
 			return { notFound: true, error: 'Book not found in AR database' };
 		}
 
@@ -176,8 +181,14 @@ async function scrapeArBookFind(page: any, isbn: string): Promise<ScrapeResult> 
 		await page.click('#book-title');
 
 		// Extract AR data
-		const atosStr = await page.textContent('#ctl00_ContentPlaceHolder1_ucBookDetail_lblBookLevel');
-		const arPointsStr = await page.textContent('#ctl00_ContentPlaceHolder1_ucBookDetail_lblPoints');
+		const atosStr = await page.$eval(
+			'#ctl00_ContentPlaceHolder1_ucBookDetail_lblBookLevel',
+			(element: Element) => element.textContent ?? ''
+		);
+		const arPointsStr = await page.$eval(
+			'#ctl00_ContentPlaceHolder1_ucBookDetail_lblPoints',
+			(element: Element) => element.textContent ?? ''
+		);
 
 		const arLevel = parseFloat(atosStr || '') || undefined;
 		const arPoints = parseFloat(arPointsStr || '') || undefined;
