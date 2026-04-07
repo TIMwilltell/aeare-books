@@ -31,11 +31,14 @@
 	let restoringProtectedPath = $state<string | null>(null);
 	let protectedRouteIntentLabel = $derived(describeProtectedRouteIntent(pendingProtectedRouteIntent));
 
-	const convexClient = getBrowserConvexClient();
-	convexClient.setAuth(fetchAccessToken);
-	setConvexClientContext(convexClient);
+	function initConvexClientContext() {
+		const convexClient = getBrowserConvexClient();
+		convexClient.setAuth(fetchAccessToken);
+		setConvexClientContext(convexClient);
+	}
 
 	onMount(() => {
+		initConvexClientContext();
 		void initAuthSession();
 		syncProtectedRouteRedirect();
 		void syncProtectedRouteIntentRestore();
