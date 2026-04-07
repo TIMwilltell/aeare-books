@@ -1,0 +1,28 @@
+- generic [ref=e2]:
+  - link "Skip to content" [ref=e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - banner "Application frame" [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: Ae
+        - generic [ref=e8]:
+          - paragraph [ref=e9]: Library
+          - paragraph [ref=e10]: AeAre Books
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - paragraph [ref=e13]: Signed out
+          - button "Sign in" [ref=e14] [cursor=pointer]
+        - paragraph [ref=e15]: Sign in to open the scanner.
+    - main [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - paragraph [ref=e20]: Welcome
+            - heading "Keep your library in one place." [level=1] [ref=e21]
+            - paragraph [ref=e22]: Sign in to scan, save, and edit your books.
+          - button "Sign in" [ref=e24] [cursor=pointer]
+        - generic [ref=e31]:
+          - generic [ref=e32]: Library
+          - heading "Start your library." [level=2] [ref=e33]
+          - paragraph [ref=e34]: Sign in to scan, add, and edit books.
+          - button "Sign in" [ref=e35] [cursor=pointer]
