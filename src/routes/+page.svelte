@@ -161,10 +161,6 @@
 					<span class="stat-label">AR points</span>
 				</div>
 			</div>
-		{:else}
-			<div class="signed-out-note surface-muted">
-				<p>Sign in to unlock your books.</p>
-			</div>
 		{/if}
 
 		<div class="hero-actions">
