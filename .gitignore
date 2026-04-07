@@ -27,3 +27,7 @@ vite.config.ts.timestamp-*
 /.planning
 /.planning
 /.planning/PROJECT.md
+/.planning/debug
+/test-results
+/snapshot.md
+/snapshot2.md
