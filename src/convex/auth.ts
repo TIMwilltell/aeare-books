@@ -1,5 +1,6 @@
 import { convexAuth, type EmailConfig, type GenericActionCtxWithAuthConfig } from '@convex-dev/auth/server';
 import { internal } from './_generated/api';
+import { convexEnv } from './lib/env';
 
 function generateLowercaseVerificationCode(): string {
 	const bytes = new Uint8Array(16);
@@ -18,17 +19,22 @@ function renderMagicLinkHtml(url: string, host: string) {
       </td>
     </tr>
     <tr>
-      <td align="center" style="padding: 20px 0;">
-        <table border="0" cellspacing="0" cellpadding="0">
-          <tr>
-            <td align="center" style="border-radius: 5px;" bgcolor="#346df1"><a href="${url}" target="_blank" style="font-size: 18px; font-family: Helvetica, Arial, sans-serif; color: #fff; text-decoration: none; border-radius: 5px; padding: 10px 20px; border: 1px solid #346df1; display: inline-block; font-weight: bold;">Sign in</a></td>
+      <td align="center" style="padding: 0 24px; font-size: 16px; line-height: 22px; font-family: Helvetica, Arial, sans-serif; color: #444;">
+	        Use the button below to sign in securely.
+	      </td>
+	    </tr>
+	    <tr>
+	      <td align="center" style="padding: 20px 0;">
+	        <table border="0" cellspacing="0" cellpadding="0">
+	          <tr>
+	            <td align="center" style="border-radius: 5px;" bgcolor="#346df1"><a href="${url}" target="_blank" style="font-size: 18px; font-family: Helvetica, Arial, sans-serif; color: #fff; text-decoration: none; border-radius: 5px; padding: 10px 20px; border: 1px solid #346df1; display: inline-block; font-weight: bold;">Open sign-in link</a></td>
           </tr>
         </table>
       </td>
     </tr>
     <tr>
       <td align="center" style="padding: 0px 0px 10px 0px; font-size: 16px; line-height: 22px; font-family: Helvetica, Arial, sans-serif; color: #444;">
-        If you did not request this email you can safely ignore it.
+	        If you did not request this email, you can safely ignore it.
       </td>
     </tr>
   </table>
@@ -37,15 +43,28 @@ function renderMagicLinkHtml(url: string, host: string) {
 }
 
 function renderMagicLinkText(url: string, host: string) {
-	return `Sign in to ${host}\n${url}\n\n`;
+	return `Sign in to ${host}\nOpen this link to continue:\n${url}\n\nIf you did not request this email, you can safely ignore it.\n`;
 }
 
 function isLocalAuthEmailMode() {
-	return process.env.AEARE_AUTH_EMAIL_MODE === 'local';
+	return convexEnv.AEARE_AUTH_EMAIL_MODE === 'local';
 }
 
 function getAuthEmailFrom() {
-	return process.env.AUTH_EMAIL_FROM ?? 'AeAre Books <auth@aeare.local>';
+	return convexEnv.AUTH_EMAIL_FROM;
+}
+
+async function readResponseBody(response: Response): Promise<string | null> {
+	const bodyText = (await response.text()).trim();
+	if (!bodyText) {
+		return null;
+	}
+
+	try {
+		return JSON.stringify(JSON.parse(bodyText));
+	} catch {
+		return bodyText;
+	}
 }
 
 function getMagicLinkProvider(): EmailConfig {
@@ -76,7 +95,7 @@ function getMagicLinkProvider(): EmailConfig {
 			return;
 		}
 
-		const resendKey = process.env.AUTH_RESEND_KEY;
+		const resendKey = convexEnv.AUTH_RESEND_KEY;
 		if (!resendKey) {
 			throw new Error('AUTH_RESEND_KEY is not configured.');
 		}
@@ -97,7 +116,11 @@ function getMagicLinkProvider(): EmailConfig {
 		});
 
 		if (!response.ok) {
-			throw new Error(`Resend error: ${JSON.stringify(await response.json())}`);
+			const body = await readResponseBody(response);
+			const statusDetails = `${response.status} ${response.statusText}`.trim();
+			throw new Error(
+				body ? `Resend error (${statusDetails}): ${body}` : `Resend error (${statusDetails}).`
+			);
 		}
 	}) as EmailConfig['sendVerificationRequest'];
 
@@ -107,7 +130,7 @@ function getMagicLinkProvider(): EmailConfig {
 		name: 'Resend',
 		from: getAuthEmailFrom(),
 		maxAge: 24 * 60 * 60,
-		apiKey: process.env.AUTH_RESEND_KEY,
+		apiKey: convexEnv.AUTH_RESEND_KEY,
 		generateVerificationToken: async () => generateLowercaseVerificationCode(),
 		options: {},
 		sendVerificationRequest,

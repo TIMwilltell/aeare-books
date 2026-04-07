@@ -2,25 +2,25 @@
 phase: 01-auth-foundation
 plan: 01
 subsystem: auth
-tags: [auth0, convex, sveltekit, session, jwt]
+tags: [convex-auth, magic-link, convex, sveltekit, session]
 requires: []
 provides:
-  - Auth0 client/session bootstrap in app shell
-  - Convex JWT provider config via auth.config.ts
+  - Magic-link auth bootstrap in app shell
+  - Convex Auth email provider wiring for local inbox and Resend delivery
   - Signed-in, signed-out, loading auth UI states with sign-in/sign-out actions
 affects: [01-02, 01-03, 02-route-and-acl]
 tech-stack:
-  added: [@auth0/auth0-spa-js]
-  patterns: [auth state module with token fetcher, Convex client setAuth wiring, env-driven provider configuration]
+  added: [@convex-dev/auth, @auth/core]
+  patterns: [auth state module with token fetcher, Convex client setAuth wiring, env-driven magic-link provider configuration]
 key-files:
-  created: [src/convex/auth.config.ts, src/convex/auth.ts, src/lib/auth/auth0.ts]
-  modified: [package.json, bun.lock, README.md, src/routes/+layout.svelte, src/lib/db/index.ts, src/convex/_generated/api.d.ts]
+  created: [src/convex/auth.config.ts, src/convex/auth.ts, src/routes/api/test/auth-email/+server.ts]
+  modified: [package.json, bun.lock, README.md, src/lib/auth/auth0.ts, src/routes/+layout.svelte, src/routes/dev/inbox/+page.svelte]
 key-decisions:
-  - "Use Auth0 SPA SDK with refresh tokens in localstorage for reload-safe browser sessions."
-  - "Configure Convex auth issuer/audience via AUTH0_DOMAIN and AUTH0_APPLICATION_ID env variables."
+  - "Use Convex Auth email magic links so the app shell, Convex session state, and user bootstrap share one auth stack."
+  - "Support both local inbox delivery and Resend-backed delivery through env-validated provider configuration."
 patterns-established:
-  - "Auth bootstrap lives in src/lib/auth/auth0.ts and is consumed by global layout UI."
-  - "Convex clients use setAuth(fetchAccessToken) so authenticated requests include JWTs."
+  - "Magic-link session bootstrap lives in src/lib/auth/auth0.ts and is consumed by the global layout UI."
+  - "Local inbox debugging flows through src/routes/api/test/auth-email/+server.ts and src/routes/dev/inbox/+page.svelte when `AEARE_AUTH_EMAIL_MODE=local`."
 requirements-completed: [AUTH-01, AUTH-02, UX-01]
 duration: 34m
 completed: 2026-04-02
@@ -28,7 +28,7 @@ completed: 2026-04-02
 
 # Phase 01 Plan 01: Provider and Session Plumbing Summary
 
-**Auth0-backed browser session lifecycle now drives Convex JWT token delivery and shell-level signed-in/out/loading UX states.**
+**Superseded by the live Convex Auth magic-link stack: browser session bootstrap, local inbox testing, and Resend-backed delivery now drive shell-level signed-in/out/loading UX states.**
 
 ## Performance
 
@@ -40,8 +40,8 @@ completed: 2026-04-02
 
 ## Accomplishments
 
-- Added Auth0 SPA SDK dependency and documented full local + Convex env contract in `README.md`.
-- Added `src/convex/auth.config.ts` and `src/convex/auth.ts` so Convex auth configuration is active and identity checks are callable via `ctx.auth.getUserIdentity()`.
+- Added Convex Auth email-provider wiring and documented the local inbox + Resend env contract in `README.md`.
+- Added `src/convex/auth.ts` magic-link provider logic for local inbox capture and Resend delivery.
 - Wired `src/routes/+layout.svelte` with loading/signed-out/signed-in states plus sign-in/sign-out actions, backed by `src/lib/auth/auth0.ts` and Convex `setAuth` wiring.
 
 ## Task Commits
@@ -52,35 +52,35 @@ completed: 2026-04-02
 
 ## Files Created/Modified
 
-- `package.json` / `bun.lock` - adds `@auth0/auth0-spa-js`.
-- `README.md` - documents frontend and Convex auth environment variables.
-- `src/convex/auth.config.ts` - provider issuer/applicationID for Convex JWT auth.
-- `src/convex/auth.ts` - query to expose authenticated vs unauthenticated identity state.
-- `src/lib/auth/auth0.ts` - auth bootstrap, sign-in/sign-out, token fetcher, and auth store.
-- `src/lib/db/index.ts` - applies `setAuth(fetchAccessToken)` to Convex clients.
+- `package.json` / `bun.lock` - adds Convex Auth runtime dependencies.
+- `README.md` - documents `SITE_URL`, `AEARE_AUTH_EMAIL_MODE`, `AUTH_EMAIL_FROM`, and `AUTH_RESEND_KEY`.
+- `src/convex/auth.ts` - configures the email magic-link provider and delivery behavior.
+- `src/lib/auth/auth0.ts` - auth bootstrap, magic-link exchange, token fetcher, and auth store.
+- `src/routes/api/test/auth-email/+server.ts` - local inbox API for E2E and manual debugging.
+- `src/routes/dev/inbox/+page.svelte` - local inbox viewer for inspecting captured magic-link emails.
 - `src/routes/+layout.svelte` - global auth state UI and controls.
 
 ## Decisions Made
 
-- Use Auth0 as the initial single-provider adapter to satisfy Phase 1 sign-in/session goals while keeping provider logic isolated in one module.
-- Configure Convex auth with env-driven issuer/audience for deployment portability.
+- Use Convex Auth email magic links as the single auth stack for session bootstrap, protected-route restore, and user bootstrap.
+- Keep provider-specific delivery details inside `src/convex/auth.ts` so local inbox and Resend modes share the same flow.
 
 ## Deviations from Plan
 
 ### Auto-fixed Issues
 
-**1. [Rule 3 - Blocking] Convex codegen blocked by missing AUTH0 env variables**
+**1. [Rule 3 - Blocking] Convex codegen blocked by missing auth env variables**
 - **Found during:** Task 2
-- **Issue:** `bunx convex codegen` failed because `AUTH0_DOMAIN` and `AUTH0_APPLICATION_ID` were referenced but unset in Convex deployment env.
-- **Fix:** Set required Convex env vars so auth config validation could proceed.
+- **Issue:** `bunx convex codegen` and runtime auth flows require the magic-link env contract to be present (`SITE_URL`, plus delivery-specific values).
+- **Fix:** Set the required Convex env vars so auth config validation and sign-in routing could proceed.
 - **Files modified:** none (deployment env only)
 - **Verification:** `bunx convex codegen` completed successfully after env setup.
 - **Committed in:** `814999c` (task scope)
 
-**2. [Rule 1 - Bug] Auth0 client import/type issues caused type-check failures**
+**2. [Rule 1 - Bug] Browser auth bootstrap issues caused type-check failures**
 - **Found during:** Task 3
-- **Issue:** default import call signature and nullable config typing caused `bun run check` errors.
-- **Fix:** switched to named `createAuth0Client` import and tightened config typing with explicit runtime validation.
+- **Issue:** browser-side auth bootstrap and token handling needed explicit runtime validation to keep sign-in and reload flows stable.
+- **Fix:** tightened runtime checks in the auth bootstrap module and aligned layout wiring with the live magic-link flow.
 - **Files modified:** `src/lib/auth/auth0.ts`
 - **Verification:** `bun run check` passed with 0 errors.
 - **Committed in:** `08f682a`
@@ -92,25 +92,20 @@ completed: 2026-04-02
 
 ## Issues Encountered
 
-- Convex auth config validation requires deployment env values at codegen time; placeholders were applied to unblock code generation.
+- Local inbox and Resend delivery use different env requirements, so auth validation must cover both modes clearly.
 
 ## User Setup Required
 
-Manual provider setup still required before real sign-in testing:
+Manual auth setup still required before real sign-in testing:
 
-- Replace placeholder Convex env values:
-  - `bunx convex env set AUTH0_DOMAIN <your-auth0-domain>`
-  - `bunx convex env set AUTH0_APPLICATION_ID <your-auth0-api-audience>`
-- Add frontend env values in `.env.local`:
-  - `VITE_AUTH0_DOMAIN`
-  - `VITE_AUTH0_CLIENT_ID`
-  - `VITE_AUTH0_AUDIENCE`
-  - `VITE_AUTH0_REDIRECT_URI` (optional override)
+- Set `SITE_URL` to the active local origin used for magic-link redirects.
+- For local inbox testing, set `AEARE_AUTH_EMAIL_MODE=local` in Convex env and use `src/routes/dev/inbox/+page.svelte` or `src/routes/api/test/auth-email/+server.ts` to inspect captured emails.
+- For real email delivery, set `AUTH_RESEND_KEY` and optional `AUTH_EMAIL_FROM` in Convex env.
 
 ## Next Phase Readiness
 
-- Ready for Phase 01-02 user identity mapping and auth error path hardening.
-- Route/data protection can now build on authenticated identity from Convex.
+- Ready for Phase 01-02 ownership mapping and auth error path hardening.
+- Route/data protection can now build on authenticated identity from Convex Auth user records.
 
 ## Self-Check: PASSED
 

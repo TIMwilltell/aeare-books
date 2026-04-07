@@ -5,14 +5,14 @@
 	import StatusBanner from '$lib/components/StatusBanner.svelte';
 	import {
 		authState,
-		clearProtectedRouteIntent,
-		consumeProtectedRouteIntent,
+		clearProtectedRouteIntent as clearStoredProtectedRouteIntent,
+		consumeProtectedRouteIntent as consumeStoredProtectedRouteIntent,
 		describeProtectedRouteIntent,
 		fetchAccessToken,
 		initAuthSession,
 		isProtectedPath,
-		peekProtectedRouteIntent,
-		rememberProtectedRouteIntent,
+		peekProtectedRouteIntent as peekStoredProtectedRouteIntent,
+		rememberProtectedRouteIntent as rememberStoredProtectedRouteIntent,
 		signIn,
 		signOut
 	} from '$lib/auth/auth0';
@@ -22,6 +22,7 @@
 	import { get } from 'svelte/store';
 
 	const { children } = $props();
+	const PROTECTED_ROUTE_INTENT_SESSION_KEY = '__aeareProtectedRouteIntent';
 	let authActionPending = $state(false);
 	let authActionError = $state<string | null>(null);
 	let redirectingProtectedPath = $state<string | null>(null);
@@ -30,11 +31,14 @@
 	let restoringProtectedPath = $state<string | null>(null);
 	let protectedRouteIntentLabel = $derived(describeProtectedRouteIntent(pendingProtectedRouteIntent));
 
-	const convexClient = getBrowserConvexClient();
-	convexClient.setAuth(fetchAccessToken);
-	setConvexClientContext(convexClient);
+	function initConvexClientContext() {
+		const convexClient = getBrowserConvexClient();
+		convexClient.setAuth(fetchAccessToken);
+		setConvexClientContext(convexClient);
+	}
 
 	onMount(() => {
+		initConvexClientContext();
 		void initAuthSession();
 		syncProtectedRouteRedirect();
 		void syncProtectedRouteIntentRestore();
@@ -52,6 +56,46 @@
 		void syncProtectedRouteIntentRestore();
 	});
 
+	function peekProtectedRouteIntent() {
+		if (typeof window === 'undefined') {
+			return peekStoredProtectedRouteIntent();
+		}
+
+		const storedIntent = window.sessionStorage.getItem(PROTECTED_ROUTE_INTENT_SESSION_KEY);
+		if (storedIntent) {
+			return storedIntent;
+		}
+
+		return peekStoredProtectedRouteIntent();
+	}
+
+	function rememberProtectedRouteIntent(pathname: string, search = '', hash = '') {
+		const intent = rememberStoredProtectedRouteIntent(pathname, search, hash);
+
+		if (typeof window !== 'undefined' && intent) {
+			window.sessionStorage.setItem(PROTECTED_ROUTE_INTENT_SESSION_KEY, intent);
+		}
+
+		return intent;
+	}
+
+	function clearProtectedRouteIntent() {
+		if (typeof window !== 'undefined') {
+			window.sessionStorage.removeItem(PROTECTED_ROUTE_INTENT_SESSION_KEY);
+		}
+
+		clearStoredProtectedRouteIntent();
+	}
+
+	function consumeProtectedRouteIntent() {
+		const intent = peekProtectedRouteIntent();
+		if (intent) {
+			clearProtectedRouteIntent();
+			return intent;
+		}
+
+		return consumeStoredProtectedRouteIntent();
+	}
 	function syncProtectedRouteRedirect(pathname = page.url.pathname) {
 		pendingProtectedRouteIntent = peekProtectedRouteIntent();
 
@@ -172,7 +216,7 @@
 		<div class="brand-row">
 			<div class="brand-mark" aria-hidden="true">Ae</div>
 			<div class="brand-copy">
-				<p class="eyebrow">Reading companion</p>
+				<p class="eyebrow">Library</p>
 				<p class="brand-title">AeAre Books</p>
 			</div>
 		</div>

@@ -1,5 +1,5 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { v } from "convex/values";
 
 const userResultValidator = v.union(
@@ -29,7 +29,7 @@ export const getCurrentUser = query({
   },
 });
 
-export const ensureCurrentUser = mutation({
+export const ensureCurrentUser = query({
   args: {},
   returns: userResultValidator,
   handler: async (ctx) => {

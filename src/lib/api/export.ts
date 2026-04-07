@@ -12,8 +12,18 @@ export interface ExportData {
 export async function exportLibrary(): Promise<void> {
 	const client = getBrowserConvexClient();
 	client.setAuth(fetchAccessToken);
+	const accessToken = await fetchAccessToken({ forceRefreshToken: true });
+	if (!accessToken) {
+		throw new Error('Sign in again before exporting your library.');
+	}
 
-	const books = await client.query(api.books.getAll, {});
+	let books;
+	try {
+		books = await client.query(api.books.getAll, {});
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Export failed.';
+		throw new Error(`Could not export your library: ${message}`);
+	}
 
 	const exportData: ExportData = {
 		exportedAt: new Date().toISOString(),

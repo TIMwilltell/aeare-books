@@ -171,11 +171,11 @@
 		<p class="eyebrow">Live camera</p>
 		<div class="scanner-status" aria-live="polite" aria-atomic="true">
 			{#if status === 'initializing'}
-				<span class="status-text">Preparing camera…</span>
+				<span class="status-text">Starting camera...</span>
 			{:else if status === 'scanning'}
-				<span class="status-text">Line up the ISBN barcode within the frame.</span>
+				<span class="status-text">Line up the ISBN inside the frame.</span>
 			{:else if status === 'found'}
-				<span class="status-text status-found">Book found — opening details.</span>
+				<span class="status-text status-found">Book found. Opening...</span>
 			{:else if status === 'error'}
 				<span class="status-text status-error">{errorMessage}</span>
 			{/if}

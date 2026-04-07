@@ -108,7 +108,7 @@
 <div class="book-detail-page">
 	{#if loading}
 		<section class="section-card loading-card">
-			<p>Loading this book…</p>
+			<p>Loading book...</p>
 		</section>
 	{:else if book}
 		<section class="hero-card section-card">
@@ -123,7 +123,7 @@
 			</div>
 
 			<div class="hero-copy">
-				<p class="eyebrow">Book detail</p>
+				<p class="eyebrow">Book</p>
 				<h1 class="page-title">{book.title}</h1>
 				<p class="author-line">by {book.author}</p>
 
@@ -139,15 +139,15 @@
 						</span>
 					{/if}
 					{#if book.arDataSource === 'fetched'}
-						<span class="pill source fetched">Auto-fetched</span>
+						<span class="pill source fetched">From lookup</span>
 					{:else if book.arDataSource === 'manual'}
 						<span class="pill source manual">Manual</span>
 					{/if}
 				</div>
 
 				<div class="action-row">
-					<button class="primary-button" onclick={startEdit}>Edit details</button>
-					<button class="danger-button" onclick={confirmDelete}>Delete book</button>
+					<button class="primary-button" onclick={startEdit}>Edit</button>
+					<button class="danger-button" onclick={confirmDelete}>Delete</button>
 				</div>
 			</div>
 		</section>
@@ -155,8 +155,8 @@
 		{#if editing}
 			<section class="section-card form-card">
 				<div class="section-header">
-					<p class="eyebrow">Edit metadata</p>
-					<h2>Update the book record</h2>
+					<p class="eyebrow">Edit</p>
+					<h2>Edit details</h2>
 				</div>
 
 				<form class="edit-form" onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
@@ -189,7 +189,7 @@
 
 					<div class="form-actions">
 						<button type="button" class="ghost-button" onclick={cancelEdit} disabled={saving}>Cancel</button>
-						<button type="submit" class="primary-button" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
+						<button type="submit" class="primary-button" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
 					</div>
 				</form>
 			</section>
@@ -197,8 +197,8 @@
 			<section class="detail-grid">
 				<div class="section-card detail-card metadata-card">
 					<div class="section-header compact">
-						<p class="eyebrow">Metadata</p>
-						<h2>Catalog details</h2>
+						<p class="eyebrow">Details</p>
+						<h2>Book info</h2>
 					</div>
 
 					<div class="metadata-list surface-muted">
@@ -212,19 +212,19 @@
 						</div>
 						<div>
 							<span>ISBN</span>
-							<strong>{book.isbn || 'Not provided'}</strong>
+							<strong>{book.isbn || 'Not set'}</strong>
 						</div>
 						<div>
 							<span>AR Level</span>
-							<strong>{book.arLevel ?? 'Not provided'}</strong>
+							<strong>{book.arLevel ?? 'Not set'}</strong>
 						</div>
 						<div>
 							<span>AR Points</span>
-							<strong>{book.arPoints ?? 'Not provided'}</strong>
+							<strong>{book.arPoints ?? 'Not set'}</strong>
 						</div>
 						<div>
 							<span>AR Source</span>
-							<strong>{book.arDataSource === 'fetched' ? 'Auto-fetched' : book.arDataSource === 'manual' ? 'Manual' : 'Not set'}</strong>
+							<strong>{book.arDataSource === 'fetched' ? 'From lookup' : book.arDataSource === 'manual' ? 'Manual' : 'Not set'}</strong>
 						</div>
 					</div>
 				</div>

@@ -1,51 +1,55 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import fs from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { z } from 'zod';
 
-const useHttps = process.env.DEV_HTTPS === 'true';
+const DevServerEnvSchema = z.object({
+	DEV_HTTPS: z.enum(['true', 'false']).optional(),
+	DEV_SERVER_PORT: z.coerce.number().int().positive().default(4173)
+});
+
+const devServerEnv = DevServerEnvSchema.parse(process.env);
+const useHttps = devServerEnv.DEV_HTTPS === 'true';
+const devServerPort = devServerEnv.DEV_SERVER_PORT;
+const httpsKeyPath = './ssl/localhost.key';
+const httpsCertPath = './ssl/localhost.crt';
+
+function resolveHttpsConfig() {
+	if (!useHttps) {
+		return undefined;
+	}
+
+	if (!fs.existsSync(httpsKeyPath) || !fs.existsSync(httpsCertPath)) {
+		console.warn(
+			`DEV_HTTPS=true but ${httpsKeyPath} or ${httpsCertPath} is missing. Falling back to HTTP dev server.`
+		);
+		return undefined;
+	}
+
+	return {
+		key: fs.readFileSync(httpsKeyPath),
+		cert: fs.readFileSync(httpsCertPath)
+	};
+}
 
 export default defineConfig({
 	ssr: {
 		external: ['quagga']
 	},
 	server: {
-		https: useHttps
-			? {
-					key: './ssl/localhost.key',
-					cert: './ssl/localhost.crt'
-				}
-			: undefined,
+		https: resolveHttpsConfig(),
 		host: '0.0.0.0',
-		port: 5173
+		port: devServerPort
 	},
 	plugins: [
 		sveltekit(),
 		VitePWA({
 			registerType: 'autoUpdate',
-			manifest: {
-				name: 'AeAre Books',
-				short_name: 'AeAre',
-				description: 'Track your children\'s AR reading progress',
-				theme_color: '#4A90D9',
-				icons: [
-					{
-						src: '/icon-192.png',
-						sizes: '192x192',
-						type: 'image/png'
-					},
-					{
-						src: '/icon-512.png',
-						sizes: '512x512',
-						type: 'image/png'
-					}
-				],
-				start_url: '/',
-				display: 'standalone',
-				orientation: 'portrait',
-				scope: '/'
-			},
+			manifest: false,
+			includeAssets: ['icon-192.png', 'icon-512.png', 'manifest.webmanifest'],
 			workbox: {
-				globPatterns: ['client/**/*']
+				globPatterns: ['**/*']
 			},
 			devOptions: {
 				enabled: false,

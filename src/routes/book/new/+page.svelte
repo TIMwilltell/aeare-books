@@ -32,7 +32,7 @@
 				author = bookResult.data.author;
 				coverUrl = bookResult.data.coverUrl || '';
 			} else {
-				lookupError = bookResult.error || 'Book not found';
+				lookupError = bookResult.error || 'Book not found.';
 			}
 
 			const arResult = await lookupAr(isbn.trim());
@@ -42,7 +42,7 @@
 				arDataSource = 'fetched';
 			}
 		} catch (e) {
-			lookupError = 'Lookup failed. Please enter details manually.';
+			lookupError = 'Lookup failed. Enter the details by hand.';
 			console.error(e);
 		} finally {
 			lookupLoading = false;
@@ -78,9 +78,9 @@
 
 <div class="book-form-page">
 	<section class="intro">
-		<p class="eyebrow">New entry</p>
-		<h1 class="page-title">Add a book to the shelf.</h1>
-		<p>Look up details from the ISBN, then refine the record before saving it into your library.</p>
+		<p class="eyebrow">Add book</p>
+		<h1 class="page-title">Add a book.</h1>
+		<p>Look up an ISBN or enter the details by hand.</p>
 	</section>
 
 	<form class="book-form" onsubmit={(e) => { e.preventDefault(); handleSave(); }}>
@@ -98,20 +98,20 @@
 
 			<div class="lookup-panel">
 				<div>
-					<p class="eyebrow">Quick lookup</p>
-					<h2>Start with an ISBN</h2>
-					<p>Scan or type a code to prefill title, author, cover, and AR details.</p>
+					<p class="eyebrow">ISBN lookup</p>
+					<h2>Start with ISBN</h2>
+					<p>Scan or type an ISBN to fill in the basics.</p>
 				</div>
 
 				<label class="field" for="isbn">
 					<span>ISBN</span>
 					<div class="isbn-row">
-						<input type="text" id="isbn" bind:value={isbn} placeholder="Enter ISBN (optional)" />
+						<input type="text" id="isbn" bind:value={isbn} placeholder="Enter ISBN" />
 						<button type="button" class="secondary-button lookup-button" onclick={handleLookup} disabled={!isbn.trim() || lookupLoading}>
 							{#if lookupLoading}
 								<LoadingSpinner size="small" color="var(--color-cream-0)" />
 							{:else}
-								Lookup
+								Look up
 							{/if}
 						</button>
 					</div>
@@ -127,24 +127,24 @@
 			<div class="section-card form-section">
 				<div class="section-header">
 					<p class="eyebrow">Book details</p>
-					<h2>Core metadata</h2>
+					<h2>Book details</h2>
 				</div>
 
 				<label class="field" for="title">
 					<span>Title *</span>
-					<input type="text" id="title" bind:value={title} placeholder="Enter book title" required />
+					<input type="text" id="title" bind:value={title} placeholder="Book title" required />
 				</label>
 
 				<label class="field" for="author">
 					<span>Author *</span>
-					<input type="text" id="author" bind:value={author} placeholder="Enter author name" required />
+					<input type="text" id="author" bind:value={author} placeholder="Author name" required />
 				</label>
 			</div>
 
 			<div class="section-card form-section">
 				<div class="section-header">
 					<p class="eyebrow">AR metrics</p>
-					<h2>AR tracking</h2>
+					<h2>AR details</h2>
 				</div>
 
 				<label class="field" for="ar-level">
@@ -159,7 +159,7 @@
 
 				{#if arLevel != null || arPoints != null}
 					<span class="pill source-pill {arDataSource}">
-						{arDataSource === 'fetched' ? 'Auto-fetched data' : 'Manual data'}
+						{arDataSource === 'fetched' ? 'From lookup' : 'Manual'}
 					</span>
 				{/if}
 			</div>
@@ -167,7 +167,7 @@
 
 		<div class="form-actions">
 			<button type="button" class="ghost-button" onclick={handleCancel} disabled={saving}>Cancel</button>
-			<button type="submit" class="primary-button" disabled={saving}>{saving ? 'Saving…' : 'Save book'}</button>
+			<button type="submit" class="primary-button" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
 		</div>
 	</form>
 </div>

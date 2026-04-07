@@ -1,8 +1,9 @@
 import { v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
+import { convexEnv } from "./lib/env";
 
 function assertLocalAuthMode() {
-	if (process.env.AEARE_AUTH_EMAIL_MODE !== "local") {
+	if (convexEnv.AEARE_AUTH_EMAIL_MODE !== "local") {
 		throw new Error("Local auth inbox is disabled");
 	}
 }
@@ -26,7 +27,7 @@ export const storeMagicLinkEmail = internalMutation({
 	},
 });
 
-export const getLatestMagicLink = query({
+export const getLatestMagicLink = internalQuery({
 	args: { email: v.string() },
 	handler: async (ctx, args) => {
 		assertLocalAuthMode();
@@ -39,7 +40,7 @@ export const getLatestMagicLink = query({
 	},
 });
 
-export const clearMagicLinks = mutation({
+export const clearMagicLinks = internalMutation({
 	args: { email: v.optional(v.string()) },
 	handler: async (ctx, args) => {
 		assertLocalAuthMode();

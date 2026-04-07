@@ -72,7 +72,7 @@ Last activity: 2026-04-06 - completed Phase 3 verification and closed out the Us
 ### Blockers/Concerns
 
 - Existing legacy `books` may have no deterministic owner signal and therefore remain intentionally quarantined until a safe mapping source or operator workflow exists.
-- Route protection is still client-side because auth is not server-visible yet.
+- Route protection is still client-side in the app shell, but Convex server functions can already resolve the caller with `getAuthUserId(ctx)`.
 - Legacy `progressEvents` attached to unresolved books remain quarantined until their parent ownership can be resolved.
 
 ## Session Continuity

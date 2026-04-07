@@ -16,7 +16,7 @@
 			scanError = '';
 		} else if (error === 'not-isbn') {
 			if (errorTimeout) clearTimeout(errorTimeout);
-			scanError = 'That code doesn’t look like a book ISBN yet. Try the barcode near the back cover.';
+			scanError = 'That doesn’t look like an ISBN. Try the barcode on the back cover.';
 			errorTimeout = setTimeout(() => {
 				scanError = '';
 			}, 3000);
@@ -34,19 +34,19 @@
 
 <div class="scan-page">
 	<section class="scan-hero">
-		<p class="eyebrow">Capture a title</p>
-		<h1 class="page-title">Scan the next book into your reading circle.</h1>
+		<p class="eyebrow">Scan</p>
+		<h1 class="page-title">Scan a book.</h1>
 		<p>
-			Use your camera for a quick ISBN capture, or switch to manual entry when the barcode is hard to reach.
+			Point your camera at the ISBN, or enter it by hand.
 		</p>
 	</section>
 
 	{#if permissionDenied}
 		<section class="permission-denied section-card">
 			<div class="denied-icon" aria-hidden="true">Camera</div>
-			<h2>Camera access is turned off.</h2>
-			<p>Please allow camera access in your browser settings, or continue by entering the ISBN manually.</p>
-			<button class="secondary-button" onclick={handleManualEntry}>Enter ISBN manually</button>
+			<h2>Camera access is off.</h2>
+			<p>Allow camera access in your browser, or enter the ISBN instead.</p>
+			<button class="secondary-button" onclick={handleManualEntry}>Enter ISBN</button>
 		</section>
 	{:else}
 		<section class="scan-stage section-card">
@@ -56,10 +56,10 @@
 
 			<div class="scan-guidance">
 				<div class="guide-card surface-muted">
-					<p><strong>Framing</strong> Center the barcode in the frame and hold steady for a moment.</p>
+					<p><strong>Framing</strong> Center the barcode and hold still.</p>
 				</div>
 				<div class="guide-card surface-muted">
-					<p><strong>Barcode type</strong> Use the ISBN barcode, not a general retail product code.</p>
+					<p><strong>Barcode</strong> Scan the ISBN, not the store barcode.</p>
 				</div>
 			</div>
 
@@ -70,7 +70,7 @@
 			{/if}
 
 			<div class="manual-entry">
-				<button class="ghost-button" onclick={handleManualEntry}>Prefer typing it in?</button>
+				<button class="ghost-button" onclick={handleManualEntry}>Enter ISBN by hand</button>
 			</div>
 		</section>
 	{/if}

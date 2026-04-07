@@ -1,5 +1,6 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
 
 const DEFAULT_BATCH_SIZE = 100;
@@ -62,8 +63,19 @@ export const inventoryLegacyProgressOwnership = internalQuery({
     continueCursor: v.union(v.string(), v.null()),
     isDone: v.boolean(),
   }),
-  handler: async (ctx, args) => {
-    const progressPage = await ctx.db.query("progressEvents").order("asc").paginate(args.paginationOpts);
+	handler: async (ctx, args) => {
+		const progressPage = await ctx.db.query("progressEvents").order("asc").paginate(args.paginationOpts);
+		const bookUserIdCache = new Map();
+
+    async function resolveBookUserId(bookId: Id<"books">) {
+      if (bookUserIdCache.has(bookId)) {
+        return bookUserIdCache.get(bookId);
+      }
+
+      const userId = (await ctx.db.get(bookId))?.userId;
+			bookUserIdCache.set(bookId, userId);
+			return userId;
+		}
 
     let totalProgressEvents = 0;
     let missingOwnerProgressEvents = 0;
@@ -75,11 +87,11 @@ export const inventoryLegacyProgressOwnership = internalQuery({
         continue;
       }
 
-      missingOwnerProgressEvents += 1;
-      const parentBook = await ctx.db.get(progressEvent.bookId);
-      if (parentBook?.userId !== undefined) {
-        backfillableProgressEvents += 1;
-      }
+			missingOwnerProgressEvents += 1;
+			const parentBookUserId = await resolveBookUserId(progressEvent.bookId);
+			if (parentBookUserId !== undefined) {
+				backfillableProgressEvents += 1;
+			}
     }
 
     return {
@@ -123,11 +135,30 @@ export const backfillOwnedProgressEvents = internalMutation({
   args: {
     batchSize: v.optional(v.number()),
     paginationOpts: paginationOptsValidator,
-  },
-  returns: backfillBatchResultValidator,
-  handler: async (ctx, args) => {
-    const page = await ctx.db.query("progressEvents").order("asc").paginate(args.paginationOpts);
+	},
+	returns: backfillBatchResultValidator,
+	handler: async (ctx, args) => {
+		if (args.batchSize !== undefined && (!Number.isInteger(args.batchSize) || args.batchSize <= 0)) {
+			throw new Error("batchSize must be a positive integer");
+		}
+
     const limit = args.batchSize ?? DEFAULT_BATCH_SIZE;
+    const paginationOpts = {
+      ...args.paginationOpts,
+      numItems: Math.min(args.paginationOpts.numItems, limit),
+    };
+    const page = await ctx.db.query("progressEvents").order("asc").paginate(paginationOpts);
+    const bookUserIdCache = new Map();
+
+    async function resolveBookUserId(bookId: Id<"books">) {
+      if (bookUserIdCache.has(bookId)) {
+        return bookUserIdCache.get(bookId);
+      }
+
+      const userId = (await ctx.db.get(bookId))?.userId;
+			bookUserIdCache.set(bookId, userId);
+			return userId;
+		}
 
     let scanned = 0;
     let updated = 0;
@@ -138,18 +169,18 @@ export const backfillOwnedProgressEvents = internalMutation({
       }
 
       scanned += 1;
-      if (updated >= limit) {
-        continue;
-      }
+			if (updated >= limit) {
+				continue;
+			}
 
-      const parentBook = await ctx.db.get(progressEvent.bookId);
-      if (parentBook?.userId === undefined) {
-        continue;
-      }
+			const parentBookUserId = await resolveBookUserId(progressEvent.bookId);
+			if (parentBookUserId === undefined) {
+				continue;
+			}
 
-      await ctx.db.patch(progressEvent._id, { userId: parentBook.userId });
-      updated += 1;
-    }
+			await ctx.db.patch(progressEvent._id, { userId: parentBookUserId });
+			updated += 1;
+		}
 
     return {
       scanned,

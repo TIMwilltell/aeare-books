@@ -46,6 +46,8 @@
 	}
 
 	onMount(() => {
+		void loadBooks();
+
 		const unsubscribe = authState.subscribe((state) => {
 			void syncLibraryState(state.status);
 		});
@@ -129,7 +131,7 @@
 			await exportLibrary();
 		} catch (error) {
 			console.error('Export failed:', error);
-			alert('Failed to export library. Please try again.');
+			alert('Could not export your library. Try again.');
 		}
 	}
 </script>
@@ -211,7 +213,7 @@
 		{/if}
 	{/if}
 
-	{#if $authState.status === 'loading' || (isSignedIn && loading)}
+	{#if $authState.status === 'loading' || (isSignedIn && loading && books.length === 0)}
 		<section class="loading-state section-card" aria-live="polite">
 			<LoadingSpinner size="large" color="var(--color-coral-1)" />
 			<div>
@@ -230,20 +232,20 @@
 			<p>Your home page stays available here, while scan, add, and detail routes stay protected until you authenticate.</p>
 			<button class="secondary-button" onclick={handleScan}>Sign in and continue</button>
 		</section>
-	{:else if books.length === 0}
+	{:else if !libraryError && books.length === 0}
 		<section class="empty-state section-card">
 			<div class="empty-illustration" aria-hidden="true">Library</div>
-			<h2>Your shelf is ready for its first story.</h2>
-			<p>Scan a barcode or add a book manually to begin building your reading companion.</p>
+			<h2>Your library is empty.</h2>
+			<p>Scan a barcode or add a book by hand.</p>
 			<button class="secondary-button" onclick={handleScan}>Scan your first book</button>
 		</section>
 	{:else}
 		<section class="collection-header">
 			<div>
-				<p class="eyebrow">Collection</p>
-				<h2>Browse your current shelf</h2>
+				<p class="eyebrow">Library</p>
+				<h2>Your library</h2>
 			</div>
-			<p>{books.length} result{books.length === 1 ? '' : 's'}</p>
+			<p>{books.length} book{books.length === 1 ? '' : 's'}</p>
 		</section>
 
 		<BookList {books} onSelect={handleBookSelect} />
