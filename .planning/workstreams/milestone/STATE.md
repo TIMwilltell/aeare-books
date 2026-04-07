@@ -1,94 +1,85 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: milestone
-status: Milestone complete
-stopped_at: Phase 5 complete, starting phase 6
-last_updated: "2026-03-25T00:35:16.715Z"
+milestone: user-accounts-authentication
+milestone_name: User Accounts Authentication
+status: Complete
+stopped_at: Completed User Accounts Authentication milestone closeout
+last_updated: "2026-04-06T01:15:00Z"
+last_activity: 2026-04-06 - completed Phase 3 verification and closed out the User Accounts Authentication milestone
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 12
-  completed_plans: 12
+  total_phases: 3
+  completed_phases: 3
+  total_plans: 9
+  completed_plans: 9
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24)
+See: `.planning/PROJECT.md` (updated 2026-04-06)
 
-**Core value:** Parents can quickly catalog their children's books and track AR reading progress without manual data entry.
-**Current focus:** Phase 6 — screen-designs
+**Core value:** Parents can securely access and manage only their own family library data.
+**Current focus:** Milestone complete
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: Complete
+Plan: N/A
+Status: All three phases completed; milestone closed out
+Last activity: 2026-04-06 - completed Phase 3 verification and closed out the User Accounts Authentication milestone
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: N/A
-- Total execution time: N/A
+- Total plans completed: 9 (9 planned)
+- Average duration: pending rollup
+- Total execution time: pending rollup
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 5. Component Specs | 1 | ~15min | ~15min |
-| 6. Screen Designs | 0 | 0 | N/A |
-
-*Updated after each plan completion*
+| 1. Auth Foundation | 3 | 3 planned | 14m |
+| 2. Route + Data Protection | 3 | 3 planned | pending rollup |
+| 3. Migration + Hardening | 3 | 3 planned | pending rollup |
 
 ## Accumulated Context
 
 ### Decisions
 
-- [Current] Design spec approach: Figma with Dev Mode + Skeleton UI component library
-- [Current] Mobile-first responsive design with tablet/desktop breakpoints
-- [Previous] Implementation: SvelteKit + vite-plugin-pwa for PWA setup
-- [Previous] Implementation: Dexie.js for IndexedDB with offline support
-- [Previous] Implementation: Quagga2 for barcode scanning with manual fallback
-- [Previous] Implementation: Compact list view with FAB for library management
-- [Previous] Google Books API for ISBN lookup (free, no auth required)
-- [Previous] Use Playwright for AR lookup (complex ASPX form requires browser automation)
-- [Previous] Button click for metadata lookup (not auto-fetch on ISBN entry)
-- [Previous] Separate ProgressEvent table for chronological tracking
-- [Previous] Button on detail page to mark as read
-- [Previous] Plain text notes, no character limit
-- [Previous] Use Convex for cross-device cloud sync
-- [Previous] JSON export format (preserves all fields)
-- [Previous] Auto-sync with warning banner + manual "sync now" button
+- Start with one auth provider and complete full end-to-end flow.
+- Protect Convex operations by authenticated identity before feature expansion.
+- Keep `/` public as the signed-out entry page; guard only task routes in Phase 2.
+- Use client-side route guards for Phase 2 because the current session is established in the browser.
+- Use Convex Auth `users._id` from `getAuthUserId(ctx)` as the ownership key for protected data.
+- Existing unowned records are deferred to Phase 3 migration/hardening.
+- [Phase 01]: Capture blocked sign-in/reload/sign-out checks as explicit verification blockers instead of treating missing provider config as code failure.
+- [Phase 01]: Phase 2 handoff corrected to match live code: ownership uses Convex Auth user IDs, not tokenIdentifier lookup.
+- [Phase 02]: Protected routes are enforced client-side for `/scan`, `/book/new`, and `/book/[id]` while `/` remains public.
+- [Phase 02]: Books and progress events are stamped and queried by `userId`, and cross-account writes fail with explicit authorization errors.
+- [Phase 02]: Legacy unowned books and progress events are now intentionally hidden until Phase 3 backfill/migration.
+- [Phase 03]: Legacy books without deterministic ownership will remain quarantined and counted in migration inventory instead of being guessed or exposed through a claim UI.
+- [Phase 03]: `progressEvents.userId` backfill is limited to rows whose parent books have resolved ownership.
+- [Phase 03]: UX hardening means restoring the originally intended protected route after sign-in or auth restoration.
+- [Phase 03]: Regression coverage interprets export as the existing action on `/`, not a separate route.
 
 ### Pending Todos
 
-[From .planning/todos/pending/ — ideas captured during sessions]
-
-None yet.
+- Select and initialize the next milestone candidate after auth/users closeout.
 
 ### Blockers/Concerns
 
-[Issues that affect future work]
-
-None yet.
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260324-icf | migrate this project from npm to bun | 2026-03-24 | 9e3a267 | [260324-icf-migrate-this-project-from-npm-to-bun](./quick/260324-icf-migrate-this-project-from-npm-to-bun/) |
-| 260324-rgw | deploy this for staging using orbstack with https certs | 2026-03-25 | 132e0f1 | [260324-rgw-deploy-this-for-staging-using-orbstack-o](./quick/260324-rgw-deploy-this-for-staging-using-orbstack-o/) |
+- Existing legacy `books` may have no deterministic owner signal and therefore remain intentionally quarantined until a safe mapping source or operator workflow exists.
+- Route protection is still client-side in the app shell, but Convex server functions can already resolve the caller with `getAuthUserId(ctx)`.
+- Legacy `progressEvents` attached to unresolved books remain quarantined until their parent ownership can be resolved.
 
 ## Session Continuity
 
-Last session: 2026-03-24T20:00:00.000Z
-Stopped at: Phase 5 complete, starting phase 6
+Last session: 2026-04-06T01:15:00.000Z
+Stopped at: Milestone complete; ready for next milestone selection
 
 ---
 
-*State initialized: 2026-03-23*
-*Reset for milestone v1.1: 2026-03-24*
-*v1.1 roadmap created: 2026-03-24*
+*State initialized: 2026-04-01*

@@ -1,59 +1,131 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { authState, signIn } from '$lib/auth/auth0';
 	import { getAllBooks, searchBooks, type Book } from '$lib/db';
 	import { exportLibrary } from '$lib/api/export';
 	import BookList from '$lib/components/BookList.svelte';
 	import FAB from '$lib/components/FAB.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import { onMount } from 'svelte';
 
 	let books = $state<Book[]>([]);
 	let searchQuery = $state('');
 	let loading = $state(true);
+	let libraryError = $state<string | null>(null);
 	let requestId = 0;
+	let canSyncLibrary = $derived($authState.status === 'signed-in');
+	let showLibraryShelf = $derived(canSyncLibrary || books.length > 0);
 
 	let totalBooks = $derived(books.length);
 	let arPointsTotal = $derived(
 		books.reduce((sum, book) => sum + (typeof book.arPoints === 'number' ? book.arPoints : 0), 0)
 	);
 
-	onMount(async () => {
+	async function loadBooks() {
 		const currentRequestId = ++requestId;
-		const allBooks = await getAllBooks();
-		if (currentRequestId !== requestId) {
-			return;
+		loading = true;
+		libraryError = null;
+
+		try {
+			const allBooks = await getAllBooks();
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			books = allBooks;
+		} catch (error) {
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			libraryError = error instanceof Error ? error.message : 'Could not load your library.';
+			console.error('Failed to load books:', error);
+		} finally {
+			if (currentRequestId === requestId) {
+				loading = false;
+			}
 		}
-		books = allBooks;
-		loading = false;
+	}
+
+	onMount(() => {
+		void loadBooks();
+
+		const unsubscribe = authState.subscribe((state) => {
+			void syncLibraryState(state.status);
+		});
+
+		return unsubscribe;
 	});
 
+	async function syncLibraryState(authStatus: 'loading' | 'signed-out' | 'signed-in' | 'error') {
+		if (authStatus === 'loading') {
+			return;
+		}
+
+		if (authStatus !== 'signed-in') {
+			return;
+		}
+
+		void loadBooks();
+	}
+
 	async function handleSearch() {
-		if (loading) {
+		if (!canSyncLibrary || loading) {
 			return;
 		}
 
 		const currentRequestId = ++requestId;
-		const results = await searchBooks(searchQuery);
-		if (currentRequestId !== requestId) {
+		libraryError = null;
+
+		try {
+			const results = await searchBooks(searchQuery);
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			books = results;
+		} catch (error) {
+			if (currentRequestId !== requestId) {
+				return;
+			}
+			libraryError = error instanceof Error ? error.message : 'Search is unavailable right now.';
+			console.error('Failed to search books:', error);
+		}
+	}
+
+	async function handleRetryLibrary() {
+		if (!canSyncLibrary) {
 			return;
 		}
-		books = results;
+
+		if (searchQuery.trim()) {
+			await handleSearch();
+			return;
+		}
+
+		await loadBooks();
 	}
 
 	function handleBookSelect(id: string) {
 		goto(`/book/${id}`);
 	}
 
-	function handleScan() {
+	async function handleScan() {
+		if (!canSyncLibrary) {
+			await signIn();
+			return;
+		}
+
 		goto('/scan');
 	}
 
 	async function handleExport() {
+		if (!canSyncLibrary || loading) {
+			return;
+		}
+
 		try {
 			await exportLibrary();
 		} catch (error) {
 			console.error('Export failed:', error);
-			alert('Failed to export library. Please try again.');
+			alert('Could not export your library. Try again.');
 		}
 	}
 </script>
@@ -65,77 +137,111 @@
 <div class="library-page">
 	<section class="hero section-card">
 		<div class="hero-copy">
-			<p class="eyebrow">Your library</p>
-			<h1 class="page-title">A warmer home for every book you track.</h1>
+			<p class="eyebrow">{showLibraryShelf ? 'Library' : 'Welcome'}</p>
+			<h1 class="page-title">
+				{showLibraryShelf ? 'Your books, in one place.' : 'Keep your library in one place.'}
+			</h1>
 			<p class="hero-text">
-				Search your shelf, export your records, and manage your catalog in one calm, mobile-first dashboard.
+				{#if showLibraryShelf}
+					Search, scan, and edit your books.
+				{:else}
+					Sign in to scan, save, and edit your books.
+				{/if}
 			</p>
 		</div>
 
-		<div class="hero-stats" aria-label="Library summary">
-			<div class="stat surface-muted">
-				<span class="stat-value">{totalBooks}</span>
-				<span class="stat-label">Books shelved</span>
+		{#if showLibraryShelf}
+			<div class="hero-stats" aria-label="Library summary">
+				<div class="stat surface-muted">
+					<span class="stat-value">{totalBooks}</span>
+					<span class="stat-label">Books</span>
+				</div>
+				<div class="stat surface-muted">
+					<span class="stat-value">{arPointsTotal.toFixed(1)}</span>
+					<span class="stat-label">AR points</span>
+				</div>
 			</div>
-			<div class="stat surface-muted">
-				<span class="stat-value">{arPointsTotal.toFixed(1)}</span>
-				<span class="stat-label">AR points logged</span>
-			</div>
-		</div>
+		{/if}
 
 		<div class="hero-actions">
 			<button class="primary-button action-scan" onclick={handleScan}>
-				Scan a book
+				{canSyncLibrary ? 'Scan' : 'Sign in'}
 			</button>
-			<button class="ghost-button" onclick={handleExport}>
-				Export library
-			</button>
+			{#if canSyncLibrary}
+				<button class="ghost-button" onclick={handleExport}>Export</button>
+			{/if}
 		</div>
 	</section>
 
-	<section class="controls section-card" aria-label="Search and actions">
-		<label class="search-bar" for="library-search">
-			<input
-				id="library-search"
-				type="search"
-				aria-label="Search by title or author"
-				placeholder="Search by title or author"
-				bind:value={searchQuery}
-				disabled={loading}
-				oninput={handleSearch}
-			/>
-		</label>
-		<button class="ghost-button export-inline" onclick={handleExport} disabled={loading}>Export</button>
-	</section>
+	{#if canSyncLibrary}
+		<section class="controls section-card" aria-label="Search and actions">
+			<label class="search-bar" for="library-search">
+				<input
+					id="library-search"
+					type="search"
+					aria-label="Search by title or author"
+					placeholder="Search by title or author"
+					bind:value={searchQuery}
+					disabled={loading}
+					oninput={handleSearch}
+				/>
+			</label>
+			<button class="ghost-button export-inline" onclick={handleExport} disabled={loading}>Export</button>
+		</section>
 
-	{#if loading}
+		{#if libraryError}
+			<section class="section-card library-error" role="alert">
+				<div>
+					<p class="eyebrow">Library</p>
+					<h2>{searchQuery.trim() ? 'Search is unavailable right now.' : 'Could not load your library.'}</h2>
+					<p>{libraryError}</p>
+				</div>
+				<button class="ghost-button" type="button" onclick={handleRetryLibrary}>Retry</button>
+			</section>
+		{/if}
+	{/if}
+
+	{#if loading && books.length === 0}
 		<section class="loading-state section-card" aria-live="polite">
 			<LoadingSpinner size="large" color="var(--color-coral-1)" />
 			<div>
-				<h2>Settling your shelf…</h2>
-				<p>We’re gathering your books and catalog details.</p>
+				<h2>{$authState.status === 'loading' ? 'Checking your session...' : 'Loading your library...'}</h2>
+				<p>
+					{$authState.status === 'loading'
+						? 'Confirming access before we load your books.'
+						: 'Pulling in your latest books.'}
+				</p>
 			</div>
 		</section>
-	{:else if books.length === 0}
+	{:else if !showLibraryShelf}
 		<section class="empty-state section-card">
 			<div class="empty-illustration" aria-hidden="true">Library</div>
-			<h2>Your shelf is ready for its first story.</h2>
-			<p>Scan a barcode or add a book manually to begin building your reading companion.</p>
+			<h2>Start your library.</h2>
+			<p>Sign in to scan, add, and edit books.</p>
+			<button class="secondary-button" onclick={handleScan}>Sign in</button>
+		</section>
+	{:else if canSyncLibrary && books.length === 0}
+		<section class="empty-state section-card">
+			<div class="empty-illustration" aria-hidden="true">Library</div>
+			<h2>Your library is empty.</h2>
+			<p>Scan a barcode or add a book by hand.</p>
 			<button class="secondary-button" onclick={handleScan}>Scan your first book</button>
 		</section>
 	{:else}
 		<section class="collection-header">
 			<div>
-				<p class="eyebrow">Collection</p>
-				<h2>Browse your current shelf</h2>
+				<p class="eyebrow">Library</p>
+				<h2>Your library</h2>
 			</div>
-			<p>{books.length} result{books.length === 1 ? '' : 's'}</p>
+			<p>{books.length} book{books.length === 1 ? '' : 's'}</p>
 		</section>
 
 		<BookList {books} onSelect={handleBookSelect} />
 	{/if}
 
-	<FAB onclick={handleScan} />
+	{#if canSyncLibrary}
+		<FAB onclick={handleScan} />
+	{/if}
 </div>
 
 <style>
@@ -195,6 +301,15 @@
 		gap: 0.75rem;
 	}
 
+	.signed-out-note {
+		padding: 0.95rem;
+	}
+
+	.signed-out-note p {
+		margin: 0;
+		line-height: 1.6;
+	}
+
 	.action-scan {
 		min-width: min(100%, 14rem);
 	}
@@ -242,6 +357,25 @@
 	.collection-header p {
 		font-size: 0.92rem;
 		color: var(--text-muted);
+	}
+
+	.library-error {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid rgba(185, 85, 71, 0.25);
+	}
+
+	.library-error h2,
+	.library-error p {
+		margin: 0;
+	}
+
+	.library-error div {
+		display: grid;
+		gap: 0.35rem;
 	}
 
 	.loading-state,
@@ -302,6 +436,11 @@
 		.collection-header {
 			align-items: start;
 			flex-direction: column;
+		}
+
+		.library-error {
+			flex-direction: column;
+			align-items: start;
 		}
 	}
 </style>

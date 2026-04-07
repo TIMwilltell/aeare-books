@@ -90,13 +90,13 @@
 	<div class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby={`${dialogId}-title`} aria-describedby={`${dialogId}-description ${dialogId}-warning`}>
 		<button class="backdrop-hit" type="button" tabindex="-1" aria-label="Close dialog" onclick={onClose}></button>
 		<div class="dialog-content section-card" role="document" tabindex="-1" bind:this={dialogContent}>
-			<p class="eyebrow">Delete entry</p>
-			<h2 id={`${dialogId}-title`}>Remove this book?</h2>
+			<p class="eyebrow">Remove book</p>
+			<h2 id={`${dialogId}-title`}>Delete this book?</h2>
 			<p id={`${dialogId}-description`}>“{bookTitle}” will be deleted from your library.</p>
-			<p id={`${dialogId}-warning`} class="warning">This action cannot be undone.</p>
+			<p id={`${dialogId}-warning`} class="warning">This can’t be undone.</p>
 			<div class="dialog-actions">
 				<button type="button" class="ghost-button" onclick={onClose}>Cancel</button>
-				<button type="button" class="danger-button" onclick={onConfirm}>Delete book</button>
+				<button type="button" class="danger-button" onclick={onConfirm}>Delete</button>
 			</div>
 		</div>
 	</div>

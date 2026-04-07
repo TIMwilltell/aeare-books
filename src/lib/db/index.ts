@@ -1,4 +1,4 @@
-import { ConvexClient } from 'convex/browser';
+import { getBrowserConvexClient } from '$lib/convex/client';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 
@@ -50,17 +50,9 @@ export interface ProgressEvent {
 	createdAt: number;
 }
 
-// Create a new Convex client instance
-function createClient(): ConvexClient {
-	return new ConvexClient(import.meta.env.VITE_CONVEX_URL ?? 'https://jovial-wildcat-461.convex.cloud');
-}
 
-// Helper to get Convex client - creates a new instance
-// Note: For better performance in Svelte components, use useConvexClient() at component
-// initialization and pass the client to these functions. This function is for convenience
-// and backward compatibility but creates a new client on each call.
-function getClient(): ConvexClient {
-	return createClient();
+function getClient() {
+	return getBrowserConvexClient();
 }
 
 // Type guard for Date

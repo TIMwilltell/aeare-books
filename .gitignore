@@ -21,5 +21,10 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-.planning
 .agents
+/.playwright-mcp
+/.planning
+/.planning/debug
+/test-results
+/snapshot.md
+/snapshot2.md

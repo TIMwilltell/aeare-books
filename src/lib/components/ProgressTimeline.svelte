@@ -49,11 +49,11 @@
 <div class="progress-timeline">
 	<div class="timeline-header">
 		<p class="eyebrow">Reading log</p>
-		<h3>Progress timeline</h3>
+		<h3>Timeline</h3>
 	</div>
 
 	{#if events.length === 0}
-		<p class="no-events">No milestones recorded yet.</p>
+		<p class="no-events">No activity yet.</p>
 	{:else}
 		<ul class="timeline">
 			{#each events as event (event.id ?? `${event.eventType}-${event.eventDate}`)}

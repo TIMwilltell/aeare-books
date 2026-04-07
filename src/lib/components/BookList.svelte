@@ -22,7 +22,7 @@
 
 {#if books.length === 0}
 	<div class="empty-list section-card">
-		<p>No books match this search yet.</p>
+		<p>No books match that search.</p>
 	</div>
 {:else}
 	<ul class="book-list" aria-label="Books">
