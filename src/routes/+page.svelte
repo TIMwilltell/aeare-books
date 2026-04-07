@@ -14,7 +14,9 @@
 	let libraryError = $state<string | null>(null);
 	let requestId = 0;
 	let canSyncLibrary = $derived($authState.status === 'signed-in');
+	let authLoading = $derived($authState.status === 'loading');
 	let showLibraryShelf = $derived(canSyncLibrary || books.length > 0);
+	let showScanFab = $derived(canSyncLibrary && books.length > 0);
 
 	let totalBooks = $derived(books.length);
 	let arPointsTotal = $derived(
@@ -46,8 +48,6 @@
 	}
 
 	onMount(() => {
-		void loadBooks();
-
 		const unsubscribe = authState.subscribe((state) => {
 			void syncLibraryState(state.status);
 		});
@@ -57,10 +57,16 @@
 
 	async function syncLibraryState(authStatus: 'loading' | 'signed-out' | 'signed-in' | 'error') {
 		if (authStatus === 'loading') {
+			loading = true;
 			return;
 		}
 
 		if (authStatus !== 'signed-in') {
+			requestId += 1;
+			books = [];
+			searchQuery = '';
+			libraryError = null;
+			loading = false;
 			return;
 		}
 
@@ -135,45 +141,57 @@
 </svelte:head>
 
 <div class="library-page">
-	<section class="hero section-card">
-		<div class="hero-copy">
-			<p class="eyebrow">{showLibraryShelf ? 'Library' : 'Welcome'}</p>
-			<h1 class="page-title">
-				{showLibraryShelf ? 'Your books, in one place.' : 'Keep your library in one place.'}
-			</h1>
-			<p class="hero-text">
-				{#if showLibraryShelf}
-					Search, scan, and edit your books.
-				{:else}
-					Sign in to scan, save, and edit your books.
-				{/if}
-			</p>
-		</div>
-
-		{#if showLibraryShelf}
-			<div class="hero-stats" aria-label="Library summary">
-				<div class="stat surface-muted">
-					<span class="stat-value">{totalBooks}</span>
-					<span class="stat-label">Books</span>
-				</div>
-				<div class="stat surface-muted">
-					<span class="stat-value">{arPointsTotal.toFixed(1)}</span>
-					<span class="stat-label">AR points</span>
-				</div>
+	{#if authLoading}
+		<section class="loading-state section-card" aria-live="polite">
+			<LoadingSpinner size="large" color="var(--color-coral-1)" />
+			<div>
+				<h1>Checking your session...</h1>
+				<p>Confirming access before we load your library.</p>
 			</div>
-		{/if}
+		</section>
+	{:else if !canSyncLibrary}
+		<section class="signed-out-home section-card" aria-labelledby="signed-out-home-title">
+			<div class="empty-illustration" aria-hidden="true">Library</div>
+			<p class="eyebrow">Welcome</p>
+			<h1 id="signed-out-home-title" class="page-title">Sign in to your library.</h1>
+			<p class="signed-out-copy">Scan, save, search, and edit your books in one place.</p>
+			<button class="primary-button action-scan" type="button" onclick={handleScan}>Sign in</button>
+		</section>
+	{:else}
+		<section class="hero section-card">
+			<div class="hero-copy">
+				<p class="eyebrow">{showLibraryShelf ? 'Library' : 'Welcome'}</p>
+				<h1 class="page-title">
+					{showLibraryShelf ? 'Your books, in one place.' : 'Keep your library in one place.'}
+				</h1>
+				<p class="hero-text">
+					{#if showLibraryShelf}
+						Search, scan, and edit your books.
+					{:else}
+						Sign in to scan, save, and edit your books.
+					{/if}
+				</p>
+			</div>
 
-		<div class="hero-actions">
-			<button class="primary-button action-scan" onclick={handleScan}>
-				{canSyncLibrary ? 'Scan' : 'Sign in'}
-			</button>
-			{#if canSyncLibrary}
-				<button class="ghost-button" onclick={handleExport}>Export</button>
+			{#if showLibraryShelf}
+				<div class="hero-stats" aria-label="Library summary">
+					<div class="stat surface-muted">
+						<span class="stat-value">{totalBooks}</span>
+						<span class="stat-label">Books</span>
+					</div>
+					<div class="stat surface-muted">
+						<span class="stat-value">{arPointsTotal.toFixed(1)}</span>
+						<span class="stat-label">AR points</span>
+					</div>
+				</div>
 			{/if}
-		</div>
-	</section>
 
-	{#if canSyncLibrary}
+			<div class="hero-actions">
+				<button class="primary-button action-scan" type="button" onclick={handleScan}>Scan</button>
+				<button class="ghost-button" type="button" onclick={handleExport}>Export</button>
+			</div>
+		</section>
+
 		<section class="controls section-card" aria-label="Search and actions">
 			<label class="search-bar" for="library-search">
 				<input
@@ -186,7 +204,9 @@
 					oninput={handleSearch}
 				/>
 			</label>
-			<button class="ghost-button export-inline" onclick={handleExport} disabled={loading}>Export</button>
+			<button class="ghost-button export-inline" type="button" onclick={handleExport} disabled={loading}>
+				Export
+			</button>
 		</section>
 
 		{#if libraryError}
@@ -199,48 +219,37 @@
 				<button class="ghost-button" type="button" onclick={handleRetryLibrary}>Retry</button>
 			</section>
 		{/if}
-	{/if}
 
-	{#if loading && books.length === 0}
-		<section class="loading-state section-card" aria-live="polite">
-			<LoadingSpinner size="large" color="var(--color-coral-1)" />
-			<div>
-				<h2>{$authState.status === 'loading' ? 'Checking your session...' : 'Loading your library...'}</h2>
-				<p>
-					{$authState.status === 'loading'
-						? 'Confirming access before we load your books.'
-						: 'Pulling in your latest books.'}
-				</p>
-			</div>
-		</section>
-	{:else if !showLibraryShelf}
-		<section class="empty-state section-card">
-			<div class="empty-illustration" aria-hidden="true">Library</div>
-			<h2>Start your library.</h2>
-			<p>Sign in to scan, add, and edit books.</p>
-			<button class="secondary-button" onclick={handleScan}>Sign in</button>
-		</section>
-	{:else if canSyncLibrary && books.length === 0}
-		<section class="empty-state section-card">
-			<div class="empty-illustration" aria-hidden="true">Library</div>
-			<h2>Your library is empty.</h2>
-			<p>Scan a barcode or add a book by hand.</p>
-			<button class="secondary-button" onclick={handleScan}>Scan your first book</button>
-		</section>
-	{:else}
-		<section class="collection-header">
-			<div>
-				<p class="eyebrow">Library</p>
-				<h2>Your library</h2>
-			</div>
-			<p>{books.length} book{books.length === 1 ? '' : 's'}</p>
-		</section>
+		{#if loading && books.length === 0}
+			<section class="loading-state section-card" aria-live="polite">
+				<LoadingSpinner size="large" color="var(--color-coral-1)" />
+				<div>
+					<h2>Loading your library...</h2>
+					<p>Pulling in your latest books.</p>
+				</div>
+			</section>
+		{:else if books.length === 0}
+			<section class="empty-state section-card">
+				<div class="empty-illustration" aria-hidden="true">Library</div>
+				<h2>Your library is empty.</h2>
+				<p>Scan a barcode or add a book by hand.</p>
+				<button class="secondary-button" type="button" onclick={handleScan}>Scan your first book</button>
+			</section>
+		{:else}
+			<section class="collection-header">
+				<div>
+					<p class="eyebrow">Library</p>
+					<h2>Your library</h2>
+				</div>
+				<p>{books.length} book{books.length === 1 ? '' : 's'}</p>
+			</section>
 
-		<BookList {books} onSelect={handleBookSelect} />
-	{/if}
+			<BookList {books} onSelect={handleBookSelect} />
+		{/if}
 
-	{#if canSyncLibrary}
-		<FAB onclick={handleScan} />
+		{#if showScanFab}
+			<FAB onclick={handleScan} />
+		{/if}
 	{/if}
 </div>
 
@@ -299,15 +308,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.75rem;
-	}
-
-	.signed-out-note {
-		padding: 0.95rem;
-	}
-
-	.signed-out-note p {
-		margin: 0;
-		line-height: 1.6;
 	}
 
 	.action-scan {
@@ -379,6 +379,7 @@
 	}
 
 	.loading-state,
+	.signed-out-home,
 	.empty-state {
 		display: grid;
 		justify-items: center;
@@ -388,13 +389,16 @@
 	}
 
 	.loading-state h2,
+	.signed-out-home h1,
 	.loading-state p,
+	.signed-out-home p,
 	.empty-state h2,
 	.empty-state p {
 		margin: 0;
 	}
 
 	.loading-state h2,
+	.signed-out-home h1,
 	.empty-state h2 {
 		font-family: var(--font-serif);
 		font-size: 1.7rem;
@@ -402,6 +406,7 @@
 	}
 
 	.loading-state p,
+	.signed-out-copy,
 	.empty-state p {
 		max-width: 28rem;
 		line-height: 1.6;

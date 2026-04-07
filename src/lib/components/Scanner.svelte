@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { beforeNavigate } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import Quagga from 'quagga';
 
@@ -12,6 +13,7 @@
 	let scannerContainer: HTMLDivElement;
 	let status = $state<'initializing' | 'scanning' | 'found' | 'error'>('initializing');
 	let errorMessage = $state<string>('');
+	let scannerActive = false;
 
 	function isValidISBN10(code: string): boolean {
 		if (!/^\d{9}[\dX]$/i.test(code)) return false;
@@ -73,8 +75,12 @@
 		initScanner();
 	});
 
+	beforeNavigate(() => {
+		stop();
+	});
+
 	onDestroy(() => {
-		Quagga.stop();
+		stop();
 	});
 
 	function initScanner() {
@@ -105,11 +111,13 @@
 					console.error('[Scanner] Init error:', err);
 					status = 'error';
 					errorMessage = err.message || 'Camera access denied';
+					scannerActive = false;
 					onError?.(errorMessage);
 					return;
 				}
 				console.log('[Scanner] Init success, starting Quagga...');
 				Quagga.start();
+				scannerActive = true;
 				status = 'scanning';
 			}
 		);
@@ -125,7 +133,7 @@
 				if (normalizedISBN) {
 					console.log('[Scanner] Valid ISBN detected:', normalizedISBN, '(from original:', code + ')');
 					status = 'found';
-					Quagga.stop();
+					stop();
 					onDetected(normalizedISBN);
 				} else {
 					console.log('[Scanner] Detected but not valid ISBN:', code, '- this may be a product barcode, not a book ISBN. Make sure to scan the ISBN barcode (usually on the back cover).');
@@ -148,6 +156,15 @@
 				console.log('[Scanner] Decode error:', processingResult.err);
 			}
 		});
+	}
+
+	function stop() {
+		if (!scannerActive) {
+			return;
+		}
+
+		Quagga.stop();
+		scannerActive = false;
 	}
 
 	export function restart() {

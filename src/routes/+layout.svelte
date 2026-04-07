@@ -162,6 +162,9 @@
 	let showProtectedError = $derived(protectedRoute && $authState.status === 'error');
 	let showProtectedRedirect = $derived(protectedRoute && redirectingProtectedPath === page.url.pathname);
 	let showProtectedRestore = $derived(page.url.pathname === '/' && restoringProtectedPath !== null);
+	let hideSignedOutHomeShell = $derived(
+		$authState.status === 'signed-out' && page.url.pathname === '/' && !protectedRouteIntentLabel
+	);
 
 	async function handleSignIn() {
 		authActionPending = true;
@@ -219,53 +222,55 @@
 			</div>
 		</div>
 		<StatusBanner />
-		<section class="auth-shell" aria-live="polite">
-			{#if $authState.status === 'loading'}
-				<p class="auth-copy">Checking session...</p>
-			{:else if $authState.status === 'signed-out'}
-				<div class="auth-row">
-					<p class="auth-copy">Signed out</p>
-					<button class="primary-button" type="button" onclick={handleSignIn} disabled={authActionPending}>
-						{authActionPending ? 'Starting sign-in...' : 'Sign in'}
-					</button>
-				</div>
-				{#if protectedRouteIntentLabel}
-					<p class="auth-intent-copy">Sign in to open {protectedRouteIntentLabel}.</p>
-				{/if}
-			{:else if $authState.status === 'signed-in'}
-				<div class="auth-row">
-					<p class="auth-copy">
-						Signed in{#if $authState.user?.name} as <strong>{$authState.user.name}</strong>{/if}
-					</p>
-					<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
-						{authActionPending ? 'Signing out...' : 'Sign out'}
-					</button>
-				</div>
-				{#if showProtectedRestore && protectedRouteIntentLabel}
-					<p class="auth-intent-copy">Opening {protectedRouteIntentLabel}...</p>
-				{/if}
-			{:else}
-				<div class="auth-error" role="alert">
-					<p class="auth-copy">Could not finish sign-in.</p>
-					{#if $authState.error}
-						<p class="auth-error-copy">{$authState.error}</p>
-					{/if}
-					<p class="auth-error-copy">Try again, or sign out and start over.</p>
-					<div class="auth-row auth-actions">
-						<button class="primary-button" type="button" onclick={handleRetryAuth} disabled={authActionPending}>
-							{authActionPending ? 'Retrying...' : 'Retry sign-in'}
-						</button>
-						<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
-							Sign out
+		{#if !hideSignedOutHomeShell}
+			<section class="auth-shell" aria-live="polite">
+				{#if $authState.status === 'loading'}
+					<p class="auth-copy">Checking session...</p>
+				{:else if $authState.status === 'signed-out'}
+					<div class="auth-row">
+						<p class="auth-copy">Signed out</p>
+						<button class="primary-button" type="button" onclick={handleSignIn} disabled={authActionPending}>
+							{authActionPending ? 'Starting sign-in...' : 'Sign in'}
 						</button>
 					</div>
-				</div>
-			{/if}
+					{#if protectedRouteIntentLabel}
+						<p class="auth-intent-copy">Sign in to open {protectedRouteIntentLabel}.</p>
+					{/if}
+				{:else if $authState.status === 'signed-in'}
+					<div class="auth-row">
+						<p class="auth-copy">
+							Signed in{#if $authState.user?.name} as <strong>{$authState.user.name}</strong>{/if}
+						</p>
+						<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
+							{authActionPending ? 'Signing out...' : 'Sign out'}
+						</button>
+					</div>
+					{#if showProtectedRestore && protectedRouteIntentLabel}
+						<p class="auth-intent-copy">Opening {protectedRouteIntentLabel}...</p>
+					{/if}
+				{:else}
+					<div class="auth-error" role="alert">
+						<p class="auth-copy">Could not finish sign-in.</p>
+						{#if $authState.error}
+							<p class="auth-error-copy">{$authState.error}</p>
+						{/if}
+						<p class="auth-error-copy">Try again, or sign out and start over.</p>
+						<div class="auth-row auth-actions">
+							<button class="primary-button" type="button" onclick={handleRetryAuth} disabled={authActionPending}>
+								{authActionPending ? 'Retrying...' : 'Retry sign-in'}
+							</button>
+							<button class="ghost-button" type="button" onclick={handleSignOut} disabled={authActionPending}>
+								Sign out
+							</button>
+						</div>
+					</div>
+				{/if}
 
-			{#if authActionError}
-				<p class="auth-error-copy" role="alert">{authActionError}</p>
-			{/if}
-		</section>
+				{#if authActionError}
+					<p class="auth-error-copy" role="alert">{authActionError}</p>
+				{/if}
+			</section>
+		{/if}
 	</header>
 
 	<main id="main-content" class="page-shell">
