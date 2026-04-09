@@ -106,8 +106,7 @@
 			return;
 		}
 
-		const nextPath = consumeStoredProtectedRouteIntent();
-		pendingProtectedRouteIntent = peekStoredProtectedRouteIntent();
+		const nextPath = peekStoredProtectedRouteIntent();
 		if (!nextPath) {
 			return;
 		}
@@ -115,9 +114,11 @@
 		restoringProtectedPath = nextPath;
 
 		try {
+			consumeStoredProtectedRouteIntent();
 			await goto(nextPath, { replaceState: true });
 		} finally {
 			restoringProtectedPath = null;
+			pendingProtectedRouteIntent = peekStoredProtectedRouteIntent();
 		}
 	}
 

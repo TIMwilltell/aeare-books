@@ -33,7 +33,13 @@
 			progressEvents = await getProgressEventsByBook(bookProgressId);
 		} catch (error) {
 			progressEvents = [];
-			progressError = error instanceof Error ? error.message : 'Could not load reading activity.';
+			console.error(
+				'Failed to load reading activity.',
+				error instanceof Error
+					? { message: error.message, stack: error.stack, error }
+					: { error }
+			);
+			progressError = 'Could not load reading activity.';
 		} finally {
 			progressLoading = false;
 		}

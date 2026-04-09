@@ -1,6 +1,6 @@
 # Testing Local Backend
 
-Alternatively to [`convex-test`](./convex-test.md) you can test your functions using the [open-source version of the Convex backend](https://github.com/get-convex/convex-backend).
+As an alternative to [`convex-test`](./convex-test.md) you can test your functions using the [open-source version of the Convex backend](https://github.com/get-convex/convex-backend).
 
 ## Getting Started[​](#getting-started "Direct link to Getting Started")
 
@@ -8,8 +8,8 @@ Follow [this guide](https://stack.convex.dev/testing-with-local-oss-backend) for
 
 Compared to `convex-test`, which uses a JS mock of the backend, running your tests against the real backend has these advantages:
 
-* Your tests will run against the same code as your Convex production (as long you keep the local backend up-to-date).
-* Limits on argument, data, query sizes are enforced.
+* Your tests will run against the same code as your Convex production (as long as you keep the local backend up-to-date).
+* Limits on argument, data, and query sizes are enforced.
 * You can bootstrap a large test dataset from a data import.
 * You can test your client code in combination with your backend logic.
 
