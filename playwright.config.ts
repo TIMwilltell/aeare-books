@@ -6,7 +6,6 @@ const isParityRuntime = process.env.E2E_RUNTIME === 'parity';
 const webServerCommand = isParityRuntime
 	? `bun run build && bun run parity:serve`
 	: `bun run dev --host 127.0.0.1 --port ${devServerPort}`;
-
 export default defineConfig({
 	testDir: './tests/e2e',
 	timeout: 30_000,
