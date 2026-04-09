@@ -130,18 +130,33 @@ async function scrapeArBookFindWithBrowser(isbn: string, browserBinding: Browser
 
 					return await scrapeArBookFind(page, isbn);
 				} finally {
-					await browser.close();
+					try {
+						if (page && !page.isClosed()) {
+							await page.close();
+						}
+					} catch {}
+					try {
+						if (browser?.connected) {
+							await browser.close();
+						}
+					} catch {}
 				}
 			})(),
 			AR_BROWSER_TIMEOUT_MS,
 			new BrowserRenderTimeoutError(),
-			async () => {
-				if (page && !page.isClosed()) {
-					await page.close().catch(() => undefined);
-				}
-				if (browser?.connected) {
-					await browser.close().catch(() => undefined);
-				}
+			() => {
+				void (async () => {
+					try {
+						if (page && !page.isClosed()) {
+							await page.close();
+						}
+					} catch {}
+					try {
+						if (browser?.connected) {
+							await browser.close();
+						}
+					} catch {}
+				})();
 			}
 		);
 	} catch (error) {
