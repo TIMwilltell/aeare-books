@@ -3,9 +3,22 @@ import type { RequestHandler } from './$types';
 import puppeteer from '@cloudflare/puppeteer';
 import { getArCache, setArCache } from '$lib/db';
 import type { ArSource } from '$lib/types/ar';
+
 const ARBOOKFIND_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+const AR_BROWSER_UNAVAILABLE_MESSAGE =
+	'AR fallback is unavailable until the Cloudflare Browser Rendering binding is configured.';
+const AR_BROWSER_TIMEOUT_MS = 5000;
+const AR_BROWSER_TIMEOUT_MESSAGE = 'AR fallback timed out before browser rendering completed.';
+
 const arbookfindCooldownByIsbn = new Map<string, number>();
 type BrowserBinding = NonNullable<App.Platform['env']>['BROWSER'];
+
+class BrowserRenderTimeoutError extends Error {
+	constructor(message = AR_BROWSER_TIMEOUT_MESSAGE) {
+		super(message);
+		this.name = 'BrowserRenderTimeoutError';
+	}
+}
 
 export const GET: RequestHandler = async ({ url, platform }) => {
 	const isbn = url.searchParams.get('isbn');
@@ -85,39 +98,88 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 async function scrapeArBookFindWithBrowser(isbn: string, browserBinding: BrowserBinding | undefined): Promise<ScrapeResult> {
 	if (!browserBinding) {
-		return { error: 'AR fallback is unavailable until the Cloudflare Browser Rendering binding is configured.' };
+		return { error: AR_BROWSER_UNAVAILABLE_MESSAGE };
 	}
 
 	try {
-		const browser = await puppeteer.launch(browserBinding as any);
+		let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
+		let page: Awaited<ReturnType<Awaited<ReturnType<typeof puppeteer.launch>>['newPage']>> | undefined;
 
-		try {
-			const page = await browser.newPage();
-			page.setDefaultTimeout(7000);
-			page.setDefaultNavigationTimeout(10000);
-			await page.setRequestInterception(true);
-			page.on('request', (request) => {
-				const resourceType = request.resourceType();
-				if (
-					resourceType === 'image' ||
-					resourceType === 'font' ||
-					resourceType === 'media' ||
-					resourceType === 'stylesheet'
-				) {
-					void request.abort();
-					return;
+		return await withTimeout(
+			(async () => {
+				browser = await puppeteer.launch(browserBinding as any);
+
+				try {
+					page = await browser.newPage();
+					page.setDefaultTimeout(7000);
+					page.setDefaultNavigationTimeout(10000);
+					await page.setRequestInterception(true);
+					page.on('request', (request) => {
+						const resourceType = request.resourceType();
+						if (
+							resourceType === 'image' ||
+							resourceType === 'font' ||
+							resourceType === 'media' ||
+							resourceType === 'stylesheet'
+						) {
+							void request.abort();
+							return;
+						}
+						void request.continue();
+					});
+
+					return await scrapeArBookFind(page, isbn);
+				} finally {
+					try {
+						if (page && !page.isClosed()) {
+							await page.close();
+						}
+					} catch {}
+					try {
+						if (browser?.connected) {
+							await browser.close();
+						}
+					} catch {}
 				}
-				void request.continue();
-			});
-
-			return await scrapeArBookFind(page, isbn);
-		} finally {
-			await browser.close();
-		}
+			})(),
+			AR_BROWSER_TIMEOUT_MS,
+			new BrowserRenderTimeoutError(),
+			() => {
+				void (async () => {
+					try {
+						if (page && !page.isClosed()) {
+							await page.close();
+						}
+					} catch {}
+					try {
+						if (browser?.connected) {
+							await browser.close();
+						}
+					} catch {}
+				})();
+			}
+		);
 	} catch (error) {
 		console.error('AR scrape error:', error);
+		if (error instanceof BrowserRenderTimeoutError) {
+			return { error: AR_BROWSER_TIMEOUT_MESSAGE };
+		}
+		if (isBrowserUnavailableError(error)) {
+			return { error: AR_BROWSER_UNAVAILABLE_MESSAGE };
+		}
 		return { error: 'AR lookup failed' };
 	}
+}
+
+function isBrowserUnavailableError(error: unknown): boolean {
+	if (!(error instanceof Error)) {
+		return false;
+	}
+
+	return [
+		'WorkersWebSocketTransport',
+		'Offset is outside the bounds of the DataView'
+	].some((fragment) => error.message.includes(fragment) || error.stack?.includes(fragment));
 }
 
 function isArbookfindInCooldown(isbn: string): boolean {
@@ -269,5 +331,29 @@ async function fetchWithTimeout(input: string, timeoutMs = 10000): Promise<Respo
 		return await fetch(input, { signal: controller.signal });
 	} finally {
 		clearTimeout(timeoutId);
+	}
+}
+
+async function withTimeout<T>(
+	promise: Promise<T>,
+	timeoutMs: number,
+	error: Error,
+	onTimeout?: () => Promise<void> | void
+): Promise<T> {
+	let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+	try {
+		return await Promise.race([
+			promise,
+			new Promise<T>((_, reject) => {
+				timeoutId = setTimeout(() => {
+					void Promise.resolve(onTimeout?.()).finally(() => reject(error));
+				}, timeoutMs);
+			})
+		]);
+	} finally {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+		}
 	}
 }
