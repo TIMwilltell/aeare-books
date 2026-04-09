@@ -93,14 +93,15 @@
 		<p class="eyebrow">Development tools</p>
 		<h1>Magic-link inbox</h1>
 		<p>
-			View the latest local sign-in email when `AEARE_AUTH_EMAIL_MODE=local` is enabled.
+			Inspect the latest locally captured sign-in email when `AEARE_AUTH_EMAIL_MODE=local` is enabled on the
+			Convex dev deployment.
 		</p>
 	</section>
 
 	{#if !dev}
 		<section class="section-card status-card error-card">
 			<h2>Unavailable outside local development.</h2>
-			<p>This page only works on the local dev server.</p>
+			<p>This page is only intended for the local dev server.</p>
 		</section>
 	{:else}
 		<section class="section-card controls-card">
@@ -111,7 +112,7 @@
 
 			<div class="actions-row">
 				<button class="primary-button" type="button" onclick={loadLatest} disabled={loading || !email.trim()}>
-					{loading ? 'Loading…' : 'Load latest'}
+					{loading ? 'Loading…' : 'Load latest message'}
 				</button>
 				<button class="ghost-button" type="button" onclick={clearInbox} disabled={clearing || !email.trim()}>
 					{clearing ? 'Clearing…' : 'Clear inbox'}
@@ -168,8 +169,8 @@
 			</section>
 		{:else}
 			<section class="section-card status-card">
-				<h2>No message yet.</h2>
-				<p>Request a sign-in link, then load the latest message for this address.</p>
+				<h2>No captured message yet.</h2>
+				<p>Request a sign-in link, then load the latest message for the email above.</p>
 			</section>
 		{/if}
 	{/if}

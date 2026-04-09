@@ -1,3 +1,4 @@
+import { fetchAccessToken } from '$lib/auth/auth0';
 import { getBrowserConvexClient } from '$lib/convex/client';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -52,7 +53,9 @@ export interface ProgressEvent {
 
 
 function getClient() {
-	return getBrowserConvexClient();
+	const client = getBrowserConvexClient();
+	client.setAuth(fetchAccessToken);
+	return client;
 }
 
 // Type guard for Date

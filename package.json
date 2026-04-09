@@ -5,13 +5,23 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
+		"convex:dev": "bunx convex dev",
 		"build": "vite build",
+		"deploy:convex": "bun ./scripts/deploy-blocked.mjs convex",
+		"deploy:worker": "bun ./scripts/deploy-blocked.mjs worker",
+		"deploy:worker:staging": "bun ./scripts/deploy-blocked.mjs preview",
+		"deploy:staging": "bun ./scripts/deploy-blocked.mjs preview",
+		"deploy:prod": "bun ./scripts/deploy-blocked.mjs production",
+		"parity:build": "bun run build",
+		"parity:serve": "bunx wrangler dev --local .svelte-kit/cloudflare/_worker.js --ip 127.0.0.1 --port 4173",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:e2e": "playwright test",
-		"test:e2e:headed": "playwright test --headed"
+		"test:e2e:headed": "playwright test --headed",
+		"test:e2e:parity": "E2E_RUNTIME=parity playwright test --grep parity",
+		"verify:deploy": "bun run check && bun run build && bun run test:e2e:parity"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20260405.0",

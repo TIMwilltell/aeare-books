@@ -1,0 +1,15 @@
+# Safe template only. Never put production bindings or real secrets in local files.
+# Cloudflare preview/prod worker secrets belong in the Cloudflare dashboard, not here.
+# These values are only for local worker parity when you need them.
+
+# Must point at a non-production Convex auth issuer during local parity work.
+CONVEX_SITE_URL=
+
+# Must point at the local app origin used for auth callbacks during parity work.
+SITE_URL=
+
+AUTH_RESEND_KEY=
+AUTH_EMAIL_FROM=
+JWT_PRIVATE_KEY=
+JWKS=
+AEARE_AUTH_EMAIL_MODE=
