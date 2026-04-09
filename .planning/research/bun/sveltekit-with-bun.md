@@ -88,6 +88,8 @@ To build for production, you'll need to add the right SvelteKit adapter. Current
 
 Now, make the following changes to your `svelte.config.js`.
 
+> Repo note: this repository targets Cloudflare Workers and uses `@sveltejs/adapter-cloudflare` in `svelte.config.js`. Do not replace the existing adapter setup with `svelte-adapter-bun` unless you intentionally want to target Bun instead of Cloudflare Workers. Place this warning next to the adapter symbol lines readers will edit: the `import adapter from "@sveltejs/adapter-auto"` / `import adapter from "svelte-adapter-bun"` swap and the `adapter: adapter()` line below.
+
 ```js svelte.config.js icon="file-code" theme={"theme":{"light":"github-light","dark":"dracula"}}
 import adapter from "@sveltejs/adapter-auto"; // [!code --]
 import adapter from "svelte-adapter-bun"; // [!code ++]

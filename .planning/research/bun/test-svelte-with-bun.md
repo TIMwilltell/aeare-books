@@ -9,7 +9,7 @@ Bun's [Plugin API](/runtime/plugins) lets you add custom loaders to your project
 Firstly, install `@testing-library/svelte`, `svelte`, and `@happy-dom/global-registrator`.
 
 ```bash terminal icon="terminal" theme={"theme":{"light":"github-light","dark":"dracula"}}
-bun add @testing-library/svelte svelte@4 @happy-dom/global-registrator
+bun add @testing-library/svelte svelte@5 @happy-dom/global-registrator
 ```
 
 Then, save this plugin in your project.
@@ -37,7 +37,7 @@ plugin({
         const source = readFileSync(path.substring(0, path.includes("?") ? path.indexOf("?") : path.length), "utf-8");
 
         const result = compile(source, {
-          filetitle: path,
+          filename: path,
           generate: "client",
           dev: false,
         });
@@ -77,7 +77,8 @@ Add an example `.svelte` file in your project.
   let count = initialCount;
 </script>
 
-<button on:click="{()" ="">(count += 1)}>+1</button>
+<p>Count: {count}</p>
+<button on:click={() => (count += 1)}>+1</button>
 ```
 
 ***
@@ -90,17 +91,18 @@ import { render, fireEvent } from "@testing-library/svelte";
 import Counter from "./Counter.svelte";
 
 test("Counter increments when clicked", async () => {
-  const { getByText, component } = render(Counter);
+  const { getByText, queryByText } = render(Counter);
   const button = getByText("+1");
 
   // Initial state
-  expect(component.$$.ctx[0]).toBe(0); // initialCount is the first prop
+  expect(getByText("Count: 0")).toBeTruthy();
 
   // Click the increment button
   await fireEvent.click(button);
 
   // Check the new state
-  expect(component.$$.ctx[0]).toBe(1);
+  expect(queryByText("Count: 0")).toBeNull();
+  expect(getByText("Count: 1")).toBeTruthy();
 });
 ```
 

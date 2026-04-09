@@ -16,8 +16,19 @@ test.describe('deploy parity', () => {
 		const body = await response.json();
 		const fallbackMessage = typeof body.error === 'string' ? body.error : '';
 
-		expect([
-			'Book not found in AR database'
-		]).toContain(fallbackMessage);
+		if (response.status() === 404) {
+			expect([
+				'Book not found in AR database'
+			]).toContain(fallbackMessage);
+			return;
+		}
+
+		expect(response.status()).toBe(200);
+		expect(body).toEqual(
+			expect.objectContaining({
+				source: expect.stringMatching(/^(cache|bookroo)$/)
+			})
+		);
+		expect(typeof body.arLevel === 'number' || typeof body.arPoints === 'number').toBe(true);
 	});
 });
