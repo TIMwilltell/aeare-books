@@ -79,6 +79,12 @@ Parents can securely access and manage only their own family library data.
 
 **Gap Closure:** Closes unsatisfied auth/session gaps from the milestone audit.
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Close home-entry, reload, refresh-failure, and sign-out session lifecycle gaps.
+- [ ] 04-02-PLAN.md — Verify stable internal user mapping and capture Phase 4 audit evidence.
+
 **Success Criteria:**
 1. Signing in from the home Scan CTA preserves and restores the intended `/scan` destination.
 2. Refresh-token failures update shell auth state consistently with stored auth state.
@@ -146,7 +152,7 @@ Parents can securely access and manage only their own family library data.
 | 1. Auth Foundation | 3/3 | Complete | 2026-04-02 |
 | 2. Route + Data Protection | 3/3 | Complete | 2026-04-05 |
 | 3. Migration + Hardening | 3/3 | Complete | 2026-04-06 |
-| 4. Auth Session Closure | 0/0 | Pending | - |
+| 4. Auth Session Closure | 0/2 | Pending | - |
 | 5. Route And Ownership Completion | 0/0 | Pending | - |
 | 6. Recovery UX Hardening | 0/0 | Pending | - |
 | 7. Migration Backfill Workflow | 0/0 | Pending | - |
