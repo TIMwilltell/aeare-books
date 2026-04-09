@@ -62,6 +62,7 @@
 				loading = false;
 				void loadProgress(loadedBook.id);
 			} else {
+				loading = false;
 				goto('/');
 				return;
 			}

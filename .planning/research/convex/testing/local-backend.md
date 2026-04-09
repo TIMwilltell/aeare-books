@@ -20,10 +20,10 @@ Note that testing against the local backend also has some drawbacks:
 * It requires setting up the local backend, which is more involved.
 * No control over time and any scheduled functions will run as scheduled.
 * Crons will also run unless disabled via [`IS_TEST`](https://stack.convex.dev/testing-with-local-oss-backend#setting-up-a-local-backend).
-* No way to mock `fetch` calls.
-* No way to mock dependencies or parts of the codebase.
-* No way to control randomness (tests may not be deterministic).
-* No way to set environment variable values from within tests.
+* Cannot mock `fetch` calls.
+* Cannot mock dependencies or parts of the codebase.
+* Cannot control randomness (tests may not be deterministic).
+* Cannot set environment variable values from within tests.
 
 To test your functions in JS with a mocked Convex backend, check out [convex-test](./convex-test.md).
 

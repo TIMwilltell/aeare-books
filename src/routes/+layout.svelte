@@ -114,8 +114,8 @@
 		restoringProtectedPath = nextPath;
 
 		try {
-			consumeStoredProtectedRouteIntent();
 			await goto(nextPath, { replaceState: true });
+			consumeStoredProtectedRouteIntent();
 		} finally {
 			restoringProtectedPath = null;
 			pendingProtectedRouteIntent = peekStoredProtectedRouteIntent();
