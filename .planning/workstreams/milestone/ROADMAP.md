@@ -15,8 +15,8 @@ Parents can securely access and manage only their own family library data.
 - [x] **Phase 1: Auth Foundation** - Provider setup, session plumbing, and base user identity mapping
 - [x] **Phase 2: Route + Data Protection** - Protected routes and account-scoped Convex reads/writes
 - [x] **Phase 3: Migration + Hardening** - Legacy data handling, error UX, and auth regression validation
-- [ ] **Phase 4: Auth Session Closure** - Close sign-in, session restore, sign-out, and identity-mapping audit gaps
-- [ ] **Phase 5: Route And Ownership Completion** - Close protected-route, ownership, and scoped-data integration gaps
+- [x] **Phase 4: Auth Session Closure** - Completed 2026-04-09; verified in `04-VERIFICATION.md`
+- [x] **Phase 5: Route And Ownership Completion** - Completed 2026-04-09; verified in `05-VERIFICATION.md`
 - [ ] **Phase 6: Recovery UX Hardening** - Restore intended routes and surface rejection recovery states in the UI
 - [ ] **Phase 7: Migration Backfill Workflow** - Make legacy ownership quarantine/backfill operational and verifiable
 
@@ -152,8 +152,8 @@ Plans:
 | 1. Auth Foundation | 3/3 | Complete | 2026-04-02 |
 | 2. Route + Data Protection | 3/3 | Complete | 2026-04-05 |
 | 3. Migration + Hardening | 3/3 | Complete | 2026-04-06 |
-| 4. Auth Session Closure | 0/2 | Pending | - |
-| 5. Route And Ownership Completion | 0/0 | Pending | - |
+| 4. Auth Session Closure | 2/2 | Complete | 2026-04-09 |
+| 5. Route And Ownership Completion | 3/3 | Complete | 2026-04-09 |
 | 6. Recovery UX Hardening | 0/0 | Pending | - |
 | 7. Migration Backfill Workflow | 0/0 | Pending | - |
 

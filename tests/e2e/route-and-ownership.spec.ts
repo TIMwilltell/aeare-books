@@ -52,36 +52,38 @@ test('library timeline and export stay isolated between two signed-in users', as
 	const title = 'Route Ownership Diary';
 	const author = 'Phase Five';
 
-	await page.goto('/');
-	await signInWithLocalInbox(page, request, userAEmail);
-	await addBook(page, title, author);
+	try {
+		await page.goto('/');
+		await signInWithLocalInbox(page, request, userAEmail);
+		await addBook(page, title, author);
 
-	await page.getByRole('button', { name: new RegExp(title, 'i') }).first().click();
-	await expect(page.getByRole('heading', { name: title })).toBeVisible();
-	await expect(page.getByText('Book added to library')).toBeVisible();
+		await page.getByRole('button', { name: new RegExp(title, 'i') }).first().click();
+		await expect(page.getByRole('heading', { name: title })).toBeVisible();
+		await expect(page.getByText('Book added to library')).toBeVisible();
 
-	await page.goto('/');
-	const userAExport = await exportLibrary(page);
-	await expect(userAExport.books).toHaveLength(1);
-	await expect(userAExport.progressEvents.length).toBeGreaterThanOrEqual(1);
-	expect(userAExport.books[0]?.title).toBe(title);
-	expect(
-		userAExport.progressEvents.some((event) => {
-			return event.eventType === 'book_added' && event.eventDate.endsWith('Z') && event.createdAt.endsWith('Z');
-		})
-	).toBe(true);
+		await page.goto('/');
+		const userAExport = await exportLibrary(page);
+		await expect(userAExport.books).toHaveLength(1);
+		await expect(userAExport.progressEvents.length).toBeGreaterThanOrEqual(1);
+		expect(userAExport.books[0]?.title).toBe(title);
+		expect(
+			userAExport.progressEvents.some((event) => {
+				return event.eventType === 'book_added' && event.eventDate.endsWith('Z') && event.createdAt.endsWith('Z');
+			})
+		).toBe(true);
 
-	await page.getByRole('button', { name: 'Sign out' }).click();
-	await expect(page.getByText('Signed out')).toBeVisible();
+		await page.getByRole('button', { name: 'Sign out' }).click();
+		await expect(page.getByText('Signed out')).toBeVisible();
 
-	await signInWithLocalInbox(page, request, userBEmail);
-	await expect(page.getByRole('heading', { name: 'Your library is empty.' })).toBeVisible();
-	await expect(page.getByRole('button', { name: new RegExp(title, 'i') })).toHaveCount(0);
+		await signInWithLocalInbox(page, request, userBEmail);
+		await expect(page.getByRole('heading', { name: 'Your library is empty.' })).toBeVisible();
+		await expect(page.getByRole('button', { name: new RegExp(title, 'i') })).toHaveCount(0);
 
-	const userBExport = await exportLibrary(page);
-	expect(userBExport.books).toEqual([]);
-	expect(userBExport.progressEvents).toEqual([]);
-
-	await clearMagicLinks(request, userAEmail);
-	await clearMagicLinks(request, userBEmail);
+		const userBExport = await exportLibrary(page);
+		expect(userBExport.books).toEqual([]);
+		expect(userBExport.progressEvents).toEqual([]);
+	} finally {
+		await clearMagicLinks(request, userAEmail);
+		await clearMagicLinks(request, userBEmail);
+	}
 });

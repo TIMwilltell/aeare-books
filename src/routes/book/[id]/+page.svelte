@@ -44,19 +44,24 @@
 			goto('/');
 			return;
 		}
-		const loadedBook = await getBook(bookId);
-		if (loadedBook) {
-			book = loadedBook;
-			title = loadedBook.title;
-			author = loadedBook.author;
-			isbn = loadedBook.isbn;
-			arLevel = loadedBook.arLevel || 0;
-			arPoints = loadedBook.arPoints || 0;
+		try {
+			const loadedBook = await getBook(bookId);
+			if (loadedBook) {
+				book = loadedBook;
+				title = loadedBook.title;
+				author = loadedBook.author;
+				isbn = loadedBook.isbn;
+				arLevel = loadedBook.arLevel || 0;
+				arPoints = loadedBook.arPoints || 0;
+				loading = false;
+				void loadProgress(loadedBook.id);
+			} else {
+				goto('/');
+				return;
+			}
+		} catch {
 			loading = false;
-			void loadProgress(loadedBook.id);
-		} else {
 			goto('/');
-			return;
 		}
 	});
 

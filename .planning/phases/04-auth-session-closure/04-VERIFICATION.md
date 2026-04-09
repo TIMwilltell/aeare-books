@@ -11,7 +11,7 @@ Status: satisfied
 | Convex code generation | `bunx convex codegen` | ✅ Pass | Convex functions and generated bindings rebuilt successfully |
 | Static/type check | `bun run check` | ✅ Pass | `svelte-check found 0 errors and 0 warnings` |
 | Local Convex identity tests | `bun run test:convex` | ✅ Pass | `src/convex/users.test.ts` passed 3 tests |
-| Auth route/session browser regression | `bunx playwright test tests/e2e/auth-route-guards.spec.ts --grep "home scan CTA|reloading after local sign-in|signing out clears shell state"` | ✅ Pass | 9/9 tests passed across Chromium, Firefox, and WebKit |
+| Auth route/session browser regression | `bunx playwright test tests/e2e/auth-route-guards.spec.ts --grep "home scan CTA\|reloading after local sign-in\|signing out clears shell state"` | ✅ Pass | 9/9 tests passed across Chromium, Firefox, and WebKit |
 | Dedicated Phase 4 auth-session closure browser suite | `bunx playwright test tests/e2e/auth-session-closure.spec.ts` | ✅ Pass | 6/6 tests passed across Chromium, Firefox, and WebKit |
 | AR parity regression after cleanup | `E2E_RUNTIME=parity bunx playwright test tests/e2e/deploy-parity.spec.ts` | ✅ Pass | 12/12 parity tests passed after removing Browser Rendering fallback |
 

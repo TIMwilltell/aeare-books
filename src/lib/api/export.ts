@@ -10,7 +10,7 @@ export interface ExportData {
 }
 
 function toIsoString(value: number | null | undefined) {
-	return value ? new Date(value).toISOString() : null;
+	return value !== null && value !== undefined ? new Date(value).toISOString() : null;
 }
 
 export async function exportLibrary(): Promise<void> {

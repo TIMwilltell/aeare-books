@@ -34,7 +34,7 @@ Related code and decisions found in the current codebase:
 
 - `src/routes/book/new/+page.svelte:22-49` runs `lookupBook(isbn.trim())` and only afterward awaits `lookupAr(isbn.trim())`, with one shared `lookupLoading` state.
 - `src/routes/api/books/+server.ts:15-42` and `src/routes/api/ar/+server.ts:6-42` are already separate endpoints, which makes staged or concurrent client behavior feasible.
-- `src/routes/api/ar/+server.ts:50-117` performs a network scrape path that can be slower or fail independently of metadata lookup.
+- `src/routes/api/ar/+server.ts:29-42` and `src/routes/api/ar/+server.ts:50-103` perform the Bookroo lookup + details parsing that can be slower or fail independently of metadata lookup.
 - `README.md:9-12` already documents graceful fallback when AR lookup fails, which aligns with treating AR as enrichment rather than a blocker.
 
 ## Notes

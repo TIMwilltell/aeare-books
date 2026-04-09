@@ -30,7 +30,7 @@
 	let pendingProtectedRouteIntent = $state<string | null>(null);
 	let restoringProtectedPath = $state<string | null>(null);
 	let protectedRouteIntentLabel = $derived(describeProtectedRouteIntent(pendingProtectedRouteIntent));
-	let showAuthAudit = $derived(dev && page.url.searchParams.has('authAudit'));
+	let showAuthAudit = $derived(dev && page.url.searchParams.get('authAudit') === '1');
 
 	function initConvexClientContext() {
 		const convexClient = getBrowserConvexClient();

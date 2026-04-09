@@ -15,8 +15,8 @@ Parents can securely access and manage only their own family library data.
 - [x] **Phase 1: Auth Foundation** - Provider setup, session plumbing, and base user identity mapping
 - [x] **Phase 2: Route + Data Protection** - Protected routes and account-scoped Convex reads/writes
 - [x] **Phase 3: Migration + Hardening** - Legacy data handling, error UX, and auth regression validation
-- [ ] **Phase 4: Auth Session Closure** - Close sign-in, session restore, sign-out, and identity-mapping audit gaps
-- [ ] **Phase 5: Route And Ownership Completion** - Close protected-route, ownership, and scoped-data integration gaps
+- [x] **Phase 4: Auth Session Closure** - Completed 2026-04-09; verified in `04-VERIFICATION.md`
+- [x] **Phase 5: Route And Ownership Completion** - Completed 2026-04-09; verified in `05-VERIFICATION.md`
 - [ ] **Phase 6: Recovery UX Hardening** - Restore intended routes and surface rejection recovery states in the UI
 - [ ] **Phase 7: Migration Backfill Workflow** - Make legacy ownership quarantine/backfill operational and verifiable
 
@@ -82,8 +82,8 @@ Parents can securely access and manage only their own family library data.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Close home-entry, reload, refresh-failure, and sign-out session lifecycle gaps.
-- [ ] 04-02-PLAN.md — Verify stable internal user mapping and capture Phase 4 audit evidence.
+- [x] 04-01-PLAN.md — Close home-entry, reload, refresh-failure, and sign-out session lifecycle gaps.
+- [x] 04-02-PLAN.md — Verify stable internal user mapping and capture Phase 4 audit evidence.
 
 **Success Criteria:**
 1. Signing in from the home Scan CTA preserves and restores the intended `/scan` destination.
@@ -106,9 +106,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Lock backend ownership rules with Convex regression coverage and owned progress-event creation.
-- [ ] 05-02-PLAN.md — Surface owned progress in protected UI flows and include it in account-scoped exports with browser isolation tests.
-- [ ] 05-03-PLAN.md — Capture Phase 5 verification evidence and README rerun instructions for route/ownership checks.
+- [x] 05-01-PLAN.md — Lock backend ownership rules with Convex regression coverage and owned progress-event creation.
+- [x] 05-02-PLAN.md — Surface owned progress in protected UI flows and include it in account-scoped exports with browser isolation tests.
+- [x] 05-03-PLAN.md — Capture Phase 5 verification evidence and README rerun instructions for route/ownership checks.
 
 **Success Criteria:**
 1. Protected routes redirect unauthenticated users based on the live shell auth state.
@@ -159,8 +159,8 @@ Plans:
 | 1. Auth Foundation | 3/3 | Complete | 2026-04-02 |
 | 2. Route + Data Protection | 3/3 | Complete | 2026-04-05 |
 | 3. Migration + Hardening | 3/3 | Complete | 2026-04-06 |
-| 4. Auth Session Closure | 0/2 | Pending | - |
-| 5. Route And Ownership Completion | 0/3 | Pending | - |
+| 4. Auth Session Closure | 2/2 | Complete | 2026-04-09 |
+| 5. Route And Ownership Completion | 3/3 | Complete | 2026-04-09 |
 | 6. Recovery UX Hardening | 0/0 | Pending | - |
 | 7. Migration Backfill Workflow | 0/0 | Pending | - |
 

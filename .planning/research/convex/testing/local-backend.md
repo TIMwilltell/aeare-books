@@ -1,6 +1,6 @@
 # Testing Local Backend
 
-Alternatively to [`convex-test`](/testing/convex-test.md) you can test your functions using the [open-source version of the Convex backend](https://github.com/get-convex/convex-backend).
+Alternatively to [`convex-test`](./convex-test.md) you can test your functions using the [open-source version of the Convex backend](https://github.com/get-convex/convex-backend).
 
 ## Getting Started[​](#getting-started "Direct link to Getting Started")
 
@@ -25,9 +25,8 @@ Note that testing against the local backend also has some drawbacks:
 * No way to control randomness (tests may not be deterministic).
 * No way to set environment variable values from within tests.
 
-To test your functions in JS with a mocked Convex backend, check out [convex-test](/testing/convex-test.md).
+To test your functions in JS with a mocked Convex backend, check out [convex-test](./convex-test.md).
 
 ## CI[​](#ci "Direct link to CI")
 
-See [Continuous Integration](/testing/ci.md) to run your tests on a shared remote machine.
-
+See [Continuous Integration](./ci.md) to run your tests on a shared remote machine.

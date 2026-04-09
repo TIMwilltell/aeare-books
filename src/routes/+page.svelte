@@ -46,8 +46,6 @@
 	}
 
 	onMount(() => {
-		void loadBooks();
-
 		const unsubscribe = authState.subscribe((state) => {
 			void syncLibraryState(state.status);
 		});

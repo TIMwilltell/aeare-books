@@ -509,23 +509,23 @@ const modules = import.meta.glob("./**/*.ts");
 
 You can get a printout of the code coverage provided by your tests. Besides answering the question "how much of my code is covered by tests" it is also helpful to check that your test is actually exercising the code that you want it to exercise.
 
-Run `npm run test:coverage`
+Run:
 
-``
+```bash
+npm run test:coverage
+```
 
-. It will ask you to install a required dependency the first time you run it.
+It will ask you to install a required dependency the first time you run it.
 
 ![example coverage printout](/screenshots/testing_coverage.png)
 
 ### Debugging tests[​](#debugging-tests "Direct link to Debugging tests")
 
-You can attach a debugger to the running tests. Read the Vitest [Debugging docs](https://vitest.dev/guide/debugging.html) and then use
+You can attach a debugger to the running tests. Read the Vitest [Debugging docs](https://vitest.dev/guide/debugging.html) and then use:
 
-`npm run test:debug`
-
-``
-
-.
+```bash
+npm run test:debug
+```
 
 ## Limitations[​](#limitations "Direct link to Limitations")
 
@@ -553,5 +553,4 @@ To test your functions running on a real Convex backend, check out [Testing Loca
 
 ## CI[​](#ci "Direct link to CI")
 
-See [Continuous Integration](/testing/ci.md) to run your tests on a shared remote machine.
-
+See [Continuous Integration](./ci.md) to run your tests on a shared remote machine.
