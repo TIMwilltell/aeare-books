@@ -4,7 +4,7 @@ const devServerPort = Number(process.env.DEV_SERVER_PORT ?? '4173');
 const devServerBaseUrl = `http://127.0.0.1:${devServerPort}`;
 const isParityRuntime = process.env.E2E_RUNTIME === 'parity';
 const webServerCommand = isParityRuntime
-	? `bun run build && bun run parity:serve`
+	? `bun run build && vite preview --host 127.0.0.1 --port ${devServerPort}`
 	: `bun run dev --host 127.0.0.1 --port ${devServerPort}`;
 export default defineConfig({
 	testDir: './tests/e2e',
