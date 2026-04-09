@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 import { replaceState } from '$app/navigation';
 import { getBrowserConvexClient } from '$lib/convex/client';
 import { ConvexClient } from 'convex/browser';
@@ -8,6 +8,7 @@ import { api } from '../../convex/_generated/api';
 type AuthStatus = 'loading' | 'signed-out' | 'signed-in' | 'error';
 
 type UserProfile = {
+	internalUserId?: string;
 	name?: string;
 	email?: string;
 };
@@ -26,6 +27,16 @@ type FetchTokenArgs = {
 	forceRefreshToken?: boolean;
 };
 
+type DevTestAuthHarness = {
+	forceRefreshFailure: () => Promise<string | null>;
+};
+
+declare global {
+	interface Window {
+		__aeareTestAuth?: DevTestAuthHarness;
+	}
+}
+
 const PROTECTED_ROUTE_PATTERNS = [/^\/scan$/, /^\/book\/new$/, /^\/book\/[^/]+$/];
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,6 +44,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const JWT_STORAGE_KEY = '__convexAuthJWT';
 const REFRESH_TOKEN_STORAGE_KEY = '__convexAuthRefreshToken';
 const PROTECTED_ROUTE_INTENT_STORAGE_KEY = '__aeareProtectedRouteIntent';
+const SESSION_EXPIRED_MESSAGE = 'Your session expired. Sign in again to continue.';
 
 export function isProtectedPath(pathname: string): boolean {
 	return PROTECTED_ROUTE_PATTERNS.some((pattern) => pattern.test(pathname));
@@ -181,6 +193,26 @@ function storeTokens(tokens: StoredTokens | null) {
 	convexClient?.setAuth(fetchAccessToken);
 }
 
+function transitionToSignedOut(error: string | null = null) {
+	clearProtectedRouteIntent();
+	storeTokens(null);
+	authState.set({ status: 'signed-out', user: null, error });
+}
+
+async function expireCurrentSession() {
+	try {
+		const existingTokens = readStoredTokens();
+		if (existingTokens) {
+			const client = getConvexClient();
+			await runSerializedAuthAction(() => client.action(api.auth.signOut, {}));
+		}
+	} catch {
+		// Local state still needs to be cleared even if the backend session cleanup fails.
+	} finally {
+		transitionToSignedOut(SESSION_EXPIRED_MESSAGE);
+	}
+}
+
 function normalizeSignInResult(result: unknown): SignInResult {
 	if (!result || typeof result !== 'object') {
 		return {};
@@ -289,6 +321,7 @@ async function loadSignedInUser(): Promise<UserProfile | null> {
 	}
 
 	return {
+		internalUserId: user._id,
 		name: user.name ?? undefined,
 		email: user.email ?? undefined,
 	};
@@ -312,8 +345,7 @@ export async function initAuthSession() {
 
 		const user = await loadSignedInUser();
 		if (!user) {
-			storeTokens(null);
-			authState.set({ status: 'signed-out', user: null, error: null });
+			transitionToSignedOut();
 			return;
 		}
 
@@ -351,7 +383,7 @@ export async function signIn() {
 			provider: 'resend',
 			params: {
 				email,
-				redirectTo: peekProtectedRouteIntent() ?? window.location.pathname,
+				redirectTo: peekProtectedRouteIntent() ?? `${window.location.pathname}${window.location.search}${window.location.hash}`,
 			},
 		});
 
@@ -376,9 +408,7 @@ export async function signOut() {
 		const client = getConvexClient();
 		await runSerializedAuthAction(() => client.action(api.auth.signOut, {}));
 	} finally {
-		clearProtectedRouteIntent();
-		storeTokens(null);
-		authState.set({ status: 'signed-out', user: null, error: null });
+		transitionToSignedOut();
 	}
 }
 
@@ -399,14 +429,23 @@ export async function fetchAccessToken(args: FetchTokenArgs = {}): Promise<strin
 	try {
 		const result = await runSignInAction({ refreshToken: existingTokens.refreshToken });
 		if (!result.tokens) {
-			storeTokens(null);
+			await expireCurrentSession();
 			return null;
 		}
 
 		storeTokens(result.tokens);
 		return result.tokens.token;
 	} catch {
-		storeTokens(null);
+		await expireCurrentSession();
 		return null;
 	}
+}
+
+if (browser && dev) {
+	window.__aeareTestAuth = {
+		forceRefreshFailure: async () => {
+			window.localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, 'invalid-refresh-token');
+			return await fetchAccessToken({ forceRefreshToken: true });
+		},
+	};
 }

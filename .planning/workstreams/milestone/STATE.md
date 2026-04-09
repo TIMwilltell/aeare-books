@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-06)
 
 **Core value:** Parents can securely access and manage only their own family library data.
-**Current focus:** Milestone complete
+**Current focus:** Phase 4 auth-session closure verified; ready to advance milestone work
 
 ## Current Position
 
-Phase: Complete
-Plan: N/A
-Status: All three phases completed; milestone closed out
-Last activity: 2026-04-06 - completed Phase 3 verification and closed out the User Accounts Authentication milestone
+Phase: 4 of 7 - Auth Session Closure
+Plan: 2 of 2
+Status: Phase 4 verification complete; summaries written and milestone ready to advance
+Last activity: 2026-04-09 - completed Phase 4 auth-session closure verification and wrote 04-01/04-02 summaries
 
 ## Performance Metrics
 
@@ -64,6 +64,9 @@ Last activity: 2026-04-06 - completed Phase 3 verification and closed out the Us
 - [Phase 03]: `progressEvents.userId` backfill is limited to rows whose parent books have resolved ownership.
 - [Phase 03]: UX hardening means restoring the originally intended protected route after sign-in or auth restoration.
 - [Phase 03]: Regression coverage interprets export as the existing action on `/`, not a separate route.
+- [Phase 04]: Auth entry now preserves the full current route, including query string, when sign-in starts from the current page.
+- [Phase 04]: Refresh-token failure now clears both shell auth state and the backend auth session before the next protected navigation.
+- [Phase 04]: Browser-level identity verification is limited to the local-dev `?authAudit=1` surface and still reads only server-derived `getCurrentUser` data.
 
 ### Pending Todos
 
@@ -77,8 +80,9 @@ Last activity: 2026-04-06 - completed Phase 3 verification and closed out the Us
 
 ## Session Continuity
 
-Last session: 2026-04-06T01:15:00.000Z
-Stopped at: Milestone complete; ready for next milestone selection
+Last session: 2026-04-09T04:28:00Z
+Stopped at: Completed Phase 4 auth-session closure verification and wrote 04-01/04-02 summaries
+Resume file: none
 
 ---
 

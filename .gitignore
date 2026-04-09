@@ -27,9 +27,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .agents
 /.playwright-mcp
-/.planning
-/.planning/PROJECT.md
-/.planning/debug
 /test-results
 /snapshot.md
 /snapshot2.md

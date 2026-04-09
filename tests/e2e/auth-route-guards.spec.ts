@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { assertSignedOutRedirect, clearMagicLinks, protectedRoutes, signInWithLocalInbox } from './helpers/auth';
+import {
+	assertSignedOutRedirect,
+	clearMagicLinks,
+	protectedRoutes,
+	signInWithLocalInbox,
+	startLocalInboxSignIn
+} from './helpers/auth';
 
 test('public home remains available while signed out', async ({ page }) => {
 	await page.goto('/');
@@ -35,7 +41,7 @@ test('local auth inbox completes a full magic-link sign-in flow', async ({ page,
 
 	await page.goto('/book/new');
 	await expect(page).toHaveURL('/book/new');
-	await expect(page.getByRole('heading', { name: 'Add a book to the shelf.' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Add a book.' })).toBeVisible();
 
 	await page.getByRole('button', { name: 'Sign out' }).click();
 	await expect(page.getByText('Signed out')).toBeVisible();
@@ -56,7 +62,49 @@ test('signed-out users return to /scan after local sign-in', async ({ page, requ
 	await signInWithLocalInbox(page, request, testEmail);
 
 	await expect(page).toHaveURL('/scan');
-	await expect(page.getByRole('heading', { name: 'Scan the next book into your reading circle.' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Scan a book.' })).toBeVisible();
+	await clearMagicLinks(request, testEmail);
+});
+
+test('signed-out home scan CTA returns to /scan after local sign-in', async ({ page, request }) => {
+	test.setTimeout(60_000);
+	const testEmail = `home-scan-reader+${Date.now()}@example.com`;
+	await page.goto('/');
+
+	await startLocalInboxSignIn(page, request, testEmail, async () => {
+		await page.getByRole('button', { name: 'Sign in to start' }).click();
+	});
+
+	await expect(page).toHaveURL('/scan');
+	await expect(page.getByRole('heading', { name: 'Scan a book.' })).toBeVisible();
+	await clearMagicLinks(request, testEmail);
+});
+
+test('reloading after local sign-in restores the signed-in shell state', async ({ page, request }) => {
+	const testEmail = `reload-reader+${Date.now()}@example.com`;
+	await page.goto('/');
+	await signInWithLocalInbox(page, request, testEmail);
+
+	await page.reload();
+
+	await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'A warmer home for every book you track.' })).toBeVisible();
+	await expect(page.getByLabel('Search by title or author')).toBeVisible();
+	await clearMagicLinks(request, testEmail);
+});
+
+test('signing out clears shell state before the next protected navigation', async ({ page, request }) => {
+	const testEmail = `signout-reader+${Date.now()}@example.com`;
+	await page.goto('/');
+	await signInWithLocalInbox(page, request, testEmail);
+
+	await page.getByRole('button', { name: 'Sign out' }).click();
+
+	await expect(page.getByText('Signed out')).toBeVisible();
+	await expect(page.getByLabel('Search by title or author')).toHaveCount(0);
+	await page.goto('/scan');
+	await expect(page).toHaveURL('/');
+	await expect(page.getByText('Sign in and we will return you to the scanner.')).toBeVisible();
 	await clearMagicLinks(request, testEmail);
 });
 
@@ -68,7 +116,7 @@ test('signed-out users return to a protected book detail after local sign-in', a
 	await page.goto('/book/new');
 	await page.getByLabel('Title *').fill('Phase 3 Redirect Book');
 	await page.getByLabel('Author *').fill('Migration Test');
-	await page.getByRole('button', { name: 'Save book' }).click();
+	await page.getByRole('button', { name: 'Save' }).click();
 
 	await expect(page).toHaveURL('/');
 	const bookCard = page.getByRole('button', { name: /Phase 3 Redirect Book/i }).first();

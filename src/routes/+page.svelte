@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { authState, signIn } from '$lib/auth/auth0';
+	import { authState, rememberProtectedRouteIntent, signIn } from '$lib/auth/auth0';
 	import { getAllBooks, searchBooks, type Book } from '$lib/db';
 	import { exportLibrary } from '$lib/api/export';
 	import BookList from '$lib/components/BookList.svelte';
@@ -115,6 +115,7 @@
 
 	async function handleScan() {
 		if (!isSignedIn) {
+			rememberProtectedRouteIntent('/scan');
 			await signIn();
 			return;
 		}

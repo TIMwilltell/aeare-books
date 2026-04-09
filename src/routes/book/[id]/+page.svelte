@@ -2,14 +2,18 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { getBook, updateBook, deleteBook } from '$lib/db';
-	import type { Book } from '$lib/db';
+	import { deleteBook, getBook, getProgressEventsByBook, updateBook } from '$lib/db';
+	import type { Book, ProgressEvent } from '$lib/db';
 	import DeleteDialog from '$lib/components/DeleteDialog.svelte';
+	import ProgressTimeline from '$lib/components/ProgressTimeline.svelte';
 
 	let book = $state<Book | null>(null);
 	let loading = $state(true);
 	let editing = $state(false);
 	let saving = $state(false);
+	let progressEvents = $state<ProgressEvent[]>([]);
+	let progressLoading = $state(false);
+	let progressError = $state<string | null>(null);
 
 	let title = $state('');
 	let author = $state('');
@@ -20,6 +24,20 @@
 	let showDeleteDialog = $state(false);
 
 	const bookId = page.params.id;
+
+	async function loadProgress(bookProgressId: string) {
+		progressLoading = true;
+		progressError = null;
+
+		try {
+			progressEvents = await getProgressEventsByBook(bookProgressId);
+		} catch (error) {
+			progressEvents = [];
+			progressError = error instanceof Error ? error.message : 'Could not load reading activity.';
+		} finally {
+			progressLoading = false;
+		}
+	}
 
 	onMount(async () => {
 		if (!bookId) {
@@ -34,10 +52,12 @@
 			isbn = loadedBook.isbn;
 			arLevel = loadedBook.arLevel || 0;
 			arPoints = loadedBook.arPoints || 0;
+			loading = false;
+			void loadProgress(loadedBook.id);
 		} else {
 			goto('/');
+			return;
 		}
-		loading = false;
 	});
 
 	function startEdit() {
@@ -228,6 +248,24 @@
 						</div>
 					</div>
 				</div>
+
+				<div class="section-card detail-card progress-card">
+					{#if progressError}
+						<div class="progress-feedback" role="alert">
+							<p class="eyebrow">Reading log</p>
+							<h2>Timeline unavailable right now.</h2>
+							<p>{progressError}</p>
+						</div>
+					{:else if progressLoading}
+						<div class="progress-feedback" aria-live="polite">
+							<p class="eyebrow">Reading log</p>
+							<h2>Loading timeline…</h2>
+							<p>We are gathering the latest activity for this book.</p>
+						</div>
+					{:else}
+						<ProgressTimeline events={progressEvents} />
+					{/if}
+				</div>
 			</section>
 		{/if}
 
@@ -335,6 +373,28 @@
 	.form-card,
 	.detail-card {
 		padding: 1rem;
+	}
+
+	.progress-card,
+	.progress-feedback {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.progress-feedback h2,
+	.progress-feedback p {
+		margin: 0;
+	}
+
+	.progress-feedback h2 {
+		font-family: var(--font-serif);
+		font-size: 1.45rem;
+		color: var(--text-strong);
+	}
+
+	.progress-feedback p:last-child {
+		line-height: 1.6;
+		color: var(--text-default);
 	}
 
 	.section-header {
