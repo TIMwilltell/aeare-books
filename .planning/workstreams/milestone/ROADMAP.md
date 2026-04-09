@@ -3,7 +3,7 @@
 **Project:** AeAre Books
 **Created:** 2026-04-01
 **Milestone slug:** user-accounts-authentication
-**Granularity:** standard (3 phases)
+**Granularity:** extended (7 phases)
 **Parallelization:** enabled
 
 ## Core Value
@@ -15,6 +15,10 @@ Parents can securely access and manage only their own family library data.
 - [x] **Phase 1: Auth Foundation** - Provider setup, session plumbing, and base user identity mapping
 - [x] **Phase 2: Route + Data Protection** - Protected routes and account-scoped Convex reads/writes
 - [x] **Phase 3: Migration + Hardening** - Legacy data handling, error UX, and auth regression validation
+- [x] **Phase 4: Auth Session Closure** - Completed 2026-04-09; verified in `04-VERIFICATION.md`
+- [x] **Phase 5: Route And Ownership Completion** - Completed 2026-04-09; verified in `05-VERIFICATION.md`
+- [ ] **Phase 6: Recovery UX Hardening** - Restore intended routes and surface rejection recovery states in the UI
+- [ ] **Phase 7: Migration Backfill Workflow** - Make legacy ownership quarantine/backfill operational and verifiable
 
 ## Phase Details
 
@@ -65,6 +69,82 @@ Parents can securely access and manage only their own family library data.
 
 ---
 
+### Phase 4: Auth Session Closure
+
+**Goal:** Auth entry, session lifecycle, and identity mapping are verified end-to-end under the audit gates.
+
+**Depends on:** Phase 3
+
+**Requirements:** AUTH-01, AUTH-02, AUTH-03, DATA-01
+
+**Gap Closure:** Closes unsatisfied auth/session gaps from the milestone audit.
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Close home-entry, reload, refresh-failure, and sign-out session lifecycle gaps.
+- [ ] 04-02-PLAN.md — Verify stable internal user mapping and capture Phase 4 audit evidence.
+
+**Success Criteria:**
+1. Signing in from the home Scan CTA preserves and restores the intended `/scan` destination.
+2. Refresh-token failures update shell auth state consistently with stored auth state.
+3. Sign-in, reload/session restore, and sign-out are demonstrated in milestone verification.
+4. First and repeat sign-in both map correctly to the internal user record.
+
+---
+
+### Phase 5: Route And Ownership Completion
+
+**Goal:** Protected routes and account ownership behavior are fully integrated and verified in current milestone artifacts.
+
+**Depends on:** Phase 4
+
+**Requirements:** AUTH-04, ACL-01, ACL-02, DATA-02
+
+**Gap Closure:** Closes orphaned route and ownership requirements plus scoped-data integration gaps from the milestone audit.
+
+**Success Criteria:**
+1. Protected routes redirect unauthenticated users based on the live shell auth state.
+2. Authenticated mutations and queries enforce current-user ownership consistently.
+3. Progress ownership is surfaced in user-facing flows and exports remain account-scoped.
+4. Milestone summary and verification artifacts demonstrate route and ownership behavior end-to-end.
+
+---
+
+### Phase 6: Recovery UX Hardening
+
+**Goal:** Users recover cleanly from auth and ownership failures without losing their intended task.
+
+**Depends on:** Phase 5
+
+**Requirements:** ACL-03, UX-03
+
+**Gap Closure:** Closes broken route-restore and rejection-recovery flows from the milestone audit.
+
+**Success Criteria:**
+1. Auth entry points restore users to their last intended usable route after auth checks complete.
+2. Book detail edit/delete rejection states are surfaced with actionable recovery UI.
+3. Broken flows from the audit pass end-to-end verification.
+
+---
+
+### Phase 7: Migration Backfill Workflow
+
+**Goal:** Legacy ownership quarantine and backfill logic can be executed and verified by an operator.
+
+**Depends on:** Phase 6
+
+**Requirements:** DATA-03
+
+**Gap Closure:** Closes the migration/backfill operator-workflow gap from the milestone audit.
+
+**Success Criteria:**
+1. The live repo exposes a documented, executable path for migration or quarantine handling.
+2. The workflow is captured in milestone summary and verification artifacts.
+3. Legacy unauthenticated data handling is no longer strategy-only.
+
+---
+
 ## Progress Table
 
 | Phase | Plans Complete | Status | Completed |
@@ -72,6 +152,10 @@ Parents can securely access and manage only their own family library data.
 | 1. Auth Foundation | 3/3 | Complete | 2026-04-02 |
 | 2. Route + Data Protection | 3/3 | Complete | 2026-04-05 |
 | 3. Migration + Hardening | 3/3 | Complete | 2026-04-06 |
+| 4. Auth Session Closure | 2/2 | Complete | 2026-04-09 |
+| 5. Route And Ownership Completion | 3/3 | Complete | 2026-04-09 |
+| 6. Recovery UX Hardening | 0/0 | Pending | - |
+| 7. Migration Backfill Workflow | 0/0 | Pending | - |
 
 ---
 *Roadmap created: 2026-04-01*

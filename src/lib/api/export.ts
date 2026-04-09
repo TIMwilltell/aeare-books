@@ -9,6 +9,10 @@ export interface ExportData {
 	progressEvents: any[];
 }
 
+function toIsoString(value: number | null | undefined) {
+	return value !== null && value !== undefined ? new Date(value).toISOString() : null;
+}
+
 export async function exportLibrary(): Promise<void> {
 	const client = getBrowserConvexClient();
 	client.setAuth(fetchAccessToken);
@@ -18,8 +22,12 @@ export async function exportLibrary(): Promise<void> {
 	}
 
 	let books;
+	let progressEvents;
 	try {
-		books = await client.query(api.books.getAll, {});
+		[books, progressEvents] = await Promise.all([
+			client.query(api.books.getAll, {}),
+			client.query(api.progress.getAll, {})
+		]);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Export failed.';
 		throw new Error(`Could not export your library: ${message}`);
@@ -30,12 +38,16 @@ export async function exportLibrary(): Promise<void> {
 		version: '1.0',
 		books: (books ?? []).map((b: any) => ({
 			...b,
-			readDate: b.readDate ? new Date(b.readDate).toISOString() : null,
-			quizDate: b.quizDate ? new Date(b.quizDate).toISOString() : null,
+			readDate: toIsoString(b.readDate),
+			quizDate: toIsoString(b.quizDate),
 			createdAt: new Date(b.createdAt).toISOString(),
 			updatedAt: new Date(b.updatedAt).toISOString(),
 		})),
-		progressEvents: [],
+		progressEvents: (progressEvents ?? []).map((event: any) => ({
+			...event,
+			eventDate: new Date(event.eventDate).toISOString(),
+			createdAt: new Date(event.createdAt).toISOString()
+		}))
 	};
 
 	const jsonString = JSON.stringify(exportData, null, 2);

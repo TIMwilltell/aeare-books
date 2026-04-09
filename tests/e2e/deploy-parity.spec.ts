@@ -9,18 +9,26 @@ test.describe('deploy parity', () => {
 		});
 	}
 
-	test('parity keeps AR lookup graceful when Cloudflare Browser Rendering is unavailable', async ({ request }) => {
+	test('parity keeps AR lookup graceful when no automated AR match is available', async ({ request }) => {
 		const response = await request.get('/api/ar?isbn=9999999999999');
-		expect([200, 404, 503]).toContain(response.status());
+		expect([200, 404]).toContain(response.status());
 
 		const body = await response.json();
 		const fallbackMessage = typeof body.error === 'string' ? body.error : '';
 
-		expect([
-			'AR fallback is unavailable until the Cloudflare Browser Rendering binding is configured.',
-			'AR fallback temporarily unavailable for this ISBN',
-			'AR lookup failed',
-			'Book not found in AR database'
-		]).toContain(fallbackMessage);
+		if (response.status() === 404) {
+			expect([
+				'Book not found in AR database'
+			]).toContain(fallbackMessage);
+			return;
+		}
+
+		expect(response.status()).toBe(200);
+		expect(body).toEqual(
+			expect.objectContaining({
+				source: expect.stringMatching(/^(cache|bookroo)$/)
+			})
+		);
+		expect(typeof body.arLevel === 'number' || typeof body.arPoints === 'number').toBe(true);
 	});
 });

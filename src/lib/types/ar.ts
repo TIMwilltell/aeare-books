@@ -1,1 +1,1 @@
-export type ArSource = 'cache' | 'bookroo' | 'scrape';
+export type ArSource = 'cache' | 'bookroo';

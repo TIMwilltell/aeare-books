@@ -1,26 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import puppeteer from '@cloudflare/puppeteer';
 import { getArCache, setArCache } from '$lib/db';
 import type { ArSource } from '$lib/types/ar';
 
-const ARBOOKFIND_COOLDOWN_MS = 6 * 60 * 60 * 1000;
-const AR_BROWSER_UNAVAILABLE_MESSAGE =
-	'AR fallback is unavailable until the Cloudflare Browser Rendering binding is configured.';
-const AR_BROWSER_TIMEOUT_MS = 5000;
-const AR_BROWSER_TIMEOUT_MESSAGE = 'AR fallback timed out before browser rendering completed.';
-
-const arbookfindCooldownByIsbn = new Map<string, number>();
-type BrowserBinding = NonNullable<App.Platform['env']>['BROWSER'];
-
-class BrowserRenderTimeoutError extends Error {
-	constructor(message = AR_BROWSER_TIMEOUT_MESSAGE) {
-		super(message);
-		this.name = 'BrowserRenderTimeoutError';
-	}
-}
-
-export const GET: RequestHandler = async ({ url, platform }) => {
+export const GET: RequestHandler = async ({ url }) => {
 	const isbn = url.searchParams.get('isbn');
 
 	if (!isbn) {
@@ -48,221 +31,20 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	let arPoints = bookrooResult?.arPoints;
 	let source: ArSource | null = bookrooResult ? 'bookroo' : null;
 
-	const needsFallback = arLevel === undefined || arPoints === undefined;
-	if (needsFallback) {
-		if (isArbookfindInCooldown(cleanIsbn)) {
-			if (arLevel !== undefined || arPoints !== undefined) {
-				return json({ arLevel, arPoints, source: source ?? 'bookroo' });
-			}
-			return json({ error: 'AR fallback temporarily unavailable for this ISBN' }, { status: 503 });
-		}
-
-		const scrapeResult = await scrapeArBookFindWithBrowser(cleanIsbn, platform?.env?.BROWSER);
-		if (scrapeResult.notFound) {
-			markArbookfindCooldown(cleanIsbn);
-			if (arLevel !== undefined || arPoints !== undefined) {
-				return json({ arLevel, arPoints, source: source ?? 'bookroo' });
-			}
-			return json({ error: scrapeResult.error ?? 'Book not found in AR database' }, { status: 404 });
-		}
-
-		if (scrapeResult.error) {
-			if (arLevel !== undefined || arPoints !== undefined) {
-				return json({ arLevel, arPoints, source: source ?? 'bookroo' });
-			}
-			return json({ error: scrapeResult.error }, { status: 503 });
-		}
-
-		if (arLevel === undefined) {
-			arLevel = scrapeResult.arLevel;
-		}
-		if (arPoints === undefined) {
-			arPoints = scrapeResult.arPoints;
-		}
-
-		if (scrapeResult.arLevel !== undefined || scrapeResult.arPoints !== undefined) {
-			source = source ?? 'scrape';
-		}
-	}
-
 	if (arLevel !== undefined && arPoints !== undefined) {
 		await setArCache(cleanIsbn, arLevel, arPoints);
 	}
 
 	if (arLevel !== undefined || arPoints !== undefined) {
-		return json({ arLevel, arPoints, source: source ?? 'scrape' });
+		return json({ arLevel, arPoints, source: source ?? 'bookroo' });
 	}
 
 	return json({ error: 'Book not found in AR database' }, { status: 404 });
 };
 
-async function scrapeArBookFindWithBrowser(isbn: string, browserBinding: BrowserBinding | undefined): Promise<ScrapeResult> {
-	if (!browserBinding) {
-		return { error: AR_BROWSER_UNAVAILABLE_MESSAGE };
-	}
-
-	try {
-		let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
-		let page: Awaited<ReturnType<Awaited<ReturnType<typeof puppeteer.launch>>['newPage']>> | undefined;
-
-		return await withTimeout(
-			(async () => {
-				browser = await puppeteer.launch(browserBinding as any);
-
-				try {
-					page = await browser.newPage();
-					page.setDefaultTimeout(7000);
-					page.setDefaultNavigationTimeout(10000);
-					await page.setRequestInterception(true);
-					page.on('request', (request) => {
-						const resourceType = request.resourceType();
-						if (
-							resourceType === 'image' ||
-							resourceType === 'font' ||
-							resourceType === 'media' ||
-							resourceType === 'stylesheet'
-						) {
-							void request.abort();
-							return;
-						}
-						void request.continue();
-					});
-
-					return await scrapeArBookFind(page, isbn);
-				} finally {
-					try {
-						if (page && !page.isClosed()) {
-							await page.close();
-						}
-					} catch {}
-					try {
-						if (browser?.connected) {
-							await browser.close();
-						}
-					} catch {}
-				}
-			})(),
-			AR_BROWSER_TIMEOUT_MS,
-			new BrowserRenderTimeoutError(),
-			() => {
-				void (async () => {
-					try {
-						if (page && !page.isClosed()) {
-							await page.close();
-						}
-					} catch {}
-					try {
-						if (browser?.connected) {
-							await browser.close();
-						}
-					} catch {}
-				})();
-			}
-		);
-	} catch (error) {
-		console.error('AR scrape error:', error);
-		if (error instanceof BrowserRenderTimeoutError) {
-			return { error: AR_BROWSER_TIMEOUT_MESSAGE };
-		}
-		if (isBrowserUnavailableError(error)) {
-			return { error: AR_BROWSER_UNAVAILABLE_MESSAGE };
-		}
-		return { error: 'AR lookup failed' };
-	}
-}
-
-function isBrowserUnavailableError(error: unknown): boolean {
-	if (!(error instanceof Error)) {
-		return false;
-	}
-
-	return [
-		'WorkersWebSocketTransport',
-		'Offset is outside the bounds of the DataView'
-	].some((fragment) => error.message.includes(fragment) || error.stack?.includes(fragment));
-}
-
-function isArbookfindInCooldown(isbn: string): boolean {
-	const retryAfter = arbookfindCooldownByIsbn.get(isbn);
-	if (!retryAfter) {
-		return false;
-	}
-	if (Date.now() >= retryAfter) {
-		arbookfindCooldownByIsbn.delete(isbn);
-		return false;
-	}
-	return true;
-}
-
-function markArbookfindCooldown(isbn: string): void {
-	arbookfindCooldownByIsbn.set(isbn, Date.now() + ARBOOKFIND_COOLDOWN_MS);
-}
-
-interface ScrapeResult {
-	arLevel?: number;
-	arPoints?: number;
-	error?: string;
-	notFound?: boolean;
-}
-
 interface BookrooResult {
 	arLevel?: number;
 	arPoints?: number;
-}
-
-async function scrapeArBookFind(page: any, isbn: string): Promise<ScrapeResult> {
-	try {
-		// Navigate to UserType.aspx
-		await page.goto('https://www.arbookfind.com/UserType.aspx?RedirectURL=%2fadvanced.aspx', {
-			waitUntil: 'domcontentloaded'
-		});
-
-		// Click Librarian radio and submit
-		await page.click('#radLibrarian');
-		await page.click('#btnSubmitUserType');
-
-		// Wait for ISBN input
-		await page.waitForSelector('#ctl00_ContentPlaceHolder1_txtISBN');
-
-		// Type ISBN and search
-		await page.click('#ctl00_ContentPlaceHolder1_txtISBN', { clickCount: 3 });
-		await page.type('#ctl00_ContentPlaceHolder1_txtISBN', isbn);
-		await Promise.all([
-			page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-			page.click('#ctl00_ContentPlaceHolder1_btnDoIt')
-		]);
-
-		// Check for failure message
-		const failLabel = await page.$('#ctl00_ContentPlaceHolder1_lblSearchResultFailedLabel');
-		if (failLabel) {
-			return { notFound: true, error: 'Book not found in AR database' };
-		}
-
-		// Click on book title
-		await page.waitForSelector('#book-title');
-		await page.click('#book-title');
-
-		// Extract AR data
-		const atosStr = await page.$eval(
-			'#ctl00_ContentPlaceHolder1_ucBookDetail_lblBookLevel',
-			(element: Element) => element.textContent ?? ''
-		);
-		const arPointsStr = await page.$eval(
-			'#ctl00_ContentPlaceHolder1_ucBookDetail_lblPoints',
-			(element: Element) => element.textContent ?? ''
-		);
-
-		const arLevel = parseFloat(atosStr || '') || undefined;
-		const arPoints = parseFloat(arPointsStr || '') || undefined;
-
-		if (arLevel === undefined && arPoints === undefined) {
-			return { error: 'Could not parse AR data' };
-		}
-
-		return { arLevel, arPoints };
-	} catch (e) {
-		return { error: `Scrape failed: ${e}` };
-	}
 }
 
 async function lookupArFromBookroo(isbn: string): Promise<BookrooResult | null> {

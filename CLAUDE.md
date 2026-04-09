@@ -3,16 +3,16 @@
 
 **AeAre Books**
 
-A progressive web app for parents to scan book barcodes, auto-populate metadata (title, author, ISBN) from Open Library, attempt AR level/points lookup from arbookfind.com, and track reading progress and AR quiz scores for children.
+A progressive web app for parents to scan book barcodes, auto-populate metadata (title, author, ISBN) from Open Library, attempt AR level/points lookup from Bookroo, and track reading progress and AR quiz scores for children.
 
 **Core Value:** Parents can quickly catalog their children's books and track AR reading progress without manual data entry.
 
 ### Constraints
 
 - **PWA Architecture**: Must run in mobile browser, installable to home screen, no app store
-- **AR Data Reliability**: AR scrape is fragile — must degrade gracefully
+- **AR Data Reliability**: External AR metadata is incomplete — must degrade gracefully
 - **Offline Capability**: Should work partially offline (scan, form, submit when connected)
-- **Backend Required**: Small backend needed for AR scrape (avoids CORS)
+- **Backend Required**: Small backend needed for server-side AR metadata lookup (avoids CORS)
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:research/STACK.md -->
@@ -29,14 +29,14 @@ A progressive web app for parents to scan book barcodes, auto-populate metadata 
 ### Core Product Integrations
 - **Barcode Scanning:** Quagga
 - **Book Metadata:** Open Library
-- **AR Lookup:** arbookfind.com scrape via Cloudflare Browser Rendering + Puppeteer
+- **AR Lookup:** Bookroo-backed server lookup with graceful manual fallback
 
 ### Data + Sync Posture
 - **Primary persistence:** Convex backend state
 - **Offline behavior:** Degraded flow support is expected; true local IndexedDB persistence is not currently treated as completed and remains under verification
 
 ### Known Operational Risks
-- AR scrape fragility when upstream HTML changes
+- External AR coverage can be incomplete for some ISBNs
 - A few client helpers still rely on hardcoded fallback Convex URL paths
 - Offline persistence expectations need explicit verification and contract clarity
 

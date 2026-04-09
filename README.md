@@ -1,12 +1,12 @@
 # AeAre Books
 
-A progressive web app for parents to scan book barcodes, auto-populate metadata (title, author, ISBN) from Open Library, attempt AR level/points lookup from arbookfind.com, and track reading progress and AR quiz scores for children.
+A progressive web app for parents to scan book barcodes, auto-populate metadata (title, author, ISBN) from Open Library, attempt AR level/points lookup from Bookroo, and track reading progress and AR quiz scores for children.
 
 ## Features
 
 - **Barcode Scanning** — Scan book barcodes with your phone's camera to quickly add books
 - **Auto-Populate Book Data** — Automatically fetch title, author, and cover image from Open Library
-- **AR Level Integration** — Fetch Accelerated Reader (AR) levels from arbookfind.com (with manual fallback)
+- **AR Level Integration** — Fetch Accelerated Reader (AR) levels when Bookroo provides them, with manual fallback
 - **Reading Progress Tracking** — Track when books are read with date tracking
 - **Quiz Score Recording** — Record AR quiz scores for each book
 - **Graceful Fallbacks** — If AR lookup fails, manual entry keeps the workflow moving
@@ -18,7 +18,7 @@ A progressive web app for parents to scan book barcodes, auto-populate metadata 
 - **Backend:** Convex (real-time database & serverless functions)
 - **Local Storage:** Client-side persistence is partial and under active verification
 - **Barcode Scanning:** Quagga
-- **APIs:** Open Library, arbookfind.com (scraped)
+- **APIs:** Open Library, Bookroo
 - **Build:** Vite with PWA plugin
 - **Package Manager:** Bun
 
@@ -138,13 +138,13 @@ bun run verify:deploy
 ```
 
 - `bun run test:e2e:parity` builds the app and runs the parity-tagged Playwright smoke suite against Wrangler-served `.svelte-kit/cloudflare/_worker.js`.
-- The parity runtime is served with `wrangler dev --local`, so it exercises the built worker locally without Cloudflare's remote Browser Rendering proxy.
+- The parity runtime is served with `wrangler dev --local`, so it exercises the built worker locally against the built Cloudflare-shaped runtime.
 - `bun run verify:deploy` is the local pre-push gate. It runs `bun run check`, `bun run build`, and `bun run test:e2e:parity` in order.
 
 Parity smoke coverage currently verifies:
 
 - Signed-out redirects still protect `/scan`, `/book/new`, and `/book/test-book-id`
-- The AR API returns a graceful degradation response when Cloudflare Browser Rendering is unavailable in non-production parity work
+- The AR API returns a graceful not-found response when no automated AR match is available in parity work
 
 ### Preview builds
 
@@ -180,8 +180,8 @@ Convex production secrets and auth settings should live only in the production C
 
 - Roll back by redeploying the last known-good Cloudflare build plus the last known-good Convex deployment for that environment.
 - After a Cloudflare preview or production deploy, smoke-check the signed-out redirects for `/scan`, `/book/new`, and `/book/test-book-id`.
-- Smoke-check the AR endpoint and confirm it either returns AR data or the documented graceful fallback message instead of crashing when Browser Rendering is unavailable.
-- If auth redirects or AR fallback differ from parity results, stop and fix parity before promoting the next build.
+- Smoke-check the AR endpoint and confirm it either returns AR data or the documented not-found response instead of crashing.
+- If auth redirects or AR lookup behavior differ from parity results, stop and fix parity before promoting the next build.
 
 ### Required secrets, bindings, and variable sources
 
@@ -206,7 +206,7 @@ Worker template (`.dev.vars.example`) for local parity only:
 
 Cloudflare dashboard/runtime config:
 
-- Preview branch builds must keep Browser Rendering and all vars/bindings pointed at non-production resources
+- Preview branch builds must keep all vars/bindings pointed at non-production resources
 - Production must not reuse preview/local test overrides
 
 Production should not keep the local inbox overrides:
@@ -253,15 +253,51 @@ Run the signed-out route-protection checks with:
 bun run test:e2e
 ```
 
+Run the dedicated Phase 4 auth-session closure suite with:
+
+```bash
+bunx playwright test tests/e2e/auth-session-closure.spec.ts
+```
+
+Run the local Convex function checks with:
+
+```bash
+bun run test:convex
+```
+
+Phase 4 auth-session verification notes live at:
+
+```text
+.planning/phases/04-auth-session-closure/04-VERIFICATION.md
+```
+
+Run the dedicated Phase 5 route and ownership checks with:
+
+```bash
+bun run test:convex
+bunx playwright test tests/e2e/auth-route-guards.spec.ts
+bunx playwright test tests/e2e/route-and-ownership.spec.ts
+```
+
+Phase 5 route and ownership verification notes live at:
+
+```text
+.planning/phases/05-route-and-ownership-completion/05-VERIFICATION.md
+```
+
 Current automation covers:
 
 - Public home remains usable while signed out
 - Signed-out redirects from `/scan`, `/book/new`, and `/book/[id]`
 - Full local magic-link sign-in when `AEARE_AUTH_EMAIL_MODE=local`
+- Refresh-token failure resets the shell to signed-out and the next protected navigation redirects back home
+- First sign-in, reload, sign-out, and repeat sign-in keep the same server-derived internal user mapping when `?authAudit=1` is enabled locally
+- Local Convex identity-query coverage for signed-out access, authenticated access, and repeat-session user mapping
 
 Important note:
 
 - The local inbox is stored in the Convex dev deployment instead of Mailpit. This keeps the same Convex Auth magic-link flow while avoiding the network reachability problem of a hosted Convex action trying to deliver mail to your laptop's `localhost`.
+- `bun run test:convex` is fully local and does not require `bun run convex:dev`, but the Playwright auth flows still do because they exercise the hosted Convex Auth HTTP endpoints.
 
 ### Recovery guide
 

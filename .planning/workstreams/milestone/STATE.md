@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: user-accounts-authentication
 milestone_name: User Accounts Authentication
-status: Complete
-stopped_at: Completed User Accounts Authentication milestone closeout
-last_updated: "2026-04-06T01:15:00Z"
-last_activity: 2026-04-06 - completed Phase 3 verification and closed out the User Accounts Authentication milestone
+status: Active
+phase: 4
+plan: 2
+last_updated: "2026-04-09T06:32:14.222Z"
+last_activity: 2026-04-09 - completed Phase 4 auth-session closure verification and wrote 04-01/04-02 summaries
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_phases: 7
+  completed_phases: 4
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # Project State
@@ -20,20 +21,20 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-06)
 
 **Core value:** Parents can securely access and manage only their own family library data.
-**Current focus:** Milestone complete
+**Current focus:** Phase 4 auth-session closure verified; ready to advance milestone work
 
 ## Current Position
 
-Phase: Complete
-Plan: N/A
-Status: All three phases completed; milestone closed out
-Last activity: 2026-04-06 - completed Phase 3 verification and closed out the User Accounts Authentication milestone
+Phase: 4 of 7 - Auth Session Closure
+Plan: 2 of 2
+Status: Phase 4 verification complete; summaries written and milestone ready to advance
+Last activity: 2026-04-09 - completed Phase 4 auth-session closure verification and wrote 04-01/04-02 summaries
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 9 (9 planned)
+- Total plans completed: 11 (11 planned)
 - Average duration: pending rollup
 - Total execution time: pending rollup
 
@@ -44,6 +45,7 @@ Last activity: 2026-04-06 - completed Phase 3 verification and closed out the Us
 | 1. Auth Foundation | 3 | 3 planned | 14m |
 | 2. Route + Data Protection | 3 | 3 planned | pending rollup |
 | 3. Migration + Hardening | 3 | 3 planned | pending rollup |
+| 4. Auth Session Closure | 2 | 2 planned | pending rollup |
 
 ## Accumulated Context
 
@@ -64,6 +66,9 @@ Last activity: 2026-04-06 - completed Phase 3 verification and closed out the Us
 - [Phase 03]: `progressEvents.userId` backfill is limited to rows whose parent books have resolved ownership.
 - [Phase 03]: UX hardening means restoring the originally intended protected route after sign-in or auth restoration.
 - [Phase 03]: Regression coverage interprets export as the existing action on `/`, not a separate route.
+- [Phase 04]: Auth entry now preserves the full current route, including query string, when sign-in starts from the current page.
+- [Phase 04]: Refresh-token failure now clears both shell auth state and the backend auth session before the next protected navigation.
+- [Phase 04]: Browser-level identity verification is limited to the local-dev `?authAudit=1` surface and still reads only server-derived `getCurrentUser` data.
 
 ### Pending Todos
 
@@ -77,8 +82,9 @@ Last activity: 2026-04-06 - completed Phase 3 verification and closed out the Us
 
 ## Session Continuity
 
-Last session: 2026-04-06T01:15:00.000Z
-Stopped at: Milestone complete; ready for next milestone selection
+Last session: 2026-04-09T04:28:00Z
+Stopped at: Completed Phase 4 auth-session closure verification and wrote 04-01/04-02 summaries
+Resume file: none
 
 ---
 

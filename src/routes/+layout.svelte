@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
@@ -22,7 +23,6 @@
 	import { get } from 'svelte/store';
 
 	const { children } = $props();
-	const PROTECTED_ROUTE_INTENT_SESSION_KEY = '__aeareProtectedRouteIntent';
 	let authActionPending = $state(false);
 	let authActionError = $state<string | null>(null);
 	let redirectingProtectedPath = $state<string | null>(null);
@@ -30,6 +30,7 @@
 	let pendingProtectedRouteIntent = $state<string | null>(null);
 	let restoringProtectedPath = $state<string | null>(null);
 	let protectedRouteIntentLabel = $derived(describeProtectedRouteIntent(pendingProtectedRouteIntent));
+	let showAuthAudit = $derived(dev && page.url.searchParams.get('authAudit') === '1');
 
 	function initConvexClientContext() {
 		const convexClient = getBrowserConvexClient();
@@ -56,51 +57,11 @@
 		void syncProtectedRouteIntentRestore();
 	});
 
-	function peekProtectedRouteIntent() {
-		if (typeof window === 'undefined') {
-			return peekStoredProtectedRouteIntent();
-		}
-
-		const storedIntent = window.sessionStorage.getItem(PROTECTED_ROUTE_INTENT_SESSION_KEY);
-		if (storedIntent) {
-			return storedIntent;
-		}
-
-		return peekStoredProtectedRouteIntent();
-	}
-
-	function rememberProtectedRouteIntent(pathname: string, search = '', hash = '') {
-		const intent = rememberStoredProtectedRouteIntent(pathname, search, hash);
-
-		if (typeof window !== 'undefined' && intent) {
-			window.sessionStorage.setItem(PROTECTED_ROUTE_INTENT_SESSION_KEY, intent);
-		}
-
-		return intent;
-	}
-
-	function clearProtectedRouteIntent() {
-		if (typeof window !== 'undefined') {
-			window.sessionStorage.removeItem(PROTECTED_ROUTE_INTENT_SESSION_KEY);
-		}
-
-		clearStoredProtectedRouteIntent();
-	}
-
-	function consumeProtectedRouteIntent() {
-		const intent = peekProtectedRouteIntent();
-		if (intent) {
-			clearProtectedRouteIntent();
-			return intent;
-		}
-
-		return consumeStoredProtectedRouteIntent();
-	}
 	function syncProtectedRouteRedirect(pathname = page.url.pathname) {
-		pendingProtectedRouteIntent = peekProtectedRouteIntent();
+		pendingProtectedRouteIntent = peekStoredProtectedRouteIntent();
 
 		if (get(authState).status === 'signed-in' && pendingProtectedRouteIntent === `${page.url.pathname}${page.url.search}${page.url.hash}`) {
-			clearProtectedRouteIntent();
+			clearStoredProtectedRouteIntent();
 			pendingProtectedRouteIntent = null;
 		}
 
@@ -118,13 +79,13 @@
 			return;
 		}
 
-		pendingProtectedRouteIntent = rememberProtectedRouteIntent(page.url.pathname, page.url.search, page.url.hash);
+		pendingProtectedRouteIntent = rememberStoredProtectedRouteIntent(page.url.pathname, page.url.search, page.url.hash);
 		redirectingProtectedPath = pathname;
 		void goto('/', { replaceState: true });
 	}
 
 	async function syncProtectedRouteIntentRestore() {
-		pendingProtectedRouteIntent = peekProtectedRouteIntent();
+		pendingProtectedRouteIntent = peekStoredProtectedRouteIntent();
 
 		if ($authState.status !== 'signed-in') {
 			if ($authState.status !== 'loading') {
@@ -135,7 +96,7 @@
 
 		const currentPath = `${page.url.pathname}${page.url.search}${page.url.hash}`;
 		if (pendingProtectedRouteIntent === currentPath) {
-			clearProtectedRouteIntent();
+			clearStoredProtectedRouteIntent();
 			pendingProtectedRouteIntent = null;
 			restoringProtectedPath = null;
 			return;
@@ -145,8 +106,7 @@
 			return;
 		}
 
-		const nextPath = consumeProtectedRouteIntent();
-		pendingProtectedRouteIntent = peekProtectedRouteIntent();
+		const nextPath = peekStoredProtectedRouteIntent();
 		if (!nextPath) {
 			return;
 		}
@@ -155,8 +115,10 @@
 
 		try {
 			await goto(nextPath, { replaceState: true });
+			consumeStoredProtectedRouteIntent();
 		} finally {
 			restoringProtectedPath = null;
+			pendingProtectedRouteIntent = peekStoredProtectedRouteIntent();
 		}
 	}
 
@@ -234,6 +196,9 @@
 				{#if protectedRouteIntentLabel}
 					<p class="auth-intent-copy">Sign in and we will return you to {protectedRouteIntentLabel}.</p>
 				{/if}
+				{#if $authState.error}
+					<p class="auth-error-copy" role="alert">{$authState.error}</p>
+				{/if}
 			{:else if $authState.status === 'signed-in'}
 				<div class="auth-row">
 					<p class="auth-copy">
@@ -243,6 +208,18 @@
 						{authActionPending ? 'Signing out…' : 'Sign out'}
 					</button>
 				</div>
+				{#if showAuthAudit && $authState.user?.internalUserId}
+					<dl class="auth-audit surface-muted" data-testid="auth-audit">
+						<div>
+							<dt>Internal user</dt>
+							<dd data-testid="auth-current-user-id">{$authState.user.internalUserId}</dd>
+						</div>
+						<div>
+							<dt>Email</dt>
+							<dd data-testid="auth-current-user-email">{$authState.user.email ?? 'unknown'}</dd>
+						</div>
+					</dl>
+				{/if}
 				{#if showProtectedRestore && protectedRouteIntentLabel}
 					<p class="auth-intent-copy">Returning you to {protectedRouteIntentLabel} now.</p>
 				{/if}
@@ -634,6 +611,31 @@
 	.auth-actions {
 		justify-content: flex-start;
 		flex-wrap: wrap;
+	}
+
+	.auth-audit {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+		gap: 0.75rem;
+		padding: 0.75rem;
+	}
+
+	.auth-audit div,
+	.auth-audit dt,
+	.auth-audit dd {
+		margin: 0;
+	}
+
+	.auth-audit dt {
+		font-size: 0.78rem;
+		color: var(--text-muted);
+	}
+
+	.auth-audit dd {
+		font-family: var(--font-mono);
+		font-size: 0.84rem;
+		color: var(--text-strong);
+		word-break: break-all;
 	}
 
 	.auth-copy {

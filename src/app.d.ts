@@ -1,5 +1,3 @@
-import type { Fetcher } from '@cloudflare/workers-types';
-
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
@@ -8,11 +6,7 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		// interface PageState {}
-		interface Platform {
-			env?: {
-				BROWSER?: Fetcher;
-			};
-		}
+		// interface Platform {}
 	}
 }
 

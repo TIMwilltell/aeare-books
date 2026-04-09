@@ -41,12 +41,22 @@ export const add = mutation({
   handler: async (ctx, args) => {
     const userId = await requireCurrentUserId(ctx);
     const now = Date.now();
-    return await ctx.db.insert("books", {
+    const bookId = await ctx.db.insert("books", {
       userId,
       ...args,
       createdAt: now,
       updatedAt: now,
     });
+
+    await ctx.db.insert("progressEvents", {
+      userId,
+      bookId,
+      eventType: "book_added",
+      eventDate: now,
+      createdAt: now,
+    });
+
+    return bookId;
   },
 });
 
@@ -81,6 +91,13 @@ export const remove = mutation({
     const userId = await requireCurrentUserId(ctx);
     const book = await ctx.db.get(args.id);
     requireOwnedBook(book, userId);
+
+    for await (const progressEvent of ctx.db
+      .query("progressEvents")
+      .withIndex("bookId", (q) => q.eq("bookId", args.id))) {
+      await ctx.db.delete(progressEvent._id);
+    }
+
     await ctx.db.delete(args.id);
   },
 });
