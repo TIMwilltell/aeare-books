@@ -115,3 +115,27 @@ async function fetchWithTimeout(input: string, timeoutMs = 10000): Promise<Respo
 		clearTimeout(timeoutId);
 	}
 }
+
+async function withTimeout<T>(
+	promise: Promise<T>,
+	timeoutMs: number,
+	error: Error,
+	onTimeout?: () => Promise<void> | void
+): Promise<T> {
+	let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+	try {
+		return await Promise.race([
+			promise,
+			new Promise<T>((_, reject) => {
+				timeoutId = setTimeout(() => {
+					void Promise.resolve(onTimeout?.()).finally(() => reject(error));
+				}, timeoutMs);
+			})
+		]);
+	} finally {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+		}
+	}
+}
